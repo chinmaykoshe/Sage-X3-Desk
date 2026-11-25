@@ -1,0 +1,16 @@
+{
+  "name": "sage-x3-desk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sage X3 Desk - Team Ticketing & Operations Management System",
+  "scripts": {
+    "dev": "concurrently -n API,WEB -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "start": "npm --prefix server start",
+    "seed": "npm --prefix server run seed",
+    "build": "npm --prefix client run build",
+    "test:api": "node server/tests/api.test.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
