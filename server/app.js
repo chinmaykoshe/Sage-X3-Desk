@@ -54,6 +54,9 @@ const authLimiter = rateLimit({
 });
 app.use('/api/auth', authLimiter);
 
+app.get('/', (req, res) => {
+  res.json({ success: true, service: 'Sage X3 Desk API', status: 'running' });
+});
 app.use('/uploads', express.static(uploadRoot));
 app.use('/api', apiRoutes);
 

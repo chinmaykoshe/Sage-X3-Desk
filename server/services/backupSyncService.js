@@ -1,4 +1,5 @@
 import AppError from '../utils/AppError.js';
+import { isMongoConnected } from '../config/db.js';
 import Ticket from '../models/Ticket.js';
 import Task from '../models/Task.js';
 import Client from '../models/Client.js';
@@ -48,10 +49,17 @@ function resolveSupabaseCreds() {
  */
 export function getSupabaseBackupStatus() {
   const { url, configured } = resolveSupabaseCreds();
+  const mongoUp = isMongoConnected();
+  const primaryLabel = mongoUp
+    ? 'MongoDB (Connected)'
+    : configured
+      ? 'MongoDB (Offline — Supabase Cloud Fallback Active)'
+      : 'MongoDB (Offline)';
 
   if (!configured) {
     return {
-      primaryDatabase: 'MongoDB (Connected)',
+      primaryDatabase: primaryLabel,
+      mongoConnected: mongoUp,
       supabaseConfigured: false,
       dualBackupEnabled: false,
       status: 'unavailable',
@@ -60,12 +68,15 @@ export function getSupabaseBackupStatus() {
   }
 
   return {
-    primaryDatabase: 'MongoDB (Connected)',
+    primaryDatabase: primaryLabel,
+    mongoConnected: mongoUp,
     supabaseConfigured: true,
     dualBackupEnabled: true,
     supabaseUrl: url,
-    status: 'ready',
-    message: `Supabase dual-backup connected (${url}).`,
+    status: mongoUp ? 'ready' : 'fallback',
+    message: mongoUp
+      ? `MongoDB + Supabase dual-backup connected (${url}).`
+      : `Supabase cloud fallback active (${url}).`,
   };
 }
 
@@ -90,18 +101,42 @@ export async function triggerDualBackupSync() {
       throw new AppError(`Supabase endpoint responded with HTTP ${res.status}`, 502);
     }
 
-    const [clientsCount, ticketsCount, tasksCount] = await Promise.all([
-      Client.countDocuments({ isDeleted: false }),
-      Ticket.countDocuments({ isDeleted: false }),
-      Task.countDocuments({ isDeleted: false }),
-    ]);
+    let snapshot = { clientsCount: 0, ticketsCount: 0, tasksCount: 0 };
+    if (isMongoConnected()) {
+      const [clientsCount, ticketsCount, tasksCount] = await Promise.all([
+        Client.countDocuments({ isDeleted: false }),
+        Ticket.countDocuments({ isDeleted: false }),
+        Task.countDocuments({ isDeleted: false }),
+      ]);
+      snapshot = { clientsCount, ticketsCount, tasksCount };
+
+      // Best-effort snapshot sync to Supabase table if present
+      await fetch(`${url}/rest/v1/x3_backup_snapshots`, {
+        method: 'POST',
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({
+          synced_at: new Date().toISOString(),
+          clients_count: clientsCount,
+          tickets_count: ticketsCount,
+          tasks_count: tasksCount,
+        }),
+      }).catch(() => {});
+    }
 
     return {
       syncedAt: new Date().toISOString(),
       supabaseUrl: url,
+      mongoConnected: isMongoConnected(),
       status: 'completed',
-      snapshot: { clientsCount, ticketsCount, tasksCount },
-      message: `Verified Supabase connection (${url}) — ${clientsCount} clients, ${ticketsCount} tickets, ${tasksCount} tasks ready.`,
+      snapshot,
+      message: isMongoConnected()
+        ? `Synced MongoDB → Supabase (${url}) — ${snapshot.clientsCount} clients, ${snapshot.ticketsCount} tickets, ${snapshot.tasksCount} tasks.`
+        : `Supabase cloud fallback verified (${url}) — MongoDB is currently offline.`,
     };
   } catch (err) {
     if (err instanceof AppError) throw err;

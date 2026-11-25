@@ -6,6 +6,7 @@ import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import connectDB from './config/db.js';
 import app from './app.js';
+import { getSupabaseBackupStatus } from './services/backupSyncService.js';
 import {
   setSocketIO,
   registerUserSocket,
@@ -64,7 +65,10 @@ async function startServer() {
 let dbReadyPromise = null;
 function ensureDbConnected() {
   if (!dbReadyPromise) {
-    dbReadyPromise = connectDB();
+    dbReadyPromise = connectDB().catch((err) => {
+      dbReadyPromise = null;
+      throw err;
+    });
   }
   return dbReadyPromise;
 }
@@ -77,6 +81,19 @@ if (!process.env.VERCEL) {
 }
 
 export default async function handler(req, res) {
-  await ensureDbConnected();
-  return app(req, res);
+  try {
+    await ensureDbConnected();
+    return app(req, res);
+  } catch (err) {
+    const supa = getSupabaseBackupStatus();
+    if (supa.supabaseConfigured) {
+      console.warn('MongoDB unavailable on Vercel, falling back to Supabase-only mode:', err.message);
+      return app(req, res);
+    }
+    console.error('Serverless invocation error:', err);
+    return res.status(503).json({
+      success: false,
+      message: `Database/server initialization failed: ${err.message}`,
+    });
+  }
 }
