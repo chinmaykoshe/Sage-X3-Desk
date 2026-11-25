@@ -44,9 +44,11 @@ export default function ApprovalInboxPage() {
   const [clientFilter, setClientFilter] = useState('');
   const [search, setSearch] = useState('');
   const [drafts, setDrafts] = useState([]);
-  const [counts, setCounts] = useState({});
+  const [counts, setCounts] = useState({}); // Always reflects ALL-status aggregate
+  const [pendingTickets, setPendingTickets] = useState([]);
   const [actionRequests, setActionRequests] = useState([]);
   const [actionCounts, setActionCounts] = useState({});
+  const [ticketHistoryModal, setTicketHistoryModal] = useState({ open: false, title: '', rows: [] });
   const [loading, setLoading] = useState(true);
 
   const [selectedDraft, setSelectedDraft] = useState(null);
@@ -62,15 +64,21 @@ export default function ApprovalInboxPage() {
   const loadDrafts = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await api.get('/ai/drafts', {
-        params: {
-          status: folder,
-          client: clientFilter || undefined,
-          search: search || undefined,
-        },
-      });
-      setDrafts(data.data.drafts || []);
-      setCounts(data.data.counts || {});
+      // Fetch filtered drafts (what appears in the grid) AND global counts in parallel
+      const [filteredRes, allCountsRes] = await Promise.all([
+        api.get('/ai/drafts', {
+          params: {
+            status: folder,
+            client: clientFilter || undefined,
+            search: search || undefined,
+          },
+        }),
+        // Always fetch global counts (not filtered by folder) for accurate KPI cards & folder pills
+        api.get('/ai/drafts', { params: { status: 'All' } }),
+      ]);
+      setDrafts(filteredRes.data.data.drafts || []);
+      // Use counts from the unfiltered (All) request so KPI/pills always show real totals
+      setCounts(allCountsRes.data.data.counts || {});
     } catch (err) {
       addToast(getApiError(err, 'Failed to load approval queue'), 'error');
     } finally {
@@ -90,10 +98,69 @@ export default function ApprovalInboxPage() {
     }
   }, [folder]);
 
+  const loadPendingTickets = useCallback(async () => {
+    try {
+      const { data } = await api.get('/tickets/pending-approval', { params: { status: 'PENDING_APPROVAL' } });
+      setPendingTickets(data.data || []);
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     loadDrafts();
     loadActionRequests();
-  }, [loadDrafts, loadActionRequests, lastSync.ticket]);
+    loadPendingTickets();
+  }, [loadDrafts, loadActionRequests, loadPendingTickets, lastSync.ticket]);
+
+  const handleApprovePendingTicket = async (id) => {
+    setActing(true);
+    try {
+      const { data } = await api.post(`/tickets/${id}/approve`, {});
+      addToast(data.message || 'Ticket approved into main queue', 'success');
+      notifyLocalMutation?.('ticket');
+      loadPendingTickets();
+    } catch (err) {
+      addToast(getApiError(err), 'error');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleRejectPendingTicket = async (id) => {
+    setActing(true);
+    try {
+      await api.post(`/tickets/${id}/reject`, { reason: 'Rejected by Team Lead' });
+      addToast('Pending ticket rejected', 'info');
+      loadPendingTickets();
+    } catch (err) {
+      addToast(getApiError(err), 'error');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleRequestTicketChanges = async (id) => {
+    setActing(true);
+    try {
+      await api.post(`/tickets/${id}/request-changes`, { comments: 'Changes requested by Team Lead' });
+      addToast('Requested changes from submitter', 'info');
+      loadPendingTickets();
+    } catch (err) {
+      addToast(getApiError(err), 'error');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const openTicketHistory = async (ticket) => {
+    try {
+      const { data } = await api.get(`/tickets/${ticket._id}/approval-history`);
+      setTicketHistoryModal({ open: true, title: `${ticket.ticketId} Approval History`, rows: data.data || [] });
+    } catch (err) {
+      addToast(getApiError(err), 'error');
+    }
+  };
 
   const handleApproveAction = async (id) => {
     setActing(true);
@@ -117,6 +184,29 @@ export default function ApprovalInboxPage() {
       loadActionRequests();
     } catch (err) {
       addToast(getApiError(err, 'Failed to reject action'), 'error');
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleDirectApproveDraft = async (draft, e) => {
+    e?.stopPropagation();
+    const cId = draft.clientId?._id || draft.clientId;
+    if (!cId) {
+      addToast('Client needs verification — opening draft review so you can select a client.', 'info');
+      openDraft(draft._id);
+      return;
+    }
+    setActing(true);
+    try {
+      const { data } = await api.post(`/ai/drafts/${draft._id}/approve`, {
+        edits: { clientId: cId },
+      });
+      addToast(`Approved & published ${data.data.ticket.ticketId}`, 'success');
+      notifyLocalMutation('ticket');
+      loadDrafts();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to approve draft'), 'error');
     } finally {
       setActing(false);
     }
@@ -253,9 +343,12 @@ export default function ApprovalInboxPage() {
       {/* TL Approvals Dashboard KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
         <Card className="p-3">
-          <div className="text-[11px] font-medium text-[#777777]">Pending Ticket Drafts</div>
+          <div className="text-[11px] font-medium text-[#777777]">Pending TL Approvals</div>
           <div className="mt-1 text-2xl font-bold text-[#171717] dark:text-white">
-            {counts['Pending TL Approval'] || 0}
+            {(counts['Pending TL Approval'] || 0) + pendingTickets.length}
+          </div>
+          <div className="text-[10px] text-[#777777]">
+            {counts['Pending TL Approval'] || 0} AI Drafts · {pendingTickets.length} Dev Tickets
           </div>
         </Card>
         <Card className="p-3">
@@ -291,6 +384,16 @@ export default function ApprovalInboxPage() {
           Ticket Drafts ({counts['Pending TL Approval'] || 0} pending)
         </button>
         <button
+          onClick={() => setActiveTab('manual')}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            activeTab === 'manual'
+              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+          }`}
+        >
+          Developer Tickets ({pendingTickets.length} pending)
+        </button>
+        <button
           onClick={() => setActiveTab('actions')}
           className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
             activeTab === 'actions'
@@ -302,7 +405,69 @@ export default function ApprovalInboxPage() {
         </button>
       </div>
 
-      {activeTab === 'actions' ? (
+      {activeTab === 'manual' ? (
+        <div className="space-y-2.5">
+          {pendingTickets.length === 0 ? (
+            <Card className="py-12 text-center text-xs text-[#777777]">
+              No pending developer tickets awaiting TL approval.
+            </Card>
+          ) : (
+            pendingTickets.map((t) => (
+              <Card key={t._id} className="p-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="warning">{t.approvalStatus}</Badge>
+                    <span className="font-mono text-xs font-semibold text-[#777777]">{t.ticketId}</span>
+                    <span className="text-sm font-semibold text-[#171717] dark:text-white">{t.title}</span>
+                  </div>
+                  <p className="text-xs text-[#777777]">
+                    {t.client?.companyName} · {t.priority} · Submitted by {t.createdBy?.fullName} ({dayjs(t.createdAt).format('MMM D, h:mm A')})
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    to={`/tickets/${t._id}`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 text-xs font-medium text-[#171717] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-white"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> View Full Ticket
+                  </Link>
+                  <Button size="sm" variant="secondary" onClick={() => openTicketHistory(t)}>
+                    History
+                  </Button>
+                  {isManager && (
+                    <>
+                      <Button size="sm" variant="primary" disabled={acting} onClick={() => handleApprovePendingTicket(t._id)}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Direct Approve
+                      </Button>
+                      <Button size="sm" variant="secondary" disabled={acting} onClick={() => handleRequestTicketChanges(t._id)}>
+                        Request Changes
+                      </Button>
+                      <Button size="sm" variant="danger" disabled={acting} onClick={() => handleRejectPendingTicket(t._id)}>
+                        <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </Card>
+            ))
+          )}
+          <Modal
+            open={ticketHistoryModal.open}
+            onClose={() => setTicketHistoryModal({ open: false, title: '', rows: [] })}
+            title={ticketHistoryModal.title}
+          >
+            <div className="space-y-2 text-xs">
+              {ticketHistoryModal.rows.map((h) => (
+                <div key={h._id} className="border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5">
+                  <div className="font-semibold">{h.action} ({h.approvalMode}) — {h.previousStatus} → {h.newStatus}</div>
+                  <div className="text-[#777777]">{h.performedBy?.fullName} · {dayjs(h.timestamp).format('DD MMM YYYY HH:mm')}</div>
+                  {h.comments && <p className="mt-0.5">{h.comments}</p>}
+                </div>
+              ))}
+            </div>
+          </Modal>
+        </div>
+      ) : activeTab === 'actions' ? (
         <div className="space-y-2.5">
           {actionRequests.length === 0 ? (
             <Card className="py-12 text-center text-xs text-[#777777]">
@@ -391,13 +556,16 @@ export default function ApprovalInboxPage() {
 
       {loading ? (
         <Loader label="Loading approval queue..." />
-      ) : drafts.length === 0 ? (
+      ) : drafts.filter((d) => folder === 'All' || d.approvalStatus === folder).length === 0 ? (
         <Card className="py-12 text-center text-xs text-[#777777]">
           No submissions in "{folder}".
         </Card>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {drafts.map((d) => (
+          {/* Client-side safety filter: only show drafts that match the active folder (guards against stale data) */}
+          {drafts
+            .filter((d) => folder === 'All' || d.approvalStatus === folder)
+            .map((d) => (
             <Card
               key={d._id}
               className="cursor-pointer hover:border-[#171717]/40 transition-colors"
@@ -440,6 +608,41 @@ export default function ApprovalInboxPage() {
                     <span>· {d.clientId?.companyName || 'Unverified Client'}</span>
                   </div>
                   <span>{dayjs(d.createdAt).format('DD MMM, HH:mm')}</span>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
+                  <Button size="xs" variant="secondary" onClick={() => openDraft(d._id)}>
+                    <ExternalLink className="h-3 w-3 mr-1" /> View Full Draft
+                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    {isManager && d.approvalStatus !== 'Approved' && d.approvalStatus !== 'Rejected' && (
+                      <>
+                        <Button size="xs" variant="primary" disabled={acting} onClick={(e) => handleDirectApproveDraft(d, e)}>
+                          <CheckCircle2 className="h-3 w-3 mr-1" /> Direct Approve
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="danger"
+                          disabled={acting}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDraft(d._id);
+                            setRejectModal({ open: true, reason: '' });
+                          }}
+                        >
+                          <XCircle className="h-3 w-3 mr-1" /> Reject
+                        </Button>
+                      </>
+                    )}
+                    {d.approvedTicketId && (
+                      <Link
+                        to={`/tickets/${d.approvedTicketId?._id || d.approvedTicketId}`}
+                        className="inline-flex items-center gap-1 rounded-lg bg-[#C6F36B] px-2.5 py-1 text-[11px] font-semibold text-[#171717] hover:opacity-90"
+                      >
+                        <ExternalLink className="h-3 w-3" /> Open Full Ticket
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </Card>

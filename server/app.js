@@ -16,11 +16,7 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(
-  helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' },
-  })
-);
+// CORS must be first — before Helmet and any redirects — so OPTIONS preflights pass cleanly
 const allowedOrigins = process.env.CLIENT_URL
   ? process.env.CLIENT_URL.split(',').map((o) => o.trim()).filter(Boolean)
   : ['http://localhost:5174', 'http://localhost:5173', 'http://127.0.0.1:5173'];
@@ -30,17 +26,30 @@ const corsOptions = {
     if (
       !origin ||
       allowedOrigins.includes(origin) ||
-      /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)
+      /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin) ||
+      /^https:\/\/[a-zA-Z0-9-]+-chinmaykoshes-projects\.vercel\.app$/.test(origin)
     ) {
       return callback(null, true);
     }
     return callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-requested-with'],
+  optionsSuccessStatus: 200, // Some browsers (Safari) choke on 204
 };
 
-app.use(cors(corsOptions));
+// Handle ALL OPTIONS preflights immediately — before Helmet, rate-limiters, and body-parsers
 app.options('*', cors(corsOptions));
+
+app.use(cors(corsOptions));
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    // Don't redirect HTTP→HTTPS inside serverless (Vercel terminates TLS externally)
+    hsts: false,
+  })
+);
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true }));
 
