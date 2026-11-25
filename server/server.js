@@ -4,9 +4,9 @@ import { fileURLToPath } from 'url';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import connectDB from './config/db.js';
+import connectDB, { isMongoConnected, markMongoUnavailable, shouldSkipMongoRetry } from './config/db.js';
 import app from './app.js';
-import { getSupabaseBackupStatus } from './services/backupSyncService.js';
+import { getSupabaseBackupStatus, syncMongoToSupabase } from './services/backupSyncService.js';
 import {
   setSocketIO,
   registerUserSocket,
@@ -59,14 +59,24 @@ async function startServer() {
 
   server.listen(PORT, () => {
     console.log(`Sage X3 Desk server listening on http://localhost:${PORT}`);
+    syncMongoToSupabase()
+      .then((res) => {
+        if (res) console.log(`Synced local MongoDB -> Supabase (${res.supabaseUrl})`);
+      })
+      .catch((err) => console.warn('Initial Supabase sync warning:', err.message));
   });
 }
 
 let dbReadyPromise = null;
 function ensureDbConnected() {
+  if (isMongoConnected()) return Promise.resolve();
+  if (shouldSkipMongoRetry()) {
+    return Promise.reject(new Error('MongoDB unreachable (cached cooldown)'));
+  }
   if (!dbReadyPromise) {
     dbReadyPromise = connectDB().catch((err) => {
       dbReadyPromise = null;
+      markMongoUnavailable(60000);
       throw err;
     });
   }

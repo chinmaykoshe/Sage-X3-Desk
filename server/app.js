@@ -8,6 +8,8 @@ import { fileURLToPath } from 'url';
 import apiRoutes from './routes/index.js';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler.js';
 import { uploadRoot } from './middleware/upload.js';
+import supabaseFallbackMiddleware from './middleware/supabaseFallback.js';
+import { scheduleSupabaseSync } from './services/backupSyncService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,7 +60,15 @@ app.get('/', (req, res) => {
   res.json({ success: true, service: 'Sage X3 Desk API', status: 'running' });
 });
 app.use('/uploads', express.static(uploadRoot));
-app.use('/api', apiRoutes);
+app.use('/api', (req, res, next) => {
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
+    res.on('finish', () => {
+      if (res.statusCode < 400) scheduleSupabaseSync();
+    });
+  }
+  next();
+});
+app.use('/api', supabaseFallbackMiddleware, apiRoutes);
 
 // Serve production frontend if built
 const clientDist = path.resolve(__dirname, '..', 'client', 'dist');
