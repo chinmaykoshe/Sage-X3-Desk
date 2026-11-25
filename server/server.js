@@ -61,7 +61,22 @@ async function startServer() {
   });
 }
 
-startServer().catch((err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+let dbReadyPromise = null;
+function ensureDbConnected() {
+  if (!dbReadyPromise) {
+    dbReadyPromise = connectDB();
+  }
+  return dbReadyPromise;
+}
+
+if (!process.env.VERCEL) {
+  startServer().catch((err) => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });
+}
+
+export default async function handler(req, res) {
+  await ensureDbConnected();
+  return app(req, res);
+}

@@ -6,7 +6,9 @@ import { assertStorageWithinLimit } from '../services/backupSyncService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadRoot = path.resolve(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
+const uploadRoot = process.env.VERCEL
+  ? path.join('/tmp', 'uploads')
+  : path.resolve(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
 
 if (!fs.existsSync(uploadRoot)) {
   fs.mkdirSync(uploadRoot, { recursive: true });
