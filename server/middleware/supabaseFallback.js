@@ -421,7 +421,137 @@ fallbackRouter.get('/ai/status', async (req, res) => {
   res.json({ success: true, data: { ...ollama, pendingApprovals } });
 });
 fallbackRouter.get('/ai/drafts', (req, res) => {
-  res.json({ success: true, data: { drafts: req.ctx.ticketDrafts, counts: {} } });
+  const { status, client, search } = req.query;
+  const allDrafts = req.ctx.ticketDrafts;
+  const counts = allDrafts.reduce((acc, d) => {
+    const st = d.approvalStatus || 'Pending TL Approval';
+    acc[st] = (acc[st] || 0) + 1;
+    return acc;
+  }, {});
+
+  const clientMap = byIdMap(req.ctx.clients);
+  const userMap = byIdMap(req.ctx.users.map(sanitizeUser));
+  const ticketMap = byIdMap(req.ctx.tickets);
+  let list = allDrafts;
+  if (status && status !== 'All') list = list.filter((d) => d.approvalStatus === status);
+  if (client) list = list.filter((d) => String(d.clientId) === String(client));
+  if (search) {
+    const q = search.toLowerCase();
+    list = list.filter((d) => `${d.draftId} ${d.generatedFields?.title} ${d.extractedText}`.toLowerCase().includes(q));
+  }
+  const populated = list.map((d) => ({
+    ...d,
+    clientId: clientMap.get(String(d.clientId)) || d.clientId,
+    submittedBy: userMap.get(String(d.submittedBy)) || d.submittedBy,
+    approvedTicketId: ticketMap.get(String(d.approvedTicketId)) || d.approvedTicketId,
+  }));
+  res.json({ success: true, data: { drafts: populated, counts } });
+});
+fallbackRouter.get('/ai/drafts/:id', (req, res) => {
+  const d = req.ctx.ticketDrafts.find((x) => String(x._id) === req.params.id);
+  if (!d) return res.status(404).json({ success: false, message: 'Draft not found' });
+  const atts = req.ctx.attachments.filter((a) => (d.attachments || []).map(String).includes(String(a._id)));
+  res.json({ success: true, data: { ...d, attachments: atts } });
+});
+fallbackRouter.post('/ai/intake', memUpload.array('files', 5), async (req, res, next) => {
+  try {
+    const { sourceText = '', sourceType = 'intake', clientId = '' } = req.body || {};
+    const draftId = genId();
+    const newAtts = [];
+    for (const f of req.files || []) {
+      const up = await uploadFileToSupabase(f.buffer, f.originalname, f.mimetype);
+      newAtts.push({
+        _id: genId(),
+        filename: up.filename,
+        originalName: f.originalname,
+        mimeType: f.mimetype,
+        size: up.size,
+        url: up.url,
+        entityType: 'ticket',
+        entityId: draftId,
+        uploadedBy: req.user._id,
+        isDeleted: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    if (String(sourceText).trim()) {
+      const buf = Buffer.from(String(sourceText).trim(), 'utf8');
+      const up = await uploadFileToSupabase(buf, `${sourceType}-source.txt`, 'text/plain');
+      newAtts.push({
+        _id: genId(),
+        filename: up.filename,
+        originalName: `${sourceType}-source.txt`,
+        mimeType: 'text/plain',
+        size: buf.length,
+        url: up.url,
+        entityType: 'ticket',
+        entityId: draftId,
+        uploadedBy: req.user._id,
+        isDeleted: false,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    const draft = {
+      _id: draftId,
+      draftId: `DRF-${101 + req.ctx.ticketDrafts.length}`,
+      clientId: clientId || req.ctx.clients[0]?._id || null,
+      approvalStatus: 'Pending TL Approval',
+      generatedFields: {
+        title: String(sourceText).trim().split('\n')[0]?.slice(0, 90) || 'Support Ticket Draft',
+        description: String(sourceText).trim() || 'Created from attached screenshot/source.',
+        category: 'Bug / Error',
+        priority: 'Medium',
+        severity: 'Minor',
+      },
+      attachments: newAtts.map((a) => a._id),
+      submittedBy: req.user._id,
+      isDeleted: false,
+      createdAt: new Date().toISOString(),
+    };
+    await persistCollections(req.ctx.snap, {
+      attachments: [...(req.ctx.snap?.collections?.attachments || []), ...newAtts],
+      ticketDrafts: [draft, ...(req.ctx.snap?.collections?.ticketDrafts || [])],
+    });
+    res.status(201).json({ success: true, data: { ...draft, attachments: newAtts } });
+  } catch (err) {
+    next(err);
+  }
+});
+fallbackRouter.post('/ai/drafts/:id/approve', async (req, res, next) => {
+  try {
+    const draft = req.ctx.ticketDrafts.find((x) => String(x._id) === req.params.id);
+    if (!draft) return res.status(404).json({ success: false, message: 'Draft not found' });
+    const ticketId = genId();
+    const ticket = {
+      _id: ticketId,
+      ticketId: `TKT-${1001 + req.ctx.tickets.length}`,
+      client: req.body?.clientId || draft.clientId,
+      title: req.body?.edits?.title || draft.generatedFields?.title || 'Approved Ticket',
+      description: req.body?.edits?.description || draft.generatedFields?.description || '',
+      category: req.body?.edits?.category || draft.generatedFields?.category || 'Support Request',
+      priority: req.body?.edits?.priority || draft.generatedFields?.priority || 'Medium',
+      severity: req.body?.edits?.severity || draft.generatedFields?.severity || 'Minor',
+      status: 'New',
+      createdBy: draft.submittedBy || req.user._id,
+      isDeleted: false,
+      createdAt: new Date().toISOString(),
+    };
+    const draftAttSet = new Set((draft.attachments || []).map(String));
+    const attachments = (req.ctx.snap?.collections?.attachments || []).map((a) =>
+      draftAttSet.has(String(a._id)) ? { ...a, entityType: 'ticket', entityId: ticketId } : a
+    );
+    const ticketDrafts = (req.ctx.snap?.collections?.ticketDrafts || []).map((d) =>
+      String(d._id) === String(draft._id) ? { ...d, approvalStatus: 'Approved', approvedTicket: ticketId } : d
+    );
+    await persistCollections(req.ctx.snap, {
+      attachments,
+      ticketDrafts,
+      tickets: [ticket, ...(req.ctx.snap?.collections?.tickets || [])],
+    });
+    res.json({ success: true, data: { ticket, draft } });
+  } catch (err) {
+    next(err);
+  }
 });
 fallbackRouter.get('/ai/action-requests', (req, res) => {
   const list = req.ctx.aiActionRequests;

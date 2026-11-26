@@ -5,15 +5,14 @@ import {
   getWorkloadReport,
   getTimeTrackingReport,
 } from '../controllers/reportController.js';
-import { protect, authorizePermission } from '../middleware/auth.js';
-import { ROLES } from '../config/constants.js';
+import { protect, requireScreenAccess, requireActionPermission } from '../middleware/auth.js';
 
 const router = Router();
 router.use(protect);
 
 router.get('/dashboard', getDashboardReport);
-router.get('/tickets', authorizePermission('canViewReports', [ROLES.ADMIN, ROLES.TEAM_LEAD]), getTicketsReport);
-router.get('/workload', authorizePermission('canViewReports', [ROLES.ADMIN, ROLES.TEAM_LEAD]), getWorkloadReport);
-router.get('/time-tracking', authorizePermission('canViewReports', [ROLES.ADMIN, ROLES.TEAM_LEAD]), getTimeTrackingReport);
+router.get('/tickets', requireScreenAccess('reports'), requireActionPermission('reports', 'view', 'canViewReports'), getTicketsReport);
+router.get('/workload', requireScreenAccess('reports'), requireActionPermission('reports', 'view', 'canViewReports'), getWorkloadReport);
+router.get('/time-tracking', requireScreenAccess('reports'), requireActionPermission('reports', 'view', 'canViewReports'), getTimeTrackingReport);
 
 export default router;

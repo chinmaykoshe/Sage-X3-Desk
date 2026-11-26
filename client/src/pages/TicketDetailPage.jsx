@@ -43,7 +43,8 @@ import ConfirmDialog from '../components/ui/ConfirmDialog';
 export default function TicketDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isManager } = useAuth();
+  const { user, isManager, hasAction } = useAuth();
+  const canApproveTickets = isManager || hasAction('tickets', 'approve');
   const { addToast } = useToast();
   const { openTaskDrawer, lastSync, notifyLocalMutation } = useWorkspace();
 
@@ -69,6 +70,41 @@ export default function TicketDetailPage() {
   const [waiveModal, setWaiveModal] = useState({ open: false, reason: '' });
   const [timeLogModal, setTimeLogModal] = useState({ open: false, task: null });
   const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [devModalOpen, setDevModalOpen] = useState(false);
+  const [devForm, setDevForm] = useState({
+    description: '',
+    affectedComponent: '',
+    investigationNotes: '',
+    testingPerformed: '',
+    environment: 'Development',
+    workStatus: 'In Development',
+    timeSpent: 0,
+  });
+
+  const handleLogDevUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/monitoring/dev-activities', {
+        ...devForm,
+        ticketId: ticket._id,
+        clientId: ticket.client?._id,
+      });
+      addToast('Development update recorded');
+      setDevModalOpen(false);
+      setDevForm({
+        description: '',
+        affectedComponent: '',
+        investigationNotes: '',
+        testingPerformed: '',
+        environment: 'Development',
+        workStatus: 'In Development',
+        timeSpent: 0,
+      });
+      loadTicket(true);
+    } catch (err) {
+      addToast(getApiError(err), 'error');
+    }
+  };
 
   const taskForm = useForm({ defaultValues: { priority: 'Medium', estimatedHours: 4 } });
   const timeForm = useForm({ defaultValues: { hoursSpent: 1, date: dayjs().format('YYYY-MM-DD') } });
@@ -422,6 +458,71 @@ export default function TicketDetailPage() {
       <div className="flex-1 grid grid-cols-1 xl:grid-cols-12 min-h-0">
         {/* LEFT MAIN DETAIL AREA */}
         <div className="xl:col-span-8 p-5 sm:p-6 space-y-5 overflow-y-auto">
+          {/* TL Approval Review Banner (shown when viewing full pending ticket before publishing) */}
+          {['PENDING_APPROVAL', 'CHANGES_REQUESTED'].includes(ticket.approvalStatus) && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3.5 flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                  <Badge variant="warning">{ticket.approvalStatus}</Badge>
+                  <span>Awaiting Team Lead Approval before entering Main Ticket Queue</span>
+                </div>
+                <p className="text-[11px] text-[#555555] dark:text-slate-300">
+                  Submitted by {ticket.createdBy?.fullName || 'Developer'} · Ticket remains unassigned upon approval.
+                </p>
+              </div>
+              {canApproveTickets && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="primary"
+                    onClick={async () => {
+                      try {
+                        const { data } = await api.post(`/tickets/${ticket._id}/approve`, { comments: 'Approved from full ticket view' });
+                        addToast(data.message || 'Ticket approved into main queue');
+                        notifyLocalMutation('ticket');
+                        loadTicket(true);
+                      } catch (err) {
+                        addToast(getApiError(err), 'error');
+                      }
+                    }}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve &amp; Publish
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={async () => {
+                      try {
+                        await api.post(`/tickets/${ticket._id}/request-changes`, { comments: 'Changes requested from full ticket view' });
+                        addToast('Changes requested from submitter', 'info');
+                        loadTicket(true);
+                      } catch (err) {
+                        addToast(getApiError(err), 'error');
+                      }
+                    }}
+                  >
+                    Request Changes
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="danger"
+                    onClick={async () => {
+                      try {
+                        await api.post(`/tickets/${ticket._id}/reject`, { reason: 'Rejected from full ticket view' });
+                        addToast('Ticket rejected', 'info');
+                        navigate('/approvals');
+                      } catch (err) {
+                        addToast(getApiError(err), 'error');
+                      }
+                    }}
+                  >
+                    Reject
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Inline Editable Title */}
           <div>
             {editingTitle ? (
@@ -560,11 +661,19 @@ export default function TicketDetailPage() {
 
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-wider text-[#777777] mb-1">
-                Category & Time
+                Category, Approval &amp; Time
               </div>
-              <div className="py-1.5 font-medium text-[#171717] dark:text-slate-200 flex items-center justify-between">
+              <div className="py-1 font-medium text-[#171717] dark:text-slate-200 flex flex-wrap items-center justify-between gap-1">
                 <span>{ticket.category}</span>
                 <span className="font-mono text-[#35B8A6]">{ticket.totalHoursLogged || 0}h logged</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] mt-0.5">
+                <Badge variant={ticket.approvalStatus === 'APPROVED' ? 'success' : ticket.approvalStatus === 'REJECTED' ? 'danger' : 'warning'}>
+                  {ticket.approvalStatus || 'APPROVED'}
+                </Badge>
+                {ticket.approvalType && (
+                  <span className="text-[10px] text-[#777777]">{ticket.approvalType.replace(/_/g, ' ')}</span>
+                )}
               </div>
             </div>
           </Card>
@@ -702,28 +811,44 @@ export default function TicketDetailPage() {
                 <p className="text-xs text-[#777777]">No logs or screenshots attached.</p>
               ) : (
                 <div className="space-y-2">
-                  {ticket.attachments.map((att) => (
-                    <div
-                      key={att._id}
-                      className="flex items-center justify-between rounded-lg border border-[#E8E8E5] dark:border-[#26282D] px-2.5 py-1.5 text-xs"
-                    >
-                      <a
-                        href={att.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 truncate text-[#638BEF] hover:underline"
+                  {ticket.attachments.map((att) => {
+                    const isImage =
+                      att.mimeType?.startsWith('image/') ||
+                      /\.(png|jpe?g|gif|webp)$/i.test(att.originalName || att.url || '');
+                    return (
+                      <div
+                        key={att._id}
+                        className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] px-2.5 py-1.5 text-xs space-y-1.5"
                       >
-                        <FileText className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{att.originalName}</span>
-                      </a>
-                      <button
-                        onClick={() => handleDeleteAttachment(att._id)}
-                        className="text-[#777777] hover:text-[#F16D64] ml-2"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center justify-between">
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 truncate text-[#638BEF] hover:underline"
+                          >
+                            <FileText className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{att.originalName}</span>
+                          </a>
+                          <button
+                            onClick={() => handleDeleteAttachment(att._id)}
+                            className="text-[#777777] hover:text-[#F16D64] ml-2"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                        {isImage && (
+                          <a href={att.url} target="_blank" rel="noreferrer" className="block">
+                            <img
+                              src={att.url}
+                              alt={att.originalName}
+                              className="max-h-32 w-full rounded object-cover border border-[#E8E8E5] dark:border-[#2C2E33] bg-white"
+                            />
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </Card>
@@ -758,6 +883,87 @@ export default function TicketDetailPage() {
               )}
             </Card>
           </div>
+
+          {/* Chronological Development Activity Updates */}
+          <Card>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777]">
+                Development Activity Log ({ticket.devActivities?.length || 0})
+              </h3>
+              <Button size="xs" variant="secondary" onClick={() => setDevModalOpen((v) => !v)}>
+                <Plus className="h-3.5 w-3.5" /> Add Dev Update
+              </Button>
+            </div>
+
+            {devModalOpen && (
+              <form onSubmit={handleLogDevUpdate} className="mb-4 rounded-xl border border-[#E8E8E5] dark:border-[#2C2E33] p-3 space-y-2 text-xs bg-[#F4F4F2]/50 dark:bg-white/[0.02]">
+                <input
+                  required
+                  placeholder="Development summary (e.g. Patched ZMT940IMP validation)..."
+                  value={devForm.description}
+                  onChange={(e) => setDevForm({ ...devForm, description: e.target.value })}
+                  className="w-full rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <input
+                    placeholder="Affected Sage X3 script/object"
+                    value={devForm.affectedComponent}
+                    onChange={(e) => setDevForm({ ...devForm, affectedComponent: e.target.value })}
+                    className="rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                  />
+                  <select
+                    value={devForm.environment}
+                    onChange={(e) => setDevForm({ ...devForm, environment: e.target.value })}
+                    className="rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                  >
+                    {DEPLOYMENT_ENVIRONMENTS.map((e) => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                  <input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    placeholder="Hours spent"
+                    value={devForm.timeSpent}
+                    onChange={(e) => setDevForm({ ...devForm, timeSpent: Number(e.target.value) })}
+                    className="rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                  />
+                </div>
+                <textarea
+                  rows={2}
+                  placeholder="Technical investigation notes & testing performed..."
+                  value={devForm.investigationNotes}
+                  onChange={(e) => setDevForm({ ...devForm, investigationNotes: e.target.value })}
+                  className="w-full rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                />
+                <div className="flex justify-end gap-2">
+                  <Button type="button" size="xs" variant="secondary" onClick={() => setDevModalOpen(false)}>Cancel</Button>
+                  <Button type="submit" size="xs">Save Dev Update</Button>
+                </div>
+              </form>
+            )}
+
+            {(ticket.devActivities || []).length === 0 ? (
+              <p className="text-xs text-[#777777]">No development updates logged on this ticket yet.</p>
+            ) : (
+              <div className="space-y-2 text-xs">
+                {ticket.devActivities.map((d) => (
+                  <div key={d._id} className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">{d.employeeId?.fullName}</span>
+                        <Badge variant="info">{d.workStatus}</Badge>
+                        <Badge>{d.environment}</Badge>
+                        {d.affectedComponent && <code className="rounded bg-[#F4F4F2] dark:bg-white/10 px-1.5 py-0.5 text-[10px]">{d.affectedComponent}</code>}
+                      </div>
+                      <span className="text-[11px] text-[#777777]">{dayjs(d.timestamp).format('DD MMM HH:mm')} · {d.timeSpent || 0}h</span>
+                    </div>
+                    <p>{d.description}</p>
+                    {d.investigationNotes && <p className="text-[11px] text-[#777777]">{d.investigationNotes}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
         </div>
 
         {/* RIGHT SIDE COMMENTS & ACTIVITY SIDEBAR */}

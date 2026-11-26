@@ -1,5 +1,6 @@
 import AIConversation from '../models/AIConversation.js';
 import TicketDraft from '../models/TicketDraft.js';
+import Ticket from '../models/Ticket.js';
 import ApprovalHistory from '../models/ApprovalHistory.js';
 import AIActionRequest from '../models/AIActionRequest.js';
 import User from '../models/User.js';
@@ -18,13 +19,15 @@ import {
   rejectTicketDraftService,
   requestDraftChangesService,
 } from '../services/ai/aiTicketService.js';
+import { recordAIActivity } from '../services/auditService.js';
 
 export const getAiStatus = asyncHandler(async (req, res) => {
-  const [status, pendingApprovals] = await Promise.all([
+  const [status, pendingDrafts, pendingManual] = await Promise.all([
     checkOllamaStatus(),
     TicketDraft.countDocuments({ isDeleted: false, approvalStatus: 'Pending TL Approval' }),
+    Ticket.countDocuments({ isDeleted: false, approvalStatus: 'PENDING_APPROVAL' }),
   ]);
-  return sendSuccess(res, { ...status, pendingApprovals }, 'AI status retrieved');
+  return sendSuccess(res, { ...status, pendingApprovals: pendingDrafts + pendingManual }, 'AI status retrieved');
 });
 
 export const getConversations = asyncHandler(async (req, res) => {
@@ -114,6 +117,7 @@ export const aiChat = asyncHandler(async (req, res) => {
     );
   }
 
+  const startedAt = Date.now();
   const [ollamaStatus, context] = await Promise.all([
     checkOllamaStatus(),
     retrieveRelevantContext({ message, user: req.user, conversation }),
@@ -136,20 +140,38 @@ export const aiChat = asyncHandler(async (req, res) => {
       actor: req.user,
     });
 
+    const isAutoApproved = Boolean(draft.approvedTicketId);
     const userMsg = { role: 'user', content: message };
     const assistantMsg = {
       role: 'assistant',
-      content: draft.clientId
-        ? `Prepared ticket draft ${draft.draftId} for ${draft.clientId.companyName}: "${draft.generatedFields.title}" (${draft.generatedFields.priority} · ${draft.generatedFields.category}) with ${draft.suggestedTasks.length} suggested task(s). Sent to Pending TL Approval.`
-        : `Prepared ticket draft ${draft.draftId}: "${draft.generatedFields.title}". Client was not verified automatically—open the draft to select the client before TL approval.`,
+      content: isAutoApproved
+        ? `Created & auto-approved ticket ${draft.approvedTicketRef} for ${draft.clientId?.companyName || 'client'}: "${draft.generatedFields.title}" (published unassigned to main queue).`
+        : draft.clientId
+          ? `Prepared ticket draft ${draft.draftId} for ${draft.clientId.companyName}: "${draft.generatedFields.title}" (${draft.generatedFields.priority} · ${draft.generatedFields.category}) with ${draft.suggestedTasks.length} suggested task(s). Sent to Pending TL Approval.`
+          : `Prepared ticket draft ${draft.draftId}: "${draft.generatedFields.title}". Client was not verified automatically—open the draft to select the client before TL approval.`,
       intent: 'CREATE_TICKET_DRAFT',
       draftId: draft._id,
-      statusType: draft.clientId ? 'draft' : 'warning',
-      action: { type: 'OPEN_DRAFT', draftId: String(draft._id), route: `/approvals?draft=${draft._id}` },
+      statusType: isAutoApproved ? 'success' : draft.clientId ? 'draft' : 'warning',
+      action: isAutoApproved
+        ? { type: 'NAVIGATE', route: `/tickets/${draft.approvedTicketId}` }
+        : { type: 'OPEN_DRAFT', draftId: String(draft._id), route: `/approvals?draft=${draft._id}` },
     };
 
     conversation.messages.push(userMsg, assistantMsg);
     await conversation.save();
+
+    await recordAIActivity({
+      userId: req.user._id,
+      conversationId: conversation._id,
+      detectedIntent: 'CREATE_TICKET_DRAFT',
+      executedAction: isAutoApproved ? 'AUTO_APPROVED_TICKET' : 'CREATED_TICKET_DRAFT',
+      executionResult: isAutoApproved ? 'success' : 'pending_approval',
+      ticketDraftId: draft._id,
+      ticketId: draft.approvedTicketId || null,
+      ollamaStatus: ollamaStatus.available ? 'online' : 'offline',
+      modelName: ollamaStatus.model,
+      processingDurationMs: Date.now() - startedAt,
+    });
 
     return sendSuccess(res, {
       conversationId: conversation._id,
@@ -164,6 +186,18 @@ export const aiChat = asyncHandler(async (req, res) => {
     message,
     user: req.user,
     conversation,
+    effectivePermissions: req.effectivePermissions,
+  });
+
+  await recordAIActivity({
+    userId: req.user._id,
+    conversationId: conversation._id,
+    detectedIntent: parsed.intent,
+    executedAction: executed.action?.type || parsed.intent,
+    executionResult: executed.statusType === 'warning' ? 'denied' : 'success',
+    ollamaStatus: ollamaStatus.available ? 'online' : 'offline',
+    modelName: ollamaStatus.model,
+    processingDurationMs: Date.now() - startedAt,
   });
 
   if (executed.contextUpdates) {
@@ -196,11 +230,12 @@ export const aiChat = asyncHandler(async (req, res) => {
 
 export const smartIntakeCreateDraft = asyncHandler(async (req, res) => {
   const files = req.files || [];
-  const { sourceText = '', sourceType = 'text', clientId = '' } = req.body;
+  const { sourceText = '', userView = '', sourceType = 'text', clientId = '' } = req.body;
 
   const draft = await generateTicketDraftService({
     sourceType,
     sourceText,
+    userView,
     clientIdOverride: clientId || null,
     files,
     actor: req.user,
@@ -325,6 +360,7 @@ export const approveDraft = asyncHandler(async (req, res) => {
     selectedTaskIds,
     comments,
     actor: req.user,
+    effectivePermissions: req.effectivePermissions,
   });
   return sendSuccess(res, result, `Draft approved and published as ${result.ticket.ticketId}`);
 });

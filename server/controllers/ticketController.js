@@ -5,6 +5,8 @@ import Attachment from '../models/Attachment.js';
 import ActivityLog from '../models/ActivityLog.js';
 import TimeLog from '../models/TimeLog.js';
 import Deployment from '../models/Deployment.js';
+import ApprovalHistory from '../models/ApprovalHistory.js';
+import DevelopmentActivity from '../models/DevelopmentActivity.js';
 import { ROLES } from '../config/constants.js';
 import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
@@ -16,6 +18,9 @@ import {
   reorderTicketService,
   duplicateTicketService,
   bulkTicketActionService,
+  approvePendingTicketService,
+  rejectPendingTicketService,
+  requestPendingTicketChangesService,
 } from '../services/ticketService.js';
 import { emitBroadcast } from '../services/notificationService.js';
 import { recordActivity } from '../services/activityService.js';
@@ -30,6 +35,8 @@ export const getTickets = asyncHandler(async (req, res) => {
     status,
     category,
     project,
+    assignment,
+    highPriority,
     startDate,
     endDate,
     overdueOnly,
@@ -37,7 +44,8 @@ export const getTickets = asyncHandler(async (req, res) => {
     sortOrder = 'desc',
   } = req.query;
 
-  const filter = { isDeleted: false };
+  // Main operational ticket queue contains ONLY approved tickets
+  const filter = { isDeleted: false, approvalStatus: 'APPROVED' };
 
   // Developers can view their assigned/created tickets, or filter specifically when requested
   if (req.user.role === ROLES.DEVELOPER && req.query.scope !== 'all') {
@@ -46,7 +54,10 @@ export const getTickets = asyncHandler(async (req, res) => {
 
   if (client) filter.client = client;
   if (developer) filter.assignedDevelopers = developer;
+  if (assignment === 'unassigned') filter.assignedDevelopers = { $size: 0 };
+  if (assignment === 'assigned') filter['assignedDevelopers.0'] = { $exists: true };
   if (priority) filter.priority = priority;
+  else if (highPriority === 'true') filter.priority = { $in: ['Critical', 'High'] };
   if (status) filter.status = status;
   if (category) filter.category = category;
   if (project) filter.project = project;
@@ -139,8 +150,57 @@ export const createTicket = asyncHandler(async (req, res) => {
   const populated = await Ticket.findById(ticket._id)
     .populate('client', 'clientId companyName clientFolderCode')
     .populate('assignedDevelopers', 'fullName designation avatarColor')
-    .populate('assignedTeamLead', 'fullName');
-  return sendSuccess(res, populated, 'Ticket created successfully', 201);
+    .populate('assignedTeamLead', 'fullName')
+    .populate('approvedBy', 'fullName role');
+  const msg =
+    populated.approvalStatus === 'APPROVED'
+      ? `Ticket ${populated.ticketId} created & auto-approved into main queue`
+      : `Ticket ${populated.ticketId} submitted for Team Lead approval`;
+  return sendSuccess(res, populated, msg, 201);
+});
+
+export const getPendingApprovalTickets = asyncHandler(async (req, res) => {
+  const { status = 'PENDING_APPROVAL' } = req.query;
+  const filter = { isDeleted: false };
+  if (status !== 'All') filter.approvalStatus = status;
+  else filter.approvalStatus = { $in: ['PENDING_APPROVAL', 'CHANGES_REQUESTED', 'REJECTED', 'APPROVED'] };
+
+  if (req.user.role === ROLES.DEVELOPER) {
+    filter.createdBy = req.user._id;
+  }
+
+  const tickets = await Ticket.find(filter)
+    .populate('client', 'clientId companyName clientFolderCode')
+    .populate('createdBy', 'fullName email role designation avatarColor')
+    .populate('approvedBy', 'fullName role')
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return sendSuccess(res, tickets, 'Pending approval tickets retrieved');
+});
+
+export const approveTicket = asyncHandler(async (req, res) => {
+  const ticket = await approvePendingTicketService(req.params.id, req.body || {}, req.user);
+  return sendSuccess(res, ticket, `Approved and published as ${ticket.ticketId}`);
+});
+
+export const rejectTicket = asyncHandler(async (req, res) => {
+  const ticket = await rejectPendingTicketService(req.params.id, req.body || {}, req.user);
+  return sendSuccess(res, ticket, `Ticket ${ticket.ticketId} rejected`);
+});
+
+export const requestTicketChanges = asyncHandler(async (req, res) => {
+  const ticket = await requestPendingTicketChangesService(req.params.id, req.body || {}, req.user);
+  return sendSuccess(res, ticket, `Changes requested for ${ticket.ticketId}`);
+});
+
+export const getTicketApprovalHistory = asyncHandler(async (req, res) => {
+  const history = await ApprovalHistory.find({ ticketId: req.params.id })
+    .populate('performedBy', 'fullName email role')
+    .populate('creatorId', 'fullName email role')
+    .sort({ timestamp: -1 })
+    .lean();
+  return sendSuccess(res, history, 'Ticket approval history retrieved');
 });
 
 export const getTicketById = asyncHandler(async (req, res) => {
@@ -156,7 +216,7 @@ export const getTicketById = asyncHandler(async (req, res) => {
 
   if (!ticket) throw new AppError('Ticket not found.', 404);
 
-  const [tasks, comments, attachments, activityLogs, timeLogs, deployments] = await Promise.all([
+  const [tasks, comments, attachments, activityLogs, timeLogs, deployments, devActivities, approvalHistory] = await Promise.all([
     Task.find({ ticket: ticket._id, isDeleted: false })
       .populate('assignedEmployees', 'fullName designation avatarColor')
       .sort({ createdAt: 1 })
@@ -185,6 +245,15 @@ export const getTicketById = asyncHandler(async (req, res) => {
       .populate('approvedBy', 'fullName')
       .sort({ createdAt: -1 })
       .lean(),
+    DevelopmentActivity.find({ ticketId: ticket._id })
+      .populate('employeeId', 'fullName designation avatarColor')
+      .populate('taskId', 'taskId title')
+      .sort({ timestamp: -1 })
+      .lean(),
+    ApprovalHistory.find({ ticketId: ticket._id })
+      .populate('performedBy', 'fullName role')
+      .sort({ timestamp: -1 })
+      .lean(),
   ]);
 
   const totalHoursLogged = timeLogs.reduce((acc, l) => acc + (l.hoursSpent || 0), 0);
@@ -204,6 +273,8 @@ export const getTicketById = asyncHandler(async (req, res) => {
       activityLogs,
       timeLogs,
       deployments,
+      devActivities,
+      approvalHistory,
     },
     'Ticket details fetched'
   );
@@ -268,7 +339,7 @@ export const updateTicketStatus = asyncHandler(async (req, res) => {
 });
 
 export const assignTicket = asyncHandler(async (req, res) => {
-  const ticket = await assignTicketService(req.params.id, req.validatedBody, req.user);
+  const ticket = await assignTicketService(req.params.id, req.validatedBody, req.user, req.effectivePermissions);
   const populated = await Ticket.findById(ticket._id)
     .populate('assignedDevelopers', 'fullName designation avatarColor')
     .populate('assignedTeamLead', 'fullName');

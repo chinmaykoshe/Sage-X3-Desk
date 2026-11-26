@@ -27,12 +27,14 @@ export default function SmartIntakePage() {
 
   const [sourceType, setSourceType] = useState('screenshot');
   const [sourceText, setSourceText] = useState('');
+  const [userView, setUserView] = useState('');
   const [selectedClientOverride, setSelectedClientOverride] = useState('');
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [processing, setProcessing] = useState(false);
 
   const [draft, setDraft] = useState(null);
+  const [descriptionLength, setDescriptionLength] = useState('medium');
   const [editClientId, setEditClientId] = useState('');
   const [editFields, setEditFields] = useState(null);
   const [editTasks, setEditTasks] = useState([]);
@@ -60,8 +62,8 @@ export default function SmartIntakePage() {
 
   const handleAnalyze = async (e) => {
     e.preventDefault();
-    if (!sourceText.trim() && files.length === 0) {
-      addToast('Upload a screenshot or enter an issue description/email first.', 'error');
+    if (!sourceText.trim() && !userView.trim() && files.length === 0) {
+      addToast('Upload a screenshot or enter an issue description / user view first.', 'error');
       return;
     }
     setProcessing(true);
@@ -69,17 +71,28 @@ export default function SmartIntakePage() {
       const fd = new FormData();
       fd.append('sourceType', files.length > 0 ? 'screenshot' : sourceType);
       fd.append('sourceText', sourceText);
+      if (userView.trim()) fd.append('userView', userView.trim());
       if (selectedClientOverride) fd.append('clientId', selectedClientOverride);
       files.forEach((f) => fd.append('files', f));
 
       const { data } = await api.post('/ai/intake', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 600000, // Allow up to 10 min for local OCR + Ollama inference
       });
 
       const d = data.data;
+      const fields = { ...(d.generatedFields || {}) };
+      const lengthMap = {
+        short: fields.shortDescription,
+        medium: fields.mediumDescription,
+        long: fields.longDescription,
+      };
+      if (lengthMap[descriptionLength]) {
+        fields.description = lengthMap[descriptionLength];
+      }
       setDraft(d);
       setEditClientId(d.clientId?._id || '');
-      setEditFields(d.generatedFields || {});
+      setEditFields(fields);
       setEditTasks(d.suggestedTasks || []);
       addToast(`Draft ${d.draftId} generated`);
     } catch (err) {
@@ -219,9 +232,47 @@ export default function SmartIntakePage() {
                   rows={4}
                   value={sourceText}
                   onChange={(e) => setSourceText(e.target.value)}
-                  placeholder="e.g. ABC Manufacturing – Bank statement import issue in HTPILOT. Transactions are missing from the imported statement."
+                  placeholder="Paste email thread or raw issue details here..."
                   className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
                 />
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1">
+                  User&apos;s View / Actual Job <span className="text-[10px] font-normal text-[#777777]">(used by AI with image + issue desc)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={userView}
+                  onChange={(e) => setUserView(e.target.value)}
+                  placeholder="Describe in your own words what the actual job is, what needs to be done, or what the screenshot/email is about..."
+                  className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium mb-1">Description Output Length</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'short', label: 'Short', hint: '1–2 lines' },
+                    { id: 'medium', label: 'Medium', hint: '1 paragraph' },
+                    { id: 'long', label: 'Long', hint: 'Detailed' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setDescriptionLength(opt.id)}
+                      className={`rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                        descriptionLength === opt.id
+                          ? 'border-[#171717] bg-[#C6F36B] text-[#171717]'
+                          : 'border-[#E8E8E5] bg-white text-[#555555] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-slate-300'
+                      }`}
+                    >
+                      <div className="text-xs font-semibold">{opt.label}</div>
+                      <div className="text-[10px] opacity-75">{opt.hint}</div>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <Button type="submit" disabled={processing} className="w-full">
@@ -382,9 +433,39 @@ export default function SmartIntakePage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block font-medium mb-1">Structured Description</label>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <label className="block font-medium">Structured Description</label>
+                    <div className="inline-flex rounded-lg border border-[#E8E8E5] dark:border-[#2C2E33] p-0.5 bg-[#F4F4F2]/70 dark:bg-[#141518]">
+                      {[
+                        { id: 'short', label: 'Short', key: 'shortDescription' },
+                        { id: 'medium', label: 'Medium', key: 'mediumDescription' },
+                        { id: 'long', label: 'Long', key: 'longDescription' },
+                      ].map((opt) => {
+                        const variantText = editFields[opt.key];
+                        const isActive =
+                          variantText && editFields.description === variantText;
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            disabled={!variantText}
+                            onClick={() =>
+                              setEditFields({ ...editFields, description: variantText })
+                            }
+                            className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                              isActive
+                                ? 'bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717]'
+                                : 'text-[#555555] hover:text-[#171717] dark:text-slate-300 disabled:opacity-40'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <textarea
-                    rows={3}
+                    rows={4}
                     value={editFields.description || ''}
                     onChange={(e) => setEditFields({ ...editFields, description: e.target.value })}
                     className="w-full rounded-lg border border-[#E8E8E5] px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"

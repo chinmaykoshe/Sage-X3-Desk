@@ -1,6 +1,6 @@
 const OLLAMA_BASE_URL = () => process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
 const OLLAMA_MODEL = () => process.env.OLLAMA_MODEL || 'qwen2.5-coder:1.5b';
-const OLLAMA_TIMEOUT_MS = () => Number(process.env.OLLAMA_TIMEOUT_MS) || 45000;
+const OLLAMA_TIMEOUT_MS = () => Number(process.env.OLLAMA_TIMEOUT_MS) || 180000;
 
 /**
  * Checks whether local Ollama is reachable and the configured model is installed.

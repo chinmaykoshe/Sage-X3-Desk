@@ -101,6 +101,7 @@ export default function FloatingX3AI() {
 
       const { data } = await api.post('/ai/chat', fd, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 600000, // Allow up to 10 min for local OCR + Ollama inference
       });
 
       const payload = data.data;
@@ -315,8 +316,8 @@ export default function FloatingX3AI() {
                 </div>
               </div>
             ) : (
-              messages.map((msg) => (
-                <div key={msg._id} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              messages.map((msg, idx) => (
+                <div key={msg._id || `${msg.role}-${idx}`} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div className={`max-w-[88%] rounded-xl px-3 py-2 whitespace-pre-line leading-relaxed ${getMsgStyle(msg)}`}>
                     <div className="flex items-start gap-2">
                       {msg.role === 'assistant' && getMsgIcon(msg.statusType)}

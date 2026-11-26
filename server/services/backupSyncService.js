@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import AppError from '../utils/AppError.js';
 import { isMongoConnected } from '../config/db.js';
 import Ticket from '../models/Ticket.js';
@@ -148,10 +149,24 @@ export async function saveSupabaseSnapshot(snapshot) {
     throw new AppError('Supabase dual-backup sync is not available for now. Please try again after a while.', 503);
   }
 
-  const jsonBody = JSON.stringify(snapshot);
-  const byteSize = Buffer.byteLength(jsonBody, 'utf8');
-  if (byteSize > SUPABASE_STORAGE_LIMIT_BYTES) {
-    throw new AppError('Snapshot size exceeds 40 MB Supabase storage cap.', 413);
+  const imagesBytes = await getBucketBytes(url, key, 'images');
+  let jsonBody = JSON.stringify(snapshot);
+  let byteSize = Buffer.byteLength(jsonBody, 'utf8');
+
+  // If total Supabase usage (images + snapshot) would exceed 40 MB, trim non-critical logs first
+  if (imagesBytes + byteSize > SUPABASE_STORAGE_LIMIT_BYTES && snapshot?.collections) {
+    snapshot.collections.activityLogs = (snapshot.collections.activityLogs || []).slice(0, 25);
+    snapshot.collections.notifications = (snapshot.collections.notifications || []).slice(0, 25);
+    jsonBody = JSON.stringify(snapshot);
+    byteSize = Buffer.byteLength(jsonBody, 'utf8');
+  }
+
+  if (imagesBytes + byteSize > SUPABASE_STORAGE_LIMIT_BYTES) {
+    const totalMb = ((imagesBytes + byteSize) / (1024 * 1024)).toFixed(2);
+    throw new AppError(
+      `Storage limit exceeded: Supabase storage cannot exceed 40 MB (images + snapshot = ${totalMb} MB).`,
+      413
+    );
   }
 
   await ensureSyncBucket(url, key, SYNC_BUCKET, false);
@@ -227,9 +242,86 @@ export async function uploadFileToSupabase(fileBuffer, fileName, mimeType = 'app
   };
 }
 
+const SYNC_COLLECTIONS = [
+  { key: 'users', model: User, uniqueField: 'email' },
+  { key: 'clients', model: Client, uniqueField: 'clientId' },
+  { key: 'tickets', model: Ticket, uniqueField: 'ticketId' },
+  { key: 'ticketDrafts', model: TicketDraft, uniqueField: 'draftId' },
+  { key: 'tasks', model: Task, uniqueField: 'taskId' },
+  { key: 'projects', model: Project, uniqueField: 'projectId' },
+  { key: 'deployments', model: Deployment, uniqueField: 'deploymentId' },
+  { key: 'comments', model: Comment },
+  { key: 'attachments', model: Attachment },
+  { key: 'timeLogs', model: TimeLog },
+  { key: 'knowledgeBase', model: KnowledgeBase },
+  { key: 'aiActionRequests', model: AIActionRequest },
+  { key: 'savedViews', model: SavedView },
+  { key: 'teams', model: Team },
+  { key: 'settings', model: Settings, uniqueField: 'key' },
+  { key: 'notifications', model: Notification },
+  { key: 'activityLogs', model: ActivityLog },
+];
+
+/**
+ * Pulls any missing or newer records from Supabase cloud snapshot into local MongoDB
+ * so cloud-created tickets/drafts are preserved before pushing the unified snapshot.
+ */
+export async function mergeSupabaseToMongo() {
+  const { configured } = resolveSupabaseCreds();
+  if (!configured || !isMongoConnected()) return { pulled: 0, updated: 0 };
+
+  const cloudSnap = await loadSupabaseSnapshot(true);
+  const cols = cloudSnap?.collections;
+  if (!cols || typeof cols !== 'object') return { pulled: 0, updated: 0 };
+
+  let pulled = 0;
+  let updated = 0;
+
+  for (const { key, model, uniqueField } of SYNC_COLLECTIONS) {
+    const cloudDocs = Array.isArray(cols[key]) ? cols[key] : [];
+    for (const rawDoc of cloudDocs) {
+      if (!rawDoc || !rawDoc._id || !mongoose.Types.ObjectId.isValid(String(rawDoc._id))) continue;
+
+      const oid = new mongoose.Types.ObjectId(String(rawDoc._id));
+      const { _id, __v, ...rest } = rawDoc;
+      const query = uniqueField && rawDoc[uniqueField]
+        ? { $or: [{ _id: oid }, { [uniqueField]: rawDoc[uniqueField] }] }
+        : { _id: oid };
+
+      const existing = await model.collection.findOne(query, { projection: { _id: 1, updatedAt: 1, createdAt: 1 } });
+      try {
+        if (!existing) {
+          await model.findOneAndUpdate(
+            { _id: oid },
+            { $setOnInsert: rest },
+            { upsert: true, setDefaultsOnInsert: true }
+          );
+          pulled += 1;
+        } else {
+          const cloudTs = new Date(rawDoc.updatedAt || rawDoc.createdAt || 0).getTime();
+          const localTs = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+          if (cloudTs > localTs + 1000) {
+            await model.findOneAndUpdate({ _id: existing._id }, { $set: rest });
+            updated += 1;
+          }
+        }
+      } catch (docErr) {
+        console.warn(`Sync merge skipped ${key} (${rawDoc._id}):`, docErr.message);
+      }
+    }
+  }
+
+  return { pulled, updated };
+}
+
 export async function syncMongoToSupabase() {
   const { url, key, configured } = resolveSupabaseCreds();
   if (!configured || !isMongoConnected()) return null;
+
+  const mergeStats = await mergeSupabaseToMongo().catch((err) => {
+    console.warn('Cloud->Local merge warning:', err.message);
+    return { pulled: 0, updated: 0 };
+  });
 
   const [
     users,
@@ -293,15 +385,18 @@ export async function syncMongoToSupabase() {
     },
   };
 
-  await saveSupabaseSnapshot(snapshot);
+  const saved = await saveSupabaseSnapshot(snapshot);
   return {
     syncedAt: snapshot.syncedAt,
     supabaseUrl: url,
+    snapshotBytes: saved.byteSize,
+    mergeStats,
     snapshot: {
       usersCount: users.length,
       clientsCount: clients.length,
       ticketsCount: tickets.length,
       tasksCount: tasks.length,
+      ticketDraftsCount: ticketDrafts.length,
     },
   };
 }
@@ -344,8 +439,9 @@ export async function triggerDualBackupSync() {
         mongoConnected: true,
         status: 'completed',
         storage,
+        mergeStats: synced.mergeStats,
         snapshot: synced.snapshot,
-        message: `Synced MongoDB → Supabase (${url}) — ${synced.snapshot.clientsCount} clients, ${synced.snapshot.ticketsCount} tickets, ${synced.snapshot.tasksCount} tasks.`,
+        message: `Synced MongoDB ↔ Supabase (${url}) — ${synced.snapshot.clientsCount} clients, ${synced.snapshot.ticketsCount} tickets, ${synced.snapshot.ticketDraftsCount} drafts, ${synced.snapshot.tasksCount} tasks (${storage.usedMb} / ${storage.limitMb} MB used).`,
       };
     }
 

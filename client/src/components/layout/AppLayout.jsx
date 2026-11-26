@@ -29,6 +29,12 @@ import {
   Gauge,
   Sparkles,
   ShieldCheck,
+  Activity,
+  Wrench,
+  AlertTriangle,
+  ShieldAlert,
+  Clock,
+  BrainCircuit,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -50,42 +56,56 @@ const SIDEBAR_GROUPS = [
   {
     label: 'WORKSPACE',
     items: [
-      { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
-      { to: '/my-tasks', label: 'My Work', icon: CheckSquare },
-      { to: '/notifications', label: 'Inbox', icon: Inbox, badge: true },
-      { to: '/smart-intake', label: 'Smart Intake (AI)', icon: Sparkles },
-      { to: '/approvals', label: 'TL Approvals', icon: ShieldCheck },
-      { to: '/tickets', label: 'All Tickets', icon: Ticket },
-      { to: '/task-board', label: 'Task Board', icon: Kanban },
-      { to: '/calendar', label: 'Calendar', icon: CalendarDays },
+      { to: '/', label: 'Overview', icon: LayoutDashboard, end: true, screenKey: 'dashboard' },
+      { to: '/my-tasks', label: 'My Work', icon: CheckSquare, screenKey: 'my_tasks' },
+      { to: '/notifications', label: 'Inbox', icon: Inbox, badge: true, screenKey: 'inbox' },
+      { to: '/smart-intake', label: 'Smart Intake (AI)', icon: Sparkles, screenKey: 'smart_intake' },
+      { to: '/approvals', label: 'TL Approvals', icon: ShieldCheck, screenKey: 'approval_inbox' },
+      { to: '/tickets', label: 'All Tickets', icon: Ticket, screenKey: 'tickets' },
+      { to: '/task-board', label: 'Task Board', icon: Kanban, screenKey: 'task_board' },
+      { to: '/calendar', label: 'Calendar', icon: CalendarDays, screenKey: 'calendar' },
     ],
   },
   {
     label: 'MANAGEMENT',
     items: [
-      { to: '/clients', label: 'Clients', icon: Building2 },
-      { to: '/projects', label: 'Projects', icon: FolderKanban },
-      { to: '/team', label: 'Team Members', icon: Users },
-      { to: '/workload', label: 'Workload', icon: Gauge },
-      { to: '/deployments', label: 'Deployments', icon: Rocket },
+      { to: '/clients', label: 'Clients', icon: Building2, screenKey: 'clients' },
+      { to: '/projects', label: 'Projects', icon: FolderKanban, screenKey: 'projects' },
+      { to: '/team', label: 'Team Members', icon: Users, screenKey: 'team' },
+      { to: '/workload', label: 'Workload', icon: Gauge, screenKey: 'workload' },
+      { to: '/deployments', label: 'Deployments', icon: Rocket, screenKey: 'deployments' },
     ],
   },
   {
     label: 'INSIGHTS',
     items: [
-      { to: '/reports', label: 'Reports', icon: BarChart3, roles: ['admin', 'team_lead'] },
-      { to: '/activity-logs', label: 'Activity', icon: History },
-      { to: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen },
+      { to: '/reports', label: 'Reports', icon: BarChart3, screenKey: 'reports' },
+      { to: '/activity-logs', label: 'Activity', icon: History, screenKey: 'activity_logs' },
+      { to: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen, screenKey: 'knowledge_base' },
+    ],
+  },
+  {
+    label: 'ADMINISTRATION',
+    items: [
+      { to: '/admin/overview', label: 'System Overview', icon: Activity, screenKey: 'admin_overview' },
+      { to: '/admin/user-activity', label: 'User Activity', icon: Users, screenKey: 'admin_user_activity' },
+      { to: '/admin/dev-logs', label: 'Development Logs', icon: Wrench, screenKey: 'admin_dev_logs' },
+      { to: '/admin/system-logs', label: 'System Logs', icon: AlertTriangle, screenKey: 'admin_system_logs' },
+      { to: '/admin/api-monitoring', label: 'API Monitoring', icon: Gauge, screenKey: 'admin_api_monitoring' },
+      { to: '/admin/deployments', label: 'Deployment History', icon: Rocket, screenKey: 'admin_deployment_history' },
+      { to: '/admin/time-tracking', label: 'Time Tracking', icon: Clock, screenKey: 'admin_time_tracking' },
+      { to: '/admin/ai-activity', label: 'AI Activity', icon: BrainCircuit, screenKey: 'admin_ai_activity' },
+      { to: '/admin/audit-logs', label: 'Security & Audit', icon: ShieldAlert, screenKey: 'admin_audit_logs' },
     ],
   },
   {
     label: 'SYSTEM',
-    items: [{ to: '/settings', label: 'Settings', icon: Settings, roles: ['admin'] }],
+    items: [{ to: '/settings', label: 'Settings & Access', icon: Settings, screenKey: 'settings' }],
   },
 ];
 
 export default function AppLayout() {
-  const { user, logout, unreadCount } = useAuth();
+  const { user, logout, unreadCount, hasScreen } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const {
     openQuickTicket,
@@ -235,7 +255,7 @@ export default function AppLayout() {
       <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-5">
         {SIDEBAR_GROUPS.map((group) => {
           const visibleItems = group.items.filter(
-            (item) => !item.roles || (user && item.roles.includes(user.role))
+            (item) => (!item.screenKey || hasScreen(item.screenKey)) && (!item.roles || (user && item.roles.includes(user.role)))
           );
           if (visibleItems.length === 0) return null;
 

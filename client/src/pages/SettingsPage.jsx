@@ -5,9 +5,11 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loader from '../components/ui/Loader';
+import AccessControlPanel from '../components/settings/AccessControlPanel';
 
 export default function SettingsPage() {
   const { addToast } = useToast();
+  const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState(null);
   const [teams, setTeams] = useState([]);
   const [backupStatus, setBackupStatus] = useState(null);
@@ -51,9 +53,38 @@ export default function SettingsPage() {
   if (loading || !settings) return <Loader label="Loading settings..." />;
 
   return (
-    <div className="space-y-5 max-w-4xl">
-      <PageHeader title="Application Settings" subtitle="Configure SLA defaults, deployment guardrails, and operational policies" />
+    <div className="space-y-5 max-w-6xl">
+      <PageHeader title="Application Settings & Access Control" subtitle="Configure SLA defaults, Supabase sync, and dynamic user screen & action permissions" />
 
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setActiveTab('general')}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            activeTab === 'general'
+              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+          }`}
+        >
+          General &amp; Supabase Sync
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('access')}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            activeTab === 'access'
+              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+          }`}
+        >
+          User &amp; Access Management — Screen Permissions
+        </button>
+      </div>
+
+      {activeTab === 'access' ? (
+        <AccessControlPanel />
+      ) : (
+        <div className="space-y-5 max-w-4xl">
       <form onSubmit={handleSave} className="space-y-5">
         <Card>
           <h3 className="text-sm font-semibold mb-3">Organization & Governance</h3>
@@ -151,6 +182,8 @@ export default function SettingsPage() {
           ))}
         </div>
       </Card>
+        </div>
+      )}
     </div>
   );
 }

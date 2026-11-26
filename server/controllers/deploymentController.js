@@ -6,6 +6,7 @@ import {
   createDeploymentService,
   updateDeploymentStatusService,
 } from '../services/deploymentService.js';
+import { recordAudit } from '../services/auditService.js';
 
 export const getDeployments = asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
@@ -45,6 +46,15 @@ export const getDeployments = asyncHandler(async (req, res) => {
 
 export const createDeployment = asyncHandler(async (req, res) => {
   const deployment = await createDeploymentService(req.validatedBody, req.user);
+  await recordAudit({
+    actorId: req.user._id,
+    action: deployment.environment === 'Production' ? 'PRODUCTION_DEPLOYMENT_CREATED' : 'DEPLOYMENT_CREATED',
+    recordType: 'Deployment',
+    recordId: deployment._id,
+    recordRef: deployment.deploymentId,
+    newValue: { environment: deployment.environment, versionReference: deployment.versionReference },
+    module: 'deployments',
+  });
   const populated = await Deployment.findById(deployment._id)
     .populate('client', 'clientId companyName clientFolderCode')
     .populate('ticket', 'ticketId title')
@@ -55,6 +65,15 @@ export const createDeployment = asyncHandler(async (req, res) => {
 
 export const updateDeploymentStatus = asyncHandler(async (req, res) => {
   const deployment = await updateDeploymentStatusService(req.params.id, req.validatedBody, req.user);
+  await recordAudit({
+    actorId: req.user._id,
+    action: req.validatedBody?.approvalStatus === 'Approved' ? 'DEPLOYMENT_APPROVED' : 'DEPLOYMENT_UPDATED',
+    recordType: 'Deployment',
+    recordId: deployment._id,
+    recordRef: deployment.deploymentId,
+    newValue: { approvalStatus: deployment.approvalStatus, workflowStage: deployment.workflowStage },
+    module: 'deployments',
+  });
   const populated = await Deployment.findById(deployment._id)
     .populate('client', 'clientId companyName clientFolderCode')
     .populate('ticket', 'ticketId title')

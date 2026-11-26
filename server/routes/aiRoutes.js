@@ -16,7 +16,7 @@ import {
   approveActionRequest,
   rejectActionRequest,
 } from '../controllers/aiController.js';
-import { protect, authorizeRoles } from '../middleware/auth.js';
+import { protect, authorizeRoles, requireActionPermission } from '../middleware/auth.js';
 import { upload, enforceStorageLimit } from '../middleware/upload.js';
 import { ROLES } from '../config/constants.js';
 
@@ -32,9 +32,9 @@ router.post('/intake', enforceStorageLimit, upload.array('files', 5), smartIntak
 
 router.get('/drafts', getDrafts);
 router.route('/drafts/:id').get(getDraftById).put(updateDraft);
-router.post('/drafts/:id/approve', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), approveDraft);
-router.post('/drafts/:id/reject', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), rejectDraft);
-router.post('/drafts/:id/request-changes', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), requestDraftChanges);
+router.post('/drafts/:id/approve', requireActionPermission('approval_inbox', 'approve'), approveDraft);
+router.post('/drafts/:id/reject', requireActionPermission('approval_inbox', 'reject'), rejectDraft);
+router.post('/drafts/:id/request-changes', requireActionPermission('approval_inbox', 'request_changes'), requestDraftChanges);
 
 router.get('/action-requests', getActionRequests);
 router.post('/action-requests/:id/approve', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), approveActionRequest);

@@ -6,11 +6,30 @@ import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess } from '../utils/response.js';
 import { signToken } from '../middleware/auth.js';
 import { recordActivity } from '../services/activityService.js';
+import { getEffectivePermissions } from '../services/rbacService.js';
+import { recordAudit, recordSystemLog } from '../services/auditService.js';
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.validatedBody;
   const user = await User.findOne({ email: email.toLowerCase(), isDeleted: false }).select('+password');
   if (!user || !(await user.comparePassword(password))) {
+    await recordSystemLog({
+      severity: 'security',
+      category: 'auth_failure',
+      endpoint: '/api/auth/login',
+      method: 'POST',
+      httpStatus: 401,
+      module: 'auth',
+      message: `Failed login attempt for ${email.toLowerCase()}`,
+    });
+    await recordAudit({
+      actorId: user?._id || null,
+      action: 'LOGIN_FAILED',
+      recordType: 'User',
+      recordRef: email.toLowerCase(),
+      module: 'auth',
+      result: 'FAILED',
+    });
     throw new AppError('Invalid email or password.', 401);
   }
   if (user.status === 'Inactive') {
@@ -19,6 +38,17 @@ export const login = asyncHandler(async (req, res) => {
 
   const token = signToken(user._id);
   const safeUser = user.toJSON();
+  safeUser.effectivePermissions = await getEffectivePermissions(user);
+
+  await recordAudit({
+    actorId: user._id,
+    action: 'USER_LOGIN',
+    recordType: 'User',
+    recordId: user._id,
+    recordRef: user.employeeId || user.email,
+    module: 'auth',
+    result: 'SUCCESS',
+  });
 
   return sendSuccess(res, { token, user: safeUser }, 'Logged in successfully');
 });
@@ -56,7 +86,9 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 export const getMe = asyncHandler(async (req, res) => {
-  return sendSuccess(res, req.user, 'Current user fetched');
+  const safeUser = req.user.toJSON ? req.user.toJSON() : { ...req.user };
+  safeUser.effectivePermissions = req.effectivePermissions || (await getEffectivePermissions(req.user));
+  return sendSuccess(res, safeUser, 'Current user fetched');
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {

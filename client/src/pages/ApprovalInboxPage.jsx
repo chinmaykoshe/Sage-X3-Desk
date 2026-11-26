@@ -798,10 +798,39 @@ export default function ApprovalInboxPage() {
                   </div>
 
                   <div>
-                    <label className="font-medium text-[#777777]">Description</label>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                      <label className="font-medium text-[#777777]">Description</label>
+                      {(editFields.shortDescription || editFields.mediumDescription || editFields.longDescription) && (
+                        <div className="inline-flex rounded-lg border border-[#E8E8E5] dark:border-[#2C2E33] p-0.5 bg-[#F4F4F2]/70 dark:bg-[#141518]">
+                          {[
+                            { id: 'short', label: 'Short', key: 'shortDescription' },
+                            { id: 'medium', label: 'Medium', key: 'mediumDescription' },
+                            { id: 'long', label: 'Long', key: 'longDescription' },
+                          ].map((opt) => {
+                            const variantText = editFields[opt.key];
+                            const isActive = variantText && editFields.description === variantText;
+                            return (
+                              <button
+                                key={opt.id}
+                                type="button"
+                                disabled={!variantText}
+                                onClick={() => setEditFields({ ...editFields, description: variantText })}
+                                className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                                  isActive
+                                    ? 'bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717]'
+                                    : 'text-[#555555] hover:text-[#171717] dark:text-slate-300 disabled:opacity-40'
+                                }`}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                     {editMode ? (
                       <textarea
-                        rows={3}
+                        rows={4}
                         value={editFields.description || ''}
                         onChange={(e) => setEditFields({ ...editFields, description: e.target.value })}
                         className="mt-1 w-full rounded border px-2 py-1.5 dark:bg-[#1E2025]"

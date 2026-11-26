@@ -33,7 +33,7 @@ export async function getDashboardReportService({ range, startDate, endDate, use
   const now = new Date();
   const dateFilter = buildDateRangeFilter(range, startDate, endDate);
 
-  const ticketScope = { isDeleted: false };
+  const ticketScope = { isDeleted: false, approvalStatus: 'APPROVED' };
   const taskScope = { isDeleted: false };
 
   // Role-adapted dashboard: developers see team totals or personal scope clearly highlighted

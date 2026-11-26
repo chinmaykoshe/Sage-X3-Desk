@@ -24,6 +24,13 @@ export const TICKET_CATEGORIES = [
   'Maintenance',
 ];
 
+export const APPROVAL_STATUSES = [
+  'PENDING_APPROVAL',
+  'APPROVED',
+  'REJECTED',
+  'CHANGES_REQUESTED',
+];
+
 export const PRIORITIES = ['Critical', 'High', 'Medium', 'Low'];
 export const SEVERITIES = ['Critical', 'Major', 'Minor', 'Trivial'];
 

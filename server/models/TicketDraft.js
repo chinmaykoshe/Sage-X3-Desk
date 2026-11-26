@@ -26,6 +26,7 @@ const ticketDraftSchema = new mongoose.Schema(
       default: 'text',
     },
     sourceText: { type: String, default: '' },
+    userView: { type: String, default: '' },
     submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Client', default: null, index: true },
     clientMatchConfidence: { type: Number, default: 0 },
@@ -41,6 +42,9 @@ const ticketDraftSchema = new mongoose.Schema(
     generatedFields: {
       title: { type: String, default: '' },
       description: { type: String, default: '' },
+      shortDescription: { type: String, default: '' },
+      mediumDescription: { type: String, default: '' },
+      longDescription: { type: String, default: '' },
       category: { type: String, enum: [...TICKET_CATEGORIES, ''], default: 'Support Request' },
       priority: { type: String, enum: PRIORITIES, default: 'Medium' },
       severity: { type: String, enum: SEVERITIES, default: 'Minor' },

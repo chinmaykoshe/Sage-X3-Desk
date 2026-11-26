@@ -3,6 +3,8 @@ import User from '../models/User.js';
 import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { ROLES } from '../config/constants.js';
+import { getEffectivePermissions, userHasAction, userHasScreen } from '../services/rbacService.js';
+import { recordAudit } from '../services/auditService.js';
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -32,19 +34,69 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 
   req.user = user;
+  req.effectivePermissions = await getEffectivePermissions(user);
   next();
 });
 
+export const authenticateUser = protect;
+
 export const authorizeRoles = (...allowedRoles) => (req, res, next) => {
   if (!req.user || !allowedRoles.includes(req.user.role)) {
+    recordAudit({
+      actorId: req.user?._id || null,
+      action: 'ACCESS_DENIED_ROLE',
+      recordType: 'Route',
+      recordRef: req.originalUrl,
+      module: 'security',
+      result: 'DENIED',
+      metadata: { requiredRoles: allowedRoles, userRole: req.user?.role },
+    });
     throw new AppError('You do not have permission to perform this action.', 403);
   }
   next();
 };
 
-/**
- * Checks either role membership or an explicit granular permission flag on the user.
- */
+export const requireRole = authorizeRoles;
+
+export const requireScreenAccess = (screenKey) => (req, res, next) => {
+  if (!req.user) {
+    throw new AppError('Authentication required.', 401);
+  }
+  if (req.user.role === ROLES.ADMIN) return next();
+  if (userHasScreen(req.effectivePermissions, screenKey)) return next();
+
+  recordAudit({
+    actorId: req.user._id,
+    action: 'ACCESS_DENIED_SCREEN',
+    recordType: 'Screen',
+    recordRef: screenKey,
+    module: 'rbac',
+    result: 'DENIED',
+    metadata: { endpoint: req.originalUrl },
+  });
+  throw new AppError(`Access denied for screen "${screenKey}".`, 403);
+};
+
+export const requireActionPermission = (screenKey, action, legacyPermKey = null) => (req, res, next) => {
+  if (!req.user) {
+    throw new AppError('Authentication required.', 401);
+  }
+  if (req.user.role === ROLES.ADMIN) return next();
+  if (userHasAction(req.effectivePermissions, screenKey, action)) return next();
+  if (legacyPermKey && req.user.permissions?.[legacyPermKey]) return next();
+
+  recordAudit({
+    actorId: req.user._id,
+    action: 'ACCESS_DENIED_ACTION',
+    recordType: screenKey,
+    recordRef: `${screenKey}:${action}`,
+    module: 'rbac',
+    result: 'DENIED',
+    metadata: { endpoint: req.originalUrl },
+  });
+  throw new AppError(`You do not have "${action}" permission on "${screenKey}".`, 403);
+};
+
 export const authorizePermission = (permissionKey, fallbackRoles = [ROLES.ADMIN, ROLES.TEAM_LEAD]) => (req, res, next) => {
   if (!req.user) {
     throw new AppError('Authentication required.', 401);

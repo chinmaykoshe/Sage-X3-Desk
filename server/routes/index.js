@@ -17,6 +17,8 @@ import settingsRoutes from './settingsRoutes.js';
 import searchRoutes from './searchRoutes.js';
 import savedViewRoutes from './savedViewRoutes.js';
 import aiRoutes from './aiRoutes.js';
+import rbacRoutes from './rbacRoutes.js';
+import monitoringRoutes from './monitoringRoutes.js';
 
 const router = Router();
 
@@ -42,5 +44,7 @@ router.use('/settings', settingsRoutes);
 router.use('/search', searchRoutes);
 router.use('/views', savedViewRoutes);
 router.use('/ai', aiRoutes);
+router.use('/rbac', rbacRoutes);
+router.use('/monitoring', monitoringRoutes);
 
 export default router;

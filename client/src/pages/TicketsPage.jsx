@@ -76,7 +76,10 @@ export default function TicketsPage() {
     search: searchParams.get('search') || '',
     client: '',
     developer: '',
+    assignment: '',
     priority: '',
+    highPriority: '',
+    overdueOnly: '',
     status: searchParams.get('status') || '',
     sortBy: 'sortOrder',
     sortOrder: 'asc',
@@ -427,6 +430,25 @@ export default function TicketsPage() {
               </option>
             ))}
           </select>
+
+          <select
+            value={filters.assignment}
+            onChange={(e) => setFilters((f) => ({ ...f, assignment: e.target.value, page: 1 }))}
+            className="rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+          >
+            <option value="">All Assignment</option>
+            <option value="unassigned">Unassigned Only</option>
+            <option value="assigned">Assigned Only</option>
+          </select>
+
+          <label className="inline-flex items-center gap-1 rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={filters.overdueOnly === 'true'}
+              onChange={(e) => setFilters((f) => ({ ...f, overdueOnly: e.target.checked ? 'true' : '', page: 1 }))}
+            />
+            <span>Overdue</span>
+          </label>
 
           {viewMode === 'board' && (
             <div className="relative flex items-center gap-1.5">

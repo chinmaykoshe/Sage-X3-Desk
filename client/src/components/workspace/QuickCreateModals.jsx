@@ -120,7 +120,11 @@ export default function QuickCreateModals() {
         await api.post('/attachments', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       }
 
-      addToast(`Created ${created.ticketId}`);
+      addToast(
+        created.approvalStatus === 'APPROVED'
+          ? `Created & auto-approved ${created.ticketId}`
+          : `Submitted ${created.ticketId} for TL approval`
+      );
       notifyLocalMutation('ticket');
       closeQuickTicket();
     } catch (err) {
@@ -326,14 +330,24 @@ export default function QuickCreateModals() {
               <textarea
                 rows={3}
                 {...ticketForm.register('description', { required: true, minLength: 5 })}
-                placeholder="Describe the Sage X3 error, 4GL script, or enhancement request..."
+                onPaste={(e) => {
+                  const items = Array.from(e.clipboardData?.items || []);
+                  const pastedImages = items
+                    .filter((it) => it.type.startsWith('image/'))
+                    .map((it) => it.getAsFile())
+                    .filter(Boolean);
+                  if (pastedImages.length > 0) {
+                    setFiles((prev) => [...prev, ...pastedImages]);
+                  }
+                }}
+                placeholder="Describe the Sage X3 error, 4GL script, or enhancement request... (paste screenshots here too)"
                 className="w-full rounded-lg border border-[#E8E8E5] px-3 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
               />
             </div>
 
             <div className="sm:col-span-2">
               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-dashed border-[#D8D8D3] px-3 py-2 text-xs text-[#555555] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:text-slate-300">
-                <Paperclip className="h-3.5 w-3.5" /> Attach logs, screenshots, or .src files
+                <Paperclip className="h-3.5 w-3.5" /> Attach logs, screenshots, or source files (paste supported)
                 <input
                   type="file"
                   multiple

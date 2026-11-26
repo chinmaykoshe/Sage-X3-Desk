@@ -65,6 +65,12 @@ export function AuthProvider({ children }) {
       addToast(`${notif.title}: ${notif.message}`, 'info', 4500);
     });
 
+    s.on('permissions:updated', (payload) => {
+      if (!payload?.userId || String(payload.userId) === String(user._id)) {
+        loadUser();
+      }
+    });
+
     setSocket(s);
     return () => {
       s.disconnect();
@@ -113,14 +119,49 @@ export function AuthProvider({ children }) {
   const isAdmin = user?.role === 'admin';
   const isManager = user?.role === 'admin' || user?.role === 'team_lead';
 
+  const hasScreen = useCallback(
+    (screenKey) => {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
+      const eff = user.effectivePermissions;
+      if (eff?.screens) return eff.screens.includes(screenKey);
+      // Graceful fallback when running with older cached user payload
+      if (['reports', 'approval_inbox', 'team', 'workload'].includes(screenKey)) {
+        return user.role === 'team_lead';
+      }
+      if (screenKey.startsWith('admin_') || screenKey === 'settings') return false;
+      return true;
+    },
+    [user]
+  );
+
+  const hasAction = useCallback(
+    (screenKey, action) => {
+      if (!user) return false;
+      if (user.role === 'admin') return true;
+      const eff = user.effectivePermissions;
+      if (eff?.actions?.[screenKey]) {
+        return eff.actions[screenKey].includes(action);
+      }
+      if (user.role === 'team_lead') {
+        return ['view', 'create', 'edit', 'assign', 'reassign', 'approve', 'reject', 'request_changes', 'change_status'].includes(action);
+      }
+      return ['view', 'create', 'change_status', 'track_time', 'add_dev_note'].includes(action);
+    },
+    [user]
+  );
+
   return (
     <AuthContext.Provider
       value={{
         user,
         setUser,
+        loadUser,
         loading,
         isAdmin,
         isManager,
+        hasScreen,
+        hasAction,
         login,
         register,
         logout,

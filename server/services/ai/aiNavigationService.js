@@ -7,6 +7,31 @@ import TicketDraft from '../../models/TicketDraft.js';
 import AIActionRequest from '../../models/AIActionRequest.js';
 import { ROLES } from '../../config/constants.js';
 import { matchClientDeterministic, matchEmployeeDeterministic } from './aiContextService.js';
+import { userHasScreen } from '../rbacService.js';
+
+const DEST_TO_SCREEN = {
+  overview: 'dashboard',
+  dashboard: 'dashboard',
+  'my-tasks': 'my_tasks',
+  'my-work': 'my_tasks',
+  inbox: 'inbox',
+  notifications: 'inbox',
+  tickets: 'tickets',
+  'task-board': 'task_board',
+  tasks: 'task_board',
+  calendar: 'calendar',
+  clients: 'clients',
+  projects: 'projects',
+  team: 'team',
+  workload: 'workload',
+  deployments: 'deployments',
+  reports: 'reports',
+  activity: 'activity_logs',
+  'knowledge-base': 'knowledge_base',
+  approvals: 'approval_inbox',
+  intake: 'smart_intake',
+  settings: 'settings',
+};
 
 const DEST_TO_ROUTE = {
   overview: '/',
@@ -36,7 +61,7 @@ const DEST_TO_ROUTE = {
 /**
  * Validates permissions, executes read-only MongoDB queries, and builds a safe frontend action payload.
  */
-export async function executeIntent({ parsed, message, user, conversation }) {
+export async function executeIntent({ parsed, message, user, conversation, effectivePermissions = null }) {
   const { intent, entities = {} } = parsed;
 
   if (intent === 'CREATE_USER_REQUEST') {
@@ -99,18 +124,11 @@ export async function executeIntent({ parsed, message, user, conversation }) {
 
   if (intent === 'NAVIGATE') {
     const destKey = String(entities.destination || '').toLowerCase();
-    if (destKey === 'reports' && ![ROLES.ADMIN, ROLES.TEAM_LEAD].includes(user.role)) {
+    const screenKey = DEST_TO_SCREEN[destKey];
+    if (screenKey && effectivePermissions && !userHasScreen(effectivePermissions, screenKey)) {
       return {
         statusType: 'warning',
-        response: 'Reports & Analytics are restricted to Team Leads and Administrators.',
-        action: null,
-        contextUpdates,
-      };
-    }
-    if (destKey === 'settings' && user.role !== ROLES.ADMIN) {
-      return {
-        statusType: 'warning',
-        response: 'Application Settings are restricted to Administrators.',
+        response: `Access denied: you do not have permission to view "${destKey}".`,
         action: null,
         contextUpdates,
       };
@@ -134,10 +152,21 @@ export async function executeIntent({ parsed, message, user, conversation }) {
   }
 
   if (intent === 'SHOW_APPROVAL_QUEUE') {
-    const pending = await TicketDraft.countDocuments({ isDeleted: false, approvalStatus: 'Pending TL Approval' });
+    if (effectivePermissions && !userHasScreen(effectivePermissions, 'approval_inbox')) {
+      return {
+        statusType: 'warning',
+        response: 'Access denied: you do not have permission to view the TL Approval Inbox.',
+        action: null,
+        contextUpdates,
+      };
+    }
+    const [pendingDrafts, pendingManual] = await Promise.all([
+      TicketDraft.countDocuments({ isDeleted: false, approvalStatus: 'Pending TL Approval' }),
+      Ticket.countDocuments({ isDeleted: false, approvalStatus: 'PENDING_APPROVAL' }),
+    ]);
     return {
       statusType: 'approval',
-      response: `Found ${pending} submission(s) waiting in the TL Approval Inbox.`,
+      response: `Found ${pendingDrafts + pendingManual} submission(s) waiting in the TL Approval Inbox.`,
       action: { type: 'NAVIGATE', route: '/approvals?status=Pending%20TL%20Approval' },
       contextUpdates,
     };
