@@ -11,7 +11,7 @@ const aiMessageSchema = new mongoose.Schema(
     clarificationOptions: [{ type: mongoose.Schema.Types.Mixed }],
     statusType: {
       type: String,
-      enum: ['response', 'navigation', 'search', 'draft', 'approval', 'warning', 'error'],
+      enum: ['response', 'navigation', 'search', 'draft', 'approval', 'success', 'warning', 'error'],
       default: 'response',
     },
     createdAt: { type: Date, default: Date.now },

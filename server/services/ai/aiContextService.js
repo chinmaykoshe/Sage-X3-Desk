@@ -7,6 +7,12 @@ import Deployment from '../../models/Deployment.js';
 import TicketDraft from '../../models/TicketDraft.js';
 import { ROLES } from '../../config/constants.js';
 
+const GENERIC_CLIENT_WORDS = new Set([
+  'pvt', 'ltd', 'limited', 'private', 'inc', 'corp', 'llp', 'llc',
+  'services', 'technologies', 'manufacturing', 'new', 'client', 'company',
+  'group', 'ventures', 'solutions', 'systems', 'global', 'india', 'usa',
+]);
+
 /**
  * Deterministically matches a client from text against companyName, clientId, aliases, and folder codes.
  */
@@ -19,12 +25,12 @@ export function matchClientDeterministic(text, clients) {
 
   for (const c of clients) {
     let score = 0;
-    const nameLower = (c.companyName || '').toLowerCase();
+    const nameLower = (c.companyName || '').toLowerCase().trim();
+    if (!nameLower || nameLower === 'new client') continue;
+
     const shortTokens = nameLower
-      .replace(/\b(pvt|ltd|limited|private|inc|corp|llp|llc|services|technologies|manufacturing)\b/g, '')
-      .trim()
-      .split(/\s+/)
-      .filter((t) => t.length >= 3);
+      .split(/[^a-z0-9]+/)
+      .filter((t) => t.length >= 3 && !GENERIC_CLIENT_WORDS.has(t));
 
     const folders = [c.clientFolderCode, c.pilotFolderCode, c.productionFolderCode]
       .filter(Boolean)
@@ -34,13 +40,18 @@ export function matchClientDeterministic(text, clients) {
     if (c.clientId && lower.includes(c.clientId.toLowerCase())) score += 95;
 
     for (const f of folders) {
-      if (f && new RegExp(`\\b${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)) {
+      if (f && f.length >= 3 && new RegExp(`\\b${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(text)) {
         score += 90;
       }
     }
 
     for (const alias of c.aliases || []) {
-      if (alias && lower.includes(alias.toLowerCase())) {
+      const a = String(alias || '').trim();
+      if (!a) continue;
+      const escaped = a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Short 2-char codes like "HT" must match exact uppercase word boundary, never substrings like "https"
+      const re = a.length <= 2 ? new RegExp(`\\b${escaped}\\b`) : new RegExp(`\\b${escaped}\\b`, 'i');
+      if (re.test(text)) {
         score += 85;
       }
     }
@@ -53,7 +64,7 @@ export function matchClientDeterministic(text, clients) {
         }
       }
       if (tokenHits >= 2) score += 75;
-      else if (tokenHits === 1 && shortTokens[0] && lower.includes(shortTokens[0])) score += 55;
+      else if (tokenHits === 1 && shortTokens.length === 1 && shortTokens[0].length >= 5) score += 60;
     }
 
     if (score > 0) {

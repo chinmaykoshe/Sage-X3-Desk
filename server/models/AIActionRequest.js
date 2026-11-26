@@ -4,7 +4,7 @@ const aiActionRequestSchema = new mongoose.Schema(
   {
     actionType: {
       type: String,
-      enum: ['CREATE_USER', 'CREATE_CLIENT'],
+      enum: ['CREATE_USER', 'CREATE_CLIENT', 'CREATE_PROJECT'],
       required: true,
     },
     title: { type: String, required: true, trim: true },

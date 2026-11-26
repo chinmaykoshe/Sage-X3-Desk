@@ -28,6 +28,7 @@ import {
   Command,
   Gauge,
   Sparkles,
+  Mail,
   ShieldCheck,
   Activity,
   Wrench,
@@ -60,6 +61,7 @@ const SIDEBAR_GROUPS = [
       { to: '/my-tasks', label: 'My Work', icon: CheckSquare, screenKey: 'my_tasks' },
       { to: '/notifications', label: 'Inbox', icon: Inbox, badge: true, screenKey: 'inbox' },
       { to: '/smart-intake', label: 'Smart Intake (AI)', icon: Sparkles, screenKey: 'smart_intake' },
+      { to: '/email-inbox', label: 'Email Inbox', icon: Mail, screenKey: 'email_inbox', roles: ['admin', 'team_lead'] },
       { to: '/approvals', label: 'TL Approvals', icon: ShieldCheck, screenKey: 'approval_inbox' },
       { to: '/tickets', label: 'All Tickets', icon: Ticket, screenKey: 'tickets' },
       { to: '/task-board', label: 'Task Board', icon: Kanban, screenKey: 'task_board' },
@@ -218,13 +220,21 @@ export default function AppLayout() {
   const renderSidebar = (isMobile = false) => (
     <aside
       className={`flex h-full flex-col border-r border-[#E8E8E5] bg-white dark:border-[#26282D] dark:bg-[#141518] transition-all duration-200 ${
-        isMobile ? 'w-64' : collapsed ? 'w-[68px]' : 'w-60'
+        isMobile ? 'w-64' : collapsed ? 'w-[76px]' : 'w-60'
       }`}
     >
       {/* Brand */}
-      <div className="flex h-14 items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] px-3.5">
-        <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717] font-bold text-xs tracking-tight shadow-sm">
+      <div
+        className={`flex h-14 items-center border-b border-[#E8E8E5] dark:border-[#26282D] ${
+          collapsed && !isMobile ? 'justify-center gap-1 px-2' : 'justify-between px-3.5'
+        }`}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div
+            className={`flex shrink-0 items-center justify-center rounded-lg bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717] font-bold tracking-tight shadow-sm ${
+              collapsed && !isMobile ? 'h-7 w-7 text-[11px]' : 'h-8 w-8 text-xs'
+            }`}
+          >
             X3
           </div>
           {(!collapsed || isMobile) && (

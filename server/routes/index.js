@@ -19,6 +19,7 @@ import savedViewRoutes from './savedViewRoutes.js';
 import aiRoutes from './aiRoutes.js';
 import rbacRoutes from './rbacRoutes.js';
 import monitoringRoutes from './monitoringRoutes.js';
+import emailRoutes from './emailRoutes.js';
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use('/views', savedViewRoutes);
 router.use('/ai', aiRoutes);
 router.use('/rbac', rbacRoutes);
 router.use('/monitoring', monitoringRoutes);
+router.use('/email', emailRoutes);
 
 export default router;

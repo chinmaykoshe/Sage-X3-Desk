@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Plus, Server, Trash2, Upload, FileText } from 'lucide-react';
+import { ArrowLeft, Plus, Server, Trash2, Upload, FileText, Pencil } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -30,8 +30,11 @@ export default function ClientDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [envModalOpen, setEnvModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
 
   const envForm = useForm({ defaultValues: { environmentType: 'Pilot' } });
+  const editForm = useForm();
 
   const loadClient = async () => {
     try {
@@ -47,6 +50,40 @@ export default function ClientDetailPage() {
   useEffect(() => {
     loadClient();
   }, [id]);
+
+  const openEditClient = () => {
+    if (!client) return;
+    editForm.reset({
+      companyName: client.companyName || '',
+      primaryContactPerson: client.primaryContactPerson || '',
+      contactEmail: client.contactEmail || '',
+      contactNumber: client.contactNumber || '',
+      address: client.address || '',
+      accountStatus: client.accountStatus || 'Active',
+      sageX3Version: client.sageX3Version || 'V12 P33',
+      clientFolderCode: client.clientFolderCode || '',
+      pilotFolderCode: client.pilotFolderCode || '',
+      productionFolderCode: client.productionFolderCode || '',
+      hostingInformation: client.hostingInformation || '',
+      integrationDetails: client.integrationDetails || '',
+      supportAgreementInfo: client.supportAgreementInfo || '',
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleSaveClient = async (values) => {
+    setSavingEdit(true);
+    try {
+      await api.put(`/clients/${id}`, values);
+      addToast('Client updated');
+      setEditModalOpen(false);
+      loadClient();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to update client'), 'error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const handleAddEnv = async (values) => {
     try {
@@ -105,6 +142,11 @@ export default function ClientDetailPage() {
               <span className="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 font-mono text-xs">
                 {client.sageX3Version}
               </span>
+              {isManager && (
+                <Button size="xs" variant="secondary" onClick={openEditClient}>
+                  <Pencil className="h-3 w-3 mr-1" /> Edit Client
+                </Button>
+              )}
             </div>
             <h1 className="mt-1 text-xl font-semibold text-slate-900 dark:text-slate-100">{client.companyName}</h1>
           </div>
@@ -161,13 +203,6 @@ export default function ClientDetailPage() {
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Address</dt>
                 <dd className="text-right">{client.address || '—'}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Folder Codes</dt>
-                <dd className="font-mono text-right">
-                  Client: {client.clientFolderCode} | Pilot: {client.pilotFolderCode || '—'} | Prod:{' '}
-                  {client.productionFolderCode || '—'}
-                </dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-slate-500">Hosting</dt>
@@ -479,6 +514,62 @@ export default function ClientDetailPage() {
               Cancel
             </Button>
             <Button type="submit">Add Environment</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit Client Profile" maxWidth="max-w-2xl">
+        <form onSubmit={editForm.handleSubmit(handleSaveClient)} className="space-y-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
+              <label className="block font-medium mb-1">Company Name *</label>
+              <input {...editForm.register('companyName', { required: true })} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Primary Contact *</label>
+              <input {...editForm.register('primaryContactPerson', { required: true })} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Contact Email *</label>
+              <input type="email" {...editForm.register('contactEmail', { required: true })} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Contact Number</label>
+              <input {...editForm.register('contactNumber')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Account Status</label>
+              <select {...editForm.register('accountStatus')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]">
+                <option value="Active">Active</option>
+                <option value="Onboarding">Onboarding</option>
+                <option value="On Hold">On Hold</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Sage X3 Version</label>
+              <input {...editForm.register('sageX3Version')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block font-medium mb-1">Address</label>
+              <input {...editForm.register('address')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Hosting Information</label>
+              <input {...editForm.register('hostingInformation')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Integration Details</label>
+              <input {...editForm.register('integrationDetails')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block font-medium mb-1">Support Agreement</label>
+              <input {...editForm.register('supportAgreementInfo')} className="w-full rounded-lg border px-3 py-2 dark:bg-[#1E2025] dark:border-[#2C2E33]" />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setEditModalOpen(false)}>Cancel</Button>
+            <Button type="submit" disabled={savingEdit}>{savingEdit ? 'Saving...' : 'Save Changes'}</Button>
           </div>
         </form>
       </Modal>

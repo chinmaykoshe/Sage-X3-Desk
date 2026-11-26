@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import connectDB, { isMongoConnected, markMongoUnavailable, shouldSkipMongoRetry } from './config/db.js';
 import app from './app.js';
 import { getSupabaseBackupStatus, syncMongoToSupabase } from './services/backupSyncService.js';
+import { startEmailBackgroundScheduler } from './services/email/emailScheduler.js';
 import {
   setSocketIO,
   registerUserSocket,
@@ -59,6 +60,7 @@ async function startServer() {
 
   server.listen(PORT, () => {
     console.log(`Sage X3 Desk server listening on http://localhost:${PORT}`);
+    startEmailBackgroundScheduler();
     syncMongoToSupabase()
       .then((res) => {
         if (res) console.log(`Synced local MongoDB -> Supabase (${res.supabaseUrl})`);

@@ -22,6 +22,9 @@ SUPPORTED INTENTS:
 - "SHOW_OVERDUE": entities { target: "tickets" | "tasks" }
 - "SUMMARIZE_CLIENT": entities { client }
 - "CREATE_TICKET_DRAFT": entities { client, title, description, category, priority, environment, folderCode }
+- "CREATE_USER_REQUEST": entities { name, email, role, designation }
+- "CREATE_CLIENT_REQUEST": entities { name, email }
+- "CREATE_PROJECT_REQUEST": entities { name, client }
 - "GENERAL_ANSWER": entities {} (for answering questions from provided context, like who is working on what, recent deployments, or asking for clarification)
 
 CURRENT CONTEXT (relevant records only):
@@ -61,7 +64,7 @@ Return ONLY valid JSON with this exact structure:
   "title": "short plain-English title (4-7 words max, e.g. '2 New Bank Account Setups (BMO SFTP)'; prioritize User's View and NEVER copy long Subject lines or IR/reference codes)",
   "shortDescription": "1-2 sentence crisp summary of the issue",
   "mediumDescription": "1 clear paragraph covering the issue, Sage X3 folder/environment, and business impact",
-  "longDescription": "detailed technical breakdown with full context, observed errors, affected screens/processes, and scope",
+  "longDescription": "detailed technical breakdown with full context, observed errors, affected screens/processes, and scope with proper bullet points and proper mentions of what the task actully is.",
   "description": "same as mediumDescription",
   "category": "one valid category",
   "priority": "Critical | High | Medium | Low",

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api, { getApiError } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
@@ -6,10 +7,12 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loader from '../components/ui/Loader';
 import AccessControlPanel from '../components/settings/AccessControlPanel';
+import EmailIntegrationPanel from '../components/settings/EmailIntegrationPanel';
 
 export default function SettingsPage() {
   const { addToast } = useToast();
-  const [activeTab, setActiveTab] = useState('general');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'general');
   const [settings, setSettings] = useState(null);
   const [teams, setTeams] = useState([]);
   const [backupStatus, setBackupStatus] = useState(null);
@@ -79,10 +82,23 @@ export default function SettingsPage() {
         >
           User &amp; Access Management — Screen Permissions
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('integrations')}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            activeTab === 'integrations'
+              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+          }`}
+        >
+          Integrations → Email Integration
+        </button>
       </div>
 
       {activeTab === 'access' ? (
         <AccessControlPanel />
+      ) : activeTab === 'integrations' ? (
+        <EmailIntegrationPanel />
       ) : (
         <div className="space-y-5 max-w-4xl">
       <form onSubmit={handleSave} className="space-y-5">

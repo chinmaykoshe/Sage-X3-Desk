@@ -19,6 +19,8 @@ export const ALLOWED_INTENTS = [
   'CREATE_TICKET_DRAFT',
   'CREATE_USER_REQUEST',
   'CREATE_CLIENT_REQUEST',
+  'CREATE_PROJECT_REQUEST',
+  'BULK_CREATE_TEMPLATE',
   'GENERAL_ANSWER',
 ];
 
@@ -34,6 +36,105 @@ const intentSchema = z.object({
  * Deterministic rule-assisted parser for common navigation/filter/follow-up commands
  * so fast UI queries work reliably even if the 1.5B model needs guidance or Ollama is offline.
  */
+/**
+ * Parses CSV rows (with optional header line) or comma/`and`-separated natural lists
+ * into an array of structured item payloads for bulk creation.
+ */
+function parseBulkItems(rawText, entityType, expectedCount = 0) {
+  const lines = String(rawText || '')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  // Strip leading command line if user wrote e.g. "create 2 clients:\nname, desc, host, env1, env2\n..."
+  const csvLines = lines.filter((l) => l.includes(','));
+  if (csvLines.length > 0) {
+    const splitCsv = (line) => line.split(',').map((c) => c.trim().replace(/^['"]|['"]$/g, ''));
+    const firstCols = splitCsv(csvLines[0]).map((c) => c.toLowerCase());
+    const headerKeywords = ['name', 'companyname', 'fullname', 'email', 'desc', 'description', 'host', 'hosting', 'env', 'env1', 'role', 'designation', 'client', 'status'];
+    const hasHeader = firstCols.some((c) => headerKeywords.includes(c));
+    const headers = hasHeader ? firstCols : null;
+    const dataLines = hasHeader ? csvLines.slice(1) : csvLines;
+
+    if (dataLines.length > 0) {
+      return dataLines
+        .map((line) => {
+          const cols = splitCsv(line);
+          if (!cols[0]) return null;
+          if (headers) {
+            const obj = { environments: [] };
+            headers.forEach((h, idx) => {
+              const val = cols[idx] || '';
+              if (!val) return;
+              if (['name', 'companyname', 'fullname'].includes(h)) obj.name = val;
+              else if (['desc', 'description', 'companydescription'].includes(h)) obj.description = val;
+              else if (['host', 'hosting', 'hostinginformation'].includes(h)) obj.hosting = val;
+              else if (h === 'email' || h === 'contactemail') obj.email = val;
+              else if (h === 'role') obj.role = val;
+              else if (h === 'designation') obj.designation = val;
+              else if (h === 'department') obj.department = val;
+              else if (h === 'skills') obj.skills = val;
+              else if (h === 'client') obj.client = val;
+              else if (h === 'status') obj.status = val;
+              else if (h === 'contact' || h === 'contactperson' || h === 'primarycontactperson') obj.contactPerson = val;
+              else if (/^env\d*$|^environment\d*$/i.test(h)) obj.environments.push(val);
+            });
+            return obj.name ? obj : null;
+          }
+
+          // Headerless positional CSV
+          if (entityType === 'client') {
+            return {
+              name: cols[0],
+              description: cols[1] || '',
+              hosting: cols[2] || '',
+              environments: cols.slice(3).filter(Boolean),
+            };
+          }
+          if (entityType === 'user') {
+            return {
+              name: cols[0],
+              email: cols[1] || '',
+              designation: cols[2] || 'Sage X3 Consultant',
+              role: cols[3] || 'Developer / Employee',
+              department: cols[4] || 'Sage X3 Practice',
+              skills: cols[5] || '',
+            };
+          }
+          return {
+            name: cols[0],
+            client: cols[1] || '',
+            description: cols[2] || '',
+            status: cols[3] || 'Active',
+          };
+        })
+        .filter(Boolean);
+    }
+  }
+
+  // Natural language list: e.g. "jayesh aryan and sujal" or "acme, beta and gamma"
+  let cleaned = String(rawText || '')
+    .replace(/^.*?(add|create|onboard|start)\s+(?:\d+\s+)?(?:a\s+|new\s+)*(?:users?|employees?|members?|developers?|clients?|projects?)\s*/i, '')
+    .replace(/\b(named|called|here|please)\b/gi, '')
+    .replace(/['"]/g, '')
+    .trim();
+
+  if (!cleaned) return [];
+  let parts = cleaned
+    .split(/\s*,\s*|\s+and\s+|\s*&\s*/i)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  // If user wrote "create 3 new users jayesh aryan and sujal" (missing comma between first two names)
+  if (expectedCount > 1 && parts.length < expectedCount) {
+    const expanded = parts.flatMap((p) => p.split(/\s+/).filter(Boolean));
+    if (expanded.length === expectedCount) parts = expanded;
+  }
+
+  return parts.map((name) => ({ name }));
+}
+
 function deterministicFallbackIntent(message, context) {
   const lower = message.toLowerCase().trim();
   const ticketIdMatch = message.match(/\b(TKT-\d+)\b/i);
@@ -81,7 +182,7 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
-  if (/(smart\s+add|intake|create\s+(a\s+)?ticket|log\s+(a\s+)?ticket|draft\s+ticket)/i.test(lower)) {
+  if (/(smart\s+add|intake|\b(create|log|draft|new|raise|open)\s+(a\s+)?(new\s+)?ticket\b)/i.test(lower)) {
     return {
       intent: 'CREATE_TICKET_DRAFT',
       entities: { client: context.matchedClient?.name || '' },
@@ -89,13 +190,39 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
-  if (/(add|create|onboard)\s+(a\s+)?(new\s+)?(user|employee|member|developer)/i.test(lower)) {
+  if (/(csv|bulk)\s*(format|template)|format\s+for\s+(users?|clients?|projects?)/i.test(lower)) {
+    const target = /client/i.test(lower) ? 'client' : /user|employee|member/i.test(lower) ? 'user' : /project/i.test(lower) ? 'project' : 'all';
+    return {
+      intent: 'BULK_CREATE_TEMPLATE',
+      entities: { target },
+      response: 'Providing CSV format template.',
+    };
+  }
+
+  if (/(add|create|onboard)\s+(?:\d+\s+)?(?:a\s+|new\s+)*(users?|employees?|members?|developers?)\b/i.test(lower)) {
+    const countMatch = message.match(/\b(\d+)\s+(?:new\s+)?(?:users?|employees?|members?|developers?)/i);
+    const expectedCount = countMatch ? Number(countMatch[1]) : 0;
+    const bulkItems = parseBulkItems(message, 'user', expectedCount);
+    if (bulkItems.length > 1 || message.includes(',')) {
+      return {
+        intent: 'CREATE_USER_REQUEST',
+        entities: { items: bulkItems },
+        response: `Creating ${bulkItems.length} user(s).`,
+      };
+    }
+
     const emailMatch = message.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
     const roleMatch = message.match(/\b(Admin|Administrator|Team Lead|Manager|Developer|Employee)\b/i);
-    const nameMatch = message.replace(/(add|create|onboard)\s+(a\s+)?(new\s+)?(user|employee|member|developer)\s*/i, '')
+    const asMatch = message.match(/\bas\s+(?:a\s+)?(.+?)(?:\s+with|\s+email|$)/i);
+    const designation = asMatch ? asMatch[1].replace(/['"]/g, '').trim() : '';
+    const nameMatch = message
+      .replace(/^.*?(add|create|onboard)\s+(?:\d+\s+)?(?:a\s+|new\s+)*(?:users?|employees?|members?|developers?)\s*/i, '')
+      .replace(/\bas\s+(?:a\s+)?(.+?)(?:\s+with|\s+email|$)/i, '')
       .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
-      .replace(/\b(email|role|as|with|named)\b/gi, '')
+      .replace(/\b(email|role|as|with|named|here|please)\b/gi, '')
       .replace(/\b(Admin|Administrator|Team Lead|Manager|Developer|Employee)\b/gi, '')
+      .replace(/['"]/g, '')
+      .replace(/\s{2,}/g, ' ')
       .trim();
     return {
       intent: 'CREATE_USER_REQUEST',
@@ -103,16 +230,31 @@ function deterministicFallbackIntent(message, context) {
         name: nameMatch || 'New Team Member',
         email: emailMatch ? emailMatch[0] : '',
         role: roleMatch ? roleMatch[1] : 'Developer / Employee',
+        designation,
       },
-      response: 'Submitting new user request for Team Lead approval.',
+      response: 'Creating new user.',
     };
   }
 
-  if (/(add|create|onboard)\s+(a\s+)?(new\s+)?client/i.test(lower)) {
+  if (/(add|create|onboard)\s+(?:\d+\s+)?(?:a\s+|new\s+)*clients?\b/i.test(lower)) {
+    const countMatch = message.match(/\b(\d+)\s+(?:new\s+)?clients?/i);
+    const expectedCount = countMatch ? Number(countMatch[1]) : 0;
+    const bulkItems = parseBulkItems(message, 'client', expectedCount);
+    if (bulkItems.length > 1 || message.includes(',')) {
+      return {
+        intent: 'CREATE_CLIENT_REQUEST',
+        entities: { items: bulkItems },
+        response: `Creating ${bulkItems.length} client(s).`,
+      };
+    }
+
     const emailMatch = message.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-    const nameMatch = message.replace(/(add|create|onboard)\s+(a\s+)?(new\s+)?client\s*/i, '')
+    const nameMatch = message
+      .replace(/^.*?(add|create|onboard)\s+(?:\d+\s+)?(?:a\s+|new\s+)*clients?\s*/i, '')
       .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '')
-      .replace(/\b(email|industry|version|named|for)\b/gi, '')
+      .replace(/\b(email|industry|version|named|for|here|please)\b/gi, '')
+      .replace(/['"]/g, '')
+      .replace(/\s{2,}/g, ' ')
       .trim();
     return {
       intent: 'CREATE_CLIENT_REQUEST',
@@ -120,7 +262,35 @@ function deterministicFallbackIntent(message, context) {
         name: nameMatch || 'New Client',
         email: emailMatch ? emailMatch[0] : '',
       },
-      response: 'Submitting new client request for Team Lead approval.',
+      response: 'Creating new client.',
+    };
+  }
+
+  if (/(add|create|start)\s+(?:\d+\s+)?(?:a\s+|new\s+)*projects?\b/i.test(lower)) {
+    const countMatch = message.match(/\b(\d+)\s+(?:new\s+)?projects?/i);
+    const expectedCount = countMatch ? Number(countMatch[1]) : 0;
+    const bulkItems = parseBulkItems(message, 'project', expectedCount);
+    if (bulkItems.length > 1 || message.includes(',')) {
+      return {
+        intent: 'CREATE_PROJECT_REQUEST',
+        entities: { items: bulkItems },
+        response: `Creating ${bulkItems.length} project(s).`,
+      };
+    }
+
+    const nameMatch = message
+      .replace(/^.*?(add|create|start)\s+(?:\d+\s+)?(?:a\s+|new\s+)*projects?\s*/i, '')
+      .replace(/\b(named|called|here|please)\b/gi, '')
+      .replace(/['"]/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    return {
+      intent: 'CREATE_PROJECT_REQUEST',
+      entities: {
+        name: nameMatch || 'New Sage X3 Project',
+        client: context.matchedClient?.name || '',
+      },
+      response: 'Creating new project.',
     };
   }
 
@@ -250,6 +420,11 @@ export async function parseUserIntent({ message, history = [], context, ollamaAv
       'OPEN_CLIENT',
       'SUMMARIZE_CLIENT',
       'SHOW_MY_WORK',
+      'CREATE_USER_REQUEST',
+      'CREATE_CLIENT_REQUEST',
+      'CREATE_PROJECT_REQUEST',
+      'CREATE_TICKET_DRAFT',
+      'BULK_CREATE_TEMPLATE',
     ].includes(directMatch.intent)
   ) {
     return { ...directMatch, parsedBy: 'deterministic-router' };
@@ -303,11 +478,16 @@ export async function parseUserIntent({ message, history = [], context, ollamaAv
     const validated = intentSchema.safeParse(parsedJson);
 
     if (validated.success) {
-      // Merge deterministic matched client/employee if LLM omitted them or downgraded to generic NAVIGATE
-      const merged = validated.data;
-      if (directMatch && (merged.intent === 'GENERAL_ANSWER' || merged.intent === 'NAVIGATE')) {
+      // Explicit deterministic admin/action intents (user/client onboarding) take precedence over 1.5B guesses
+      if (
+        directMatch &&
+        (['CREATE_USER_REQUEST', 'CREATE_CLIENT_REQUEST'].includes(directMatch.intent) ||
+          validated.data.intent === 'GENERAL_ANSWER' ||
+          validated.data.intent === 'NAVIGATE')
+      ) {
         return { ...directMatch, parsedBy: 'hybrid' };
       }
+      const merged = validated.data;
       if (!merged.entities.client && context.matchedClient && ['FILTER_TICKETS', 'OPEN_CLIENT', 'SUMMARIZE_CLIENT'].includes(merged.intent)) {
         merged.entities.client = context.matchedClient.name;
       }

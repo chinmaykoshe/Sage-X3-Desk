@@ -1,4 +1,5 @@
 import Client from '../../models/Client.js';
+import Environment from '../../models/Environment.js';
 import Ticket from '../../models/Ticket.js';
 import Task from '../../models/Task.js';
 import Project from '../../models/Project.js';
@@ -6,6 +7,8 @@ import User from '../../models/User.js';
 import TicketDraft from '../../models/TicketDraft.js';
 import AIActionRequest from '../../models/AIActionRequest.js';
 import { ROLES } from '../../config/constants.js';
+import { getNextSequence } from '../../models/Counter.js';
+import AppError from '../../utils/AppError.js';
 import { matchClientDeterministic, matchEmployeeDeterministic } from './aiContextService.js';
 import { userHasScreen } from '../rbacService.js';
 
@@ -58,50 +61,214 @@ const DEST_TO_ROUTE = {
   profile: '/profile',
 };
 
+const asText = (v, fallback = '') => (typeof v === 'string' ? v.trim() : Array.isArray(v) ? String(v[0] || fallback).trim() : fallback);
+
+function normalizeEnvList(envs = [], folderBase = 'X3') {
+  if (!Array.isArray(envs) || envs.length === 0) {
+    return [
+      { name: 'Pilot', environmentType: 'Pilot', folderCode: `${folderBase}PLT` },
+      { name: 'Production', environmentType: 'Production', folderCode: `${folderBase}PRD` },
+    ];
+  }
+  return envs
+    .map((raw) => String(raw || '').trim())
+    .filter(Boolean)
+    .map((label) => {
+      const lower = label.toLowerCase();
+      const environmentType = lower.includes('prod')
+        ? 'Production'
+        : lower.includes('dev')
+          ? 'Development'
+          : lower.includes('uat')
+            ? 'UAT'
+            : lower.includes('sand')
+              ? 'Sandbox'
+              : 'Pilot';
+      return {
+        name: label,
+        environmentType,
+        folderCode: label.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || `${folderBase}PLT`,
+      };
+    });
+}
+
+export async function createEntityFromActionPayload(actionType, payload = {}, actor) {
+  if (actionType === 'CREATE_USER') {
+    const fullName = asText(payload.name, 'New Team Member') || 'New Team Member';
+    const email = (
+      asText(payload.email) || `${fullName.toLowerCase().replace(/[^a-z0-9]+/g, '.') || 'user'}@sagex3desk.com`
+    ).toLowerCase();
+    const existing = await User.findOne({ email });
+    if (existing) {
+      throw new AppError(`User with email ${email} already exists`, 409);
+    }
+    const employeeId = await getNextSequence('employee', 'EMP', 101);
+    const skillsArr = Array.isArray(payload.skills)
+      ? payload.skills
+      : asText(payload.skills)
+          .split(/[;|]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+    const createdRecord = await User.create({
+      employeeId,
+      fullName,
+      email,
+      password: 'Password@123',
+      role: Object.values(ROLES).includes(payload.role) ? payload.role : ROLES.DEVELOPER,
+      designation: asText(payload.designation, 'Sage X3 Consultant') || 'Sage X3 Consultant',
+      department: asText(payload.department, 'Sage X3 Practice') || 'Sage X3 Practice',
+      contactNumber: asText(payload.contactNumber, ''),
+      skills: skillsArr,
+    });
+    return { createdRecord, recordType: 'User', route: `/team/${createdRecord._id}` };
+  }
+
+  if (actionType === 'CREATE_CLIENT') {
+    const companyName = asText(payload.name, 'New Client') || 'New Client';
+    const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'client';
+    const folderBase = slug.slice(0, 4).toUpperCase().padEnd(3, 'X');
+    const clientId = await getNextSequence('client', 'CLT', 101);
+    const envDocs = normalizeEnvList(payload.environments, folderBase);
+    const createdRecord = await Client.create({
+      clientId,
+      companyName,
+      companyDescription: asText(payload.description, ''),
+      hostingInformation: asText(payload.hosting, ''),
+      primaryContactPerson: asText(payload.contactPerson, 'Primary Contact') || 'Primary Contact',
+      contactEmail: (asText(payload.email) || `contact@${slug}.com`).toLowerCase(),
+      clientFolderCode: envDocs[0]?.folderCode || `${folderBase}PRD`,
+      pilotFolderCode: envDocs.find((e) => e.environmentType === 'Pilot')?.folderCode || `${folderBase}PLT`,
+      productionFolderCode: envDocs.find((e) => e.environmentType === 'Production')?.folderCode || `${folderBase}PRD`,
+      sageX3Version: asText(payload.sageX3Version, 'V12 P33') || 'V12 P33',
+      accountManager: actor?._id || null,
+    });
+    await Environment.insertMany(envDocs.map((e) => ({ ...e, client: createdRecord._id })));
+    return { createdRecord, recordType: 'Client', route: `/clients/${createdRecord._id}` };
+  }
+
+  if (actionType === 'CREATE_PROJECT') {
+    const projectName = asText(payload.name, 'New Sage X3 Project') || 'New Sage X3 Project';
+    const clients = await Client.find({ isDeleted: false }).select('_id companyName aliases clientFolderCode').lean();
+    let targetClient = null;
+    if (payload.client) {
+      targetClient = matchClientDeterministic(asText(payload.client), clients).bestMatch;
+    }
+    if (!targetClient) {
+      targetClient = clients[0] || null;
+    }
+    if (!targetClient) {
+      throw new AppError('Create at least one client first before creating a project.', 400);
+    }
+    const projectId = await getNextSequence('project', 'PRJ', 101);
+    const createdRecord = await Project.create({
+      projectId,
+      name: projectName,
+      description: asText(payload.description, ''),
+      status: asText(payload.status, 'Active') || 'Active',
+      client: targetClient._id,
+      projectManager: actor._id,
+      createdBy: actor._id,
+      teamMembers: [actor._id],
+    });
+    return { createdRecord, recordType: 'Project', route: `/projects/${createdRecord._id}` };
+  }
+
+  throw new AppError(`Unsupported action type: ${actionType}`, 400);
+}
+
 /**
  * Validates permissions, executes read-only MongoDB queries, and builds a safe frontend action payload.
  */
 export async function executeIntent({ parsed, message, user, conversation, effectivePermissions = null }) {
   const { intent, entities = {} } = parsed;
+  const canCreateDirectly = [ROLES.ADMIN, ROLES.TEAM_LEAD].includes(user?.role);
 
-  if (intent === 'CREATE_USER_REQUEST') {
-    const name = (entities.name || 'New Team Member').trim();
-    const email = (entities.email || `${name.toLowerCase().replace(/[^a-z0-9]+/g, '.')}@sagex3desk.com`).trim();
-    const role = entities.role || ROLES.DEVELOPER;
-    const reqDoc = await AIActionRequest.create({
-      actionType: 'CREATE_USER',
-      title: `Add User: ${name}`,
-      summary: `Email: ${email} · Role: ${role}`,
-      payload: { name, email, role, designation: entities.designation || 'Sage X3 Consultant' },
-      requestedBy: user._id,
-      status: 'Pending TL Approval',
-    });
+  if (intent === 'BULK_CREATE_TEMPLATE') {
+    const t = entities.target || 'all';
+    const templates = {
+      client:
+        'Clients CSV format (paste rows or upload .csv):\nname, description, hosting, env1, env2\nAcme Corp, Sage X3 V12 rollout, AWS Cloud, ACMEPLT, ACMEPRD\nBeta Ltd, EDI & Banking setup, Azure, BETAPLT, BETAPRD',
+      user:
+        'Users CSV format (paste rows or upload .csv):\nname, email, designation, role, department\nJayesh Patil, jayesh@sagex3desk.com, 4GL Developer, Developer / Employee, Sage X3 Practice\nAryan Shah, aryan@sagex3desk.com, Functional Consultant, Developer / Employee, Finance',
+      project:
+        'Projects CSV format (paste rows or upload .csv):\nname, client, description, status\nSFTP Bank Setup, hightide ventures, Replicate BMO SFTP in Pilot, Active\nV12 Migration, ABC Manufacturing, Upgrade from V11 to V12, Active',
+    };
     return {
-      response: `Submitted new user request "${reqDoc.title}" (${email}) for Team Lead approval.`,
-      action: { type: 'NAVIGATE', route: '/approvals' },
-      statusType: 'success',
+      statusType: 'navigation',
+      response:
+        t === 'all'
+          ? `${templates.client}\n\n${templates.user}\n\n${templates.project}`
+          : templates[t] || templates.client,
     };
   }
 
-  if (intent === 'CREATE_CLIENT_REQUEST') {
-    const name = (entities.name || 'New Client').trim();
-    const email = (entities.email || '').trim();
-    const reqDoc = await AIActionRequest.create({
-      actionType: 'CREATE_CLIENT',
-      title: `Add Client: ${name}`,
-      summary: `${email ? `Email: ${email} · ` : ''}Industry: ${entities.industry || 'Manufacturing'}`,
-      payload: {
-        name,
-        email,
-        industry: entities.industry || 'Manufacturing',
-        sageX3Version: entities.sageX3Version || 'V12',
-      },
-      requestedBy: user._id,
-      status: 'Pending TL Approval',
-    });
+  if (['CREATE_USER_REQUEST', 'CREATE_CLIENT_REQUEST', 'CREATE_PROJECT_REQUEST'].includes(intent)) {
+    const actionType =
+      intent === 'CREATE_USER_REQUEST'
+        ? 'CREATE_USER'
+        : intent === 'CREATE_CLIENT_REQUEST'
+          ? 'CREATE_CLIENT'
+          : 'CREATE_PROJECT';
+    const rawItems = Array.isArray(entities.items) && entities.items.length > 0 ? entities.items : [entities];
+
+    if (!canCreateDirectly) {
+      const createdReqs = [];
+      for (const item of rawItems) {
+        const itemName = asText(item?.name, actionType === 'CREATE_USER' ? 'New Team Member' : actionType === 'CREATE_CLIENT' ? 'New Client' : 'New Project');
+        const labelPrefix = actionType === 'CREATE_USER' ? 'Add User' : actionType === 'CREATE_CLIENT' ? 'Add Client' : 'Add Project';
+        const summaryParts =
+          actionType === 'CREATE_USER'
+            ? [item.email || `${itemName.toLowerCase().replace(/[^a-z0-9]+/g, '.')}@sagex3desk.com`, item.designation || 'Sage X3 Consultant', item.role || ROLES.DEVELOPER]
+            : actionType === 'CREATE_CLIENT'
+              ? [item.description || 'New Sage X3 Client', item.hosting ? `Host: ${item.hosting}` : null, Array.isArray(item.environments) && item.environments.length ? `Envs: ${item.environments.join(', ')}` : null]
+              : [item.client ? `Client: ${item.client}` : 'Default Client', item.description || 'New Project'];
+
+        const reqDoc = await AIActionRequest.create({
+          actionType,
+          title: `${labelPrefix}: ${itemName}`,
+          summary: summaryParts.filter(Boolean).join(' · '),
+          payload: { ...item, name: itemName },
+          requestedBy: user._id,
+          status: 'Pending TL Approval',
+        });
+        createdReqs.push(reqDoc);
+      }
+
+      return {
+        response: `Submitted ${createdReqs.length} request(s) (${createdReqs.map((r) => r.title).join(', ')}) for Team Lead / Admin approval.`,
+        action: { type: 'OPEN_CREATED', route: '/approvals', label: 'Open TL Approvals' },
+        statusType: 'approval',
+      };
+    }
+
+    const createdSummaries = [];
+    const errors = [];
+    const buttons = [];
+
+    for (const item of rawItems) {
+      try {
+        const { createdRecord, route } = await createEntityFromActionPayload(actionType, item, user);
+        const displayName = createdRecord.fullName || createdRecord.companyName || createdRecord.name;
+        const code = createdRecord.employeeId || createdRecord.clientId || createdRecord.projectId;
+        createdSummaries.push(`${displayName} (${code})`);
+        buttons.push({ label: `Go to ${displayName}`, route });
+      } catch (err) {
+        errors.push(`${asText(item?.name, 'item')}: ${err.message}`);
+      }
+    }
+
+    if (createdSummaries.length === 0) {
+      return { response: errors.join('; ') || 'Could not create records.', statusType: 'warning' };
+    }
+
+    const labelWord = actionType === 'CREATE_USER' ? 'user(s)' : actionType === 'CREATE_CLIENT' ? 'client(s)' : 'project(s)';
+    const msgText =
+      `Created ${createdSummaries.length} ${labelWord}: ${createdSummaries.join(', ')}.` +
+      (errors.length ? `\nSkipped: ${errors.join('; ')}` : '');
+
     return {
-      response: `Submitted new client request "${reqDoc.title}" for Team Lead approval.`,
-      action: { type: 'NAVIGATE', route: '/approvals' },
+      response: msgText,
+      action: { type: 'OPEN_CREATED', buttons, route: buttons[0]?.route, label: buttons[0]?.label },
       statusType: 'success',
     };
   }
@@ -463,6 +630,16 @@ export async function executeIntent({ parsed, message, user, conversation, effec
         contextUpdates,
       };
     }
+  }
+
+  if (intent === 'CREATE_TICKET_DRAFT') {
+    return {
+      statusType: 'navigation',
+      response:
+        'Describe the issue in detail (or upload a screenshot) here, or open Smart Ticket Intake to create a structured ticket draft.',
+      action: { type: 'OPEN_CREATED', route: '/smart-intake', label: 'Go to Smart Ticket Intake' },
+      contextUpdates,
+    };
   }
 
   return {

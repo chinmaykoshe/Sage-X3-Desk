@@ -280,6 +280,16 @@ export const DEFAULT_SCREENS = [
 
   // SYSTEM
   {
+    screenKey: 'email_inbox',
+    label: 'Email Inbox',
+    route: '/email-inbox',
+    navigationGroup: 'WORKSPACE',
+    description: 'Incoming Outlook & Gmail email queue, manual review, and ticket linking',
+    sortOrder: 45,
+    defaultRoleAccess: { admin: true, team_lead: true, developer: false },
+    availableActions: ['view', 'create', 'edit'],
+  },
+  {
     screenKey: 'settings',
     label: 'Settings & Access',
     route: '/settings',

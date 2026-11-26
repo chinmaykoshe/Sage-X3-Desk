@@ -1,17 +1,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Lock, Mail, User } from 'lucide-react';
+import { Lock, Mail, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getApiError } from '../services/api';
 import Button from '../components/ui/Button';
-
-const DEMO_ACCOUNTS = [
-  { label: 'Administrator', email: 'admin@sagex3desk.com', role: 'Full Control' },
-  { label: 'Team Lead', email: 'ananya.rao@sagex3desk.com', role: 'Approvals & SLA' },
-  { label: '4GL Developer', email: 'rohan.k@sagex3desk.com', role: 'Tasks & Time Logs' },
-];
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login');
@@ -23,7 +17,6 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm({
     defaultValues: { email: '', password: '', fullName: '', designation: 'Sage X3 Developer' },
@@ -45,12 +38,6 @@ export default function LoginPage() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const fillDemo = (email) => {
-    setMode('login');
-    setValue('email', email);
-    setValue('password', 'Password@123');
   };
 
   return (
@@ -160,29 +147,6 @@ export default function LoginPage() {
               {submitting ? 'Authenticating...' : mode === 'login' ? 'Sign In to Workspace' : 'Create Account'}
             </Button>
           </form>
-
-          {/* Quick Demo Role Switcher */}
-          <div className="mt-5 border-t border-slate-200 dark:border-slate-800 pt-4">
-            <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-2">
-              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
-              Quick Demo Credentials (Password: <code className="font-mono">Password@123</code>)
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.email}
-                  type="button"
-                  onClick={() => fillDemo(acc.email)}
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 p-2 text-left hover:border-blue-400 hover:bg-blue-50/40 dark:hover:bg-blue-950/30 transition-colors"
-                >
-                  <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200 truncate">
-                    {acc.label}
-                  </div>
-                  <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{acc.role}</div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>

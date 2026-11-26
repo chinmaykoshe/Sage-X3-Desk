@@ -16,7 +16,7 @@ router
 router
   .route('/:id')
   .get(getUserById)
-  .put(authorizeRoles(ROLES.ADMIN), validate(userUpdateSchema), updateUser)
+  .put(authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), validate(userUpdateSchema), updateUser)
   .delete(authorizeRoles(ROLES.ADMIN), deleteUser);
 
 export default router;

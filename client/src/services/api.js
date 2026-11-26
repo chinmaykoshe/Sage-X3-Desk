@@ -16,7 +16,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const reqUrl = error.config?.url || '';
+    const isProviderTestOrSync = reqUrl.includes('/email/integrations/');
+    if (error.response?.status === 401 && !isProviderTestOrSync) {
       localStorage.removeItem('sagex3_token');
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';

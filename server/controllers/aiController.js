@@ -1,3 +1,4 @@
+import fs from 'fs';
 import AIConversation from '../models/AIConversation.js';
 import TicketDraft from '../models/TicketDraft.js';
 import Ticket from '../models/Ticket.js';
@@ -12,7 +13,7 @@ import { sendSuccess } from '../utils/response.js';
 import { checkOllamaStatus } from '../services/ai/ollamaService.js';
 import { retrieveRelevantContext } from '../services/ai/aiContextService.js';
 import { parseUserIntent } from '../services/ai/aiIntentService.js';
-import { executeIntent } from '../services/ai/aiNavigationService.js';
+import { executeIntent, createEntityFromActionPayload } from '../services/ai/aiNavigationService.js';
 import {
   generateTicketDraftService,
   approveTicketDraftService,
@@ -56,12 +57,31 @@ export const deleteConversation = asyncHandler(async (req, res) => {
 });
 
 export const aiChat = asyncHandler(async (req, res) => {
-  const message = (req.body.message || '').trim();
+  let message = (req.body.message || '').trim();
   const files = req.files || [];
   const conversationId = req.body.conversationId;
 
   if (!message && files.length === 0) {
-    throw new AppError('Please enter a message or attach a screenshot.', 400);
+    throw new AppError('Please enter a message or attach a screenshot / CSV.', 400);
+  }
+
+  const imageFiles = files.filter(
+    (f) => f.mimetype?.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/i.test(f.originalname || '')
+  );
+  const textFiles = files.filter((f) => !imageFiles.includes(f));
+  if (textFiles.length > 0) {
+    const textContents = textFiles
+      .map((f) => {
+        try {
+          return fs.readFileSync(f.path, 'utf8').trim();
+        } catch {
+          return '';
+        }
+      })
+      .filter(Boolean);
+    if (textContents.length > 0) {
+      message = [message, ...textContents].filter(Boolean).join('\n');
+    }
   }
 
   let conversation = conversationId
@@ -77,12 +97,12 @@ export const aiChat = asyncHandler(async (req, res) => {
   }
 
   // If image(s) attached in chat -> route straight into Smart Ticket Intake draft generation!
-  if (files.length > 0) {
+  if (imageFiles.length > 0) {
     const draft = await generateTicketDraftService({
       sourceType: 'chat',
       sourceText: message,
       clientIdOverride: req.body.clientId || null,
-      files,
+      files: imageFiles,
       actor: req.user,
     });
 
@@ -153,7 +173,7 @@ export const aiChat = asyncHandler(async (req, res) => {
       draftId: draft._id,
       statusType: isAutoApproved ? 'success' : draft.clientId ? 'draft' : 'warning',
       action: isAutoApproved
-        ? { type: 'NAVIGATE', route: `/tickets/${draft.approvedTicketId}` }
+        ? { type: 'OPEN_CREATED', route: `/tickets/${draft.approvedTicketId}`, label: `Go to ${draft.approvedTicketRef}` }
         : { type: 'OPEN_DRAFT', draftId: String(draft._id), route: `/approvals?draft=${draft._id}` },
     };
 
@@ -390,8 +410,8 @@ export const getActionRequests = asyncHandler(async (req, res) => {
 
   const [requests, pendingCount, approvedCount, rejectedCount] = await Promise.all([
     AIActionRequest.find(filter)
-      .populate('requestedBy', 'name email role')
-      .populate('reviewedBy', 'name email')
+      .populate('requestedBy', 'fullName email role')
+      .populate('reviewedBy', 'fullName email')
       .sort({ createdAt: -1 })
       .lean(),
     AIActionRequest.countDocuments({ status: 'Pending TL Approval' }),
@@ -416,36 +436,13 @@ export const approveActionRequest = asyncHandler(async (req, res) => {
     throw new AppError(`Action request is already ${actionReq.status}`, 400);
   }
 
-  let createdRecord = null;
-  if (actionReq.actionType === 'CREATE_USER') {
-    const { name, email, role, designation } = actionReq.payload || {};
-    const existing = await User.findOne({ email: (email || '').toLowerCase() });
-    if (existing) throw new AppError(`User with email ${email} already exists`, 409);
-    const empCount = await User.countDocuments();
-    createdRecord = await User.create({
-      employeeId: `EMP-${100 + empCount + 1}`,
-      name: name || 'New Team Member',
-      email,
-      password: 'Password@123',
-      role: role || ROLES.DEVELOPER,
-      designation: designation || 'Sage X3 Consultant',
-    });
-    actionReq.createdRecordId = createdRecord._id;
-    actionReq.createdRecordType = 'User';
-  } else if (actionReq.actionType === 'CREATE_CLIENT') {
-    const { name, email, industry, sageX3Version } = actionReq.payload || {};
-    const clientCount = await Client.countDocuments();
-    createdRecord = await Client.create({
-      clientCode: `CL-${100 + clientCount + 1}`,
-      name: name || 'New Client',
-      email: email || '',
-      industry: industry || 'Manufacturing',
-      sageX3Version: sageX3Version || 'V12',
-      createdBy: req.user._id,
-    });
-    actionReq.createdRecordId = createdRecord._id;
-    actionReq.createdRecordType = 'Client';
-  }
+  const { createdRecord, recordType } = await createEntityFromActionPayload(
+    actionReq.actionType,
+    actionReq.payload || {},
+    req.user
+  );
+  actionReq.createdRecordId = createdRecord._id;
+  actionReq.createdRecordType = recordType;
 
   actionReq.status = 'Approved';
   actionReq.reviewedBy = req.user._id;

@@ -162,7 +162,14 @@ export default function FloatingX3AI() {
     'Show tickets for ABC Manufacturing',
     'Find overdue tasks',
     'Show my assigned tasks',
-    ...(isManager ? ['Show pending TL approvals'] : []),
+    ...(isManager
+      ? [
+          'Show pending TL approvals',
+          'CSV format for clients',
+          'CSV format for users',
+          'CSV format for projects',
+        ]
+      : []),
     'Show recent Production deployments',
     ...(location.pathname.includes('/clients') ? ['Summarize Hindustan Precision recent issues'] : []),
   ];
@@ -175,6 +182,7 @@ export default function FloatingX3AI() {
       case 'navigation':
         return 'border border-[#638BEF]/30 bg-[#638BEF]/10 text-[#171717] dark:text-slate-100';
       case 'search':
+      case 'success':
         return 'border border-[#35B8A6]/35 bg-[#35B8A6]/10 text-[#171717] dark:text-slate-100';
       case 'draft':
       case 'approval':
@@ -324,15 +332,20 @@ export default function FloatingX3AI() {
                       <span>{msg.content}</span>
                     </div>
 
-                    {msg.action?.route && msg.action?.type === 'OPEN_DRAFT' && (
-                      <button
-                        onClick={() => {
-                          navigate(msg.action.route);
-                        }}
-                        className="mt-2 inline-flex items-center gap-1 rounded-md bg-[#171717] px-2 py-1 text-[11px] font-semibold text-[#C6F36B]"
-                      >
-                        Review in TL Approval Inbox <ArrowUpRight className="h-3 w-3" />
-                      </button>
+                    {(msg.action?.buttons?.length > 0 || (msg.action?.route && ['OPEN_DRAFT', 'OPEN_CREATED'].includes(msg.action?.type))) && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {(msg.action.buttons || [{ label: msg.action.label || 'Review in TL Approval Inbox', route: msg.action.route }]).map((btn, bIdx) => (
+                          <button
+                            key={bIdx}
+                            onClick={() => {
+                              navigate(btn.route);
+                            }}
+                            className="inline-flex items-center gap-1 rounded-md bg-[#171717] px-2.5 py-1 text-[11px] font-semibold text-[#C6F36B] hover:opacity-90"
+                          >
+                            {btn.label} <ArrowUpRight className="h-3 w-3" />
+                          </button>
+                        ))}
+                      </div>
                     )}
 
                     {(msg.clarificationOptions || []).length > 0 && (
@@ -428,13 +441,13 @@ export default function FloatingX3AI() {
               className="flex items-center gap-2"
             >
               <label
-                title="Upload screenshot for OCR ticket draft"
+                title="Upload screenshot or CSV file"
                 className="cursor-pointer rounded-lg border border-[#E8E8E5] p-2 text-[#555555] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:text-slate-300 dark:hover:bg-white/10"
               >
                 <ImagePlus className="h-4 w-4" />
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,.csv,.txt"
                   multiple
                   className="hidden"
                   onChange={(e) => setFiles((prev) => [...prev, ...Array.from(e.target.files || [])])}

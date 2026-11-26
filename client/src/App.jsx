@@ -1,6 +1,8 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import api, { getApiError } from './services/api';
 import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './context/ToastContext';
+import { ToastProvider, useToast } from './context/ToastContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { WorkspaceProvider } from './context/WorkspaceContext';
 import AppLayout from './components/layout/AppLayout';
@@ -29,6 +31,7 @@ import ProfilePage from './pages/ProfilePage';
 import SmartIntakePage from './pages/SmartIntakePage';
 import ApprovalInboxPage from './pages/ApprovalInboxPage';
 import AdminMonitoringPage from './pages/AdminMonitoringPage';
+import EmailInboxPage from './pages/EmailInboxPage';
 
 function AccessDeniedView({ screenKey }) {
   return (
@@ -67,6 +70,38 @@ function PublicRoute({ children }) {
   return children;
 }
 
+function GmailOAuthHandler() {
+  const { user } = useAuth();
+  const { addToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user || location.pathname !== '/') return;
+    const params = new URLSearchParams(location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    if (!code || !state) return;
+
+    api
+      .post('/email/integrations/gmail/exchange', {
+        code,
+        integrationId: state,
+        redirectUri: window.location.origin,
+      })
+      .then(() => {
+        addToast('Gmail OAuth authorized and connected!');
+        navigate('/settings?tab=integrations', { replace: true });
+      })
+      .catch((err) => {
+        addToast(getApiError(err, 'Gmail OAuth failed'), 'error');
+        navigate('/settings?tab=integrations', { replace: true });
+      });
+  }, [user, location.pathname, location.search]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -74,6 +109,7 @@ export default function App() {
         <AuthProvider>
           <WorkspaceProvider>
             <BrowserRouter>
+              <GmailOAuthHandler />
               <Routes>
                 <Route
                   path="/login"
@@ -98,6 +134,7 @@ export default function App() {
                   <Route path="tickets" element={<ProtectedRoute screenKey="tickets"><TicketsPage /></ProtectedRoute>} />
                   <Route path="tickets/:id" element={<ProtectedRoute screenKey="tickets"><TicketDetailPage /></ProtectedRoute>} />
                   <Route path="smart-intake" element={<ProtectedRoute screenKey="smart_intake"><SmartIntakePage /></ProtectedRoute>} />
+                  <Route path="email-inbox" element={<ProtectedRoute screenKey="email_inbox"><EmailInboxPage /></ProtectedRoute>} />
                   <Route path="approvals" element={<ProtectedRoute screenKey="approval_inbox"><ApprovalInboxPage /></ProtectedRoute>} />
                   <Route path="calendar" element={<ProtectedRoute screenKey="calendar"><CalendarPage /></ProtectedRoute>} />
                   <Route path="clients" element={<ProtectedRoute screenKey="clients"><ClientsPage /></ProtectedRoute>} />
