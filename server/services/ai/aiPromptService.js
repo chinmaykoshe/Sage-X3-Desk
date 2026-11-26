@@ -58,7 +58,7 @@ Return ONLY valid JSON with this exact structure:
   "clientName": "matched client company name or empty string",
   "folderCode": "detected Sage X3 folder code or empty string",
   "environment": "Development | Pilot | Production | Unknown",
-  "title": "concise factual ticket title",
+  "title": "short plain-English title (4-7 words max, e.g. '2 New Bank Account Setups (BMO SFTP)'; prioritize User's View and NEVER copy long Subject lines or IR/reference codes)",
   "shortDescription": "1-2 sentence crisp summary of the issue",
   "mediumDescription": "1 clear paragraph covering the issue, Sage X3 folder/environment, and business impact",
   "longDescription": "detailed technical breakdown with full context, observed errors, affected screens/processes, and scope",

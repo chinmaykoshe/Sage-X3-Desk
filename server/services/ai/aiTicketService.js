@@ -89,22 +89,35 @@ function stripEmailNoise(raw = '') {
       continue;
     }
 
-    // Skip signature_* tokens and bare email/recipient lines (with or without space before <email>)
-    if (/^signature_[a-z0-9_]+$/i.test(line)) {
+    // Skip signature_* tokens, contact/address/website/ticker lines, and bare recipient lines
+    if (
+      /^signature_[a-z0-9_]+$/i.test(line) ||
+      /^(C|M|T|P|F|Tel|Mob|Phone|Fax|Email|E-mail)\s*:/i.test(line) ||
+      /^(www\.|https?:\/\/)/i.test(line) ||
+      /^(TSXV|NYSE|NASDAQ|OTCQB|FRA):/i.test(line) ||
+      /^#\d+,\s+\d+.*\|/i.test(line)
+    ) {
       continue;
     }
-    if (inHeaderBlock || (/^[^:]{0,80}<[^>\s]+@[^>\s]+>[;,]?$/.test(line)) || (/^[^.!?]{2,60}\([^)]+\)[;,]?$/.test(line))) {
-      if (line.endsWith(';') || line.endsWith(',') || /<[^>\s]+@[^>\s]+>/.test(line)) {
+    if (
+      inHeaderBlock ||
+      /^[^:]{0,80}<[^>\s]+@[^>\s]+>[;,]?$/.test(line) ||
+      /^[^.!?]{2,60}\([^)]+\)[;,]?$/.test(line)
+    ) {
+      if (line.endsWith(';') || line.endsWith(',') || /<[^>\s]+@[^>\s]+>/.test(line) || /^[^.!?]{2,60}\([^)]+\)$/.test(line)) {
         inHeaderBlock = true;
         continue;
       }
       inHeaderBlock = false;
     }
 
-    // Skip external email CAUTION / confidentiality banners
+    // Skip external email CAUTION / confidentiality disclaimers
     if (
       /^CAUTION:\s*This email originated from outside/i.test(line) ||
       /Do not click links or open attachments unless you recognize/i.test(line) ||
+      /this email and its attachments are confidential/i.test(line) ||
+      /any unauthorized use or disclaimer is prohibited/i.test(line) ||
+      /if you receive this email in error, please notify/i.test(line) ||
       /^EXTERNAL EMAIL:/i.test(line) ||
       /^\[OCR\s+[^\]]+\]:?$/i.test(line)
     ) {
@@ -377,6 +390,7 @@ export async function generateTicketDraftService({
         ],
         expectJson: true,
         temperature: 0.1,
+        timeoutMs: 180000,
       });
 
       const parsedJson = extractJsonFromText(aiRes.content);
@@ -437,6 +451,7 @@ export async function generateTicketDraftService({
         ],
         expectJson: true,
         temperature: 0.2,
+        timeoutMs: 180000,
       });
       const revJson = extractJsonFromText(revRes.content);
       if (revJson && typeof revJson === 'object') {
@@ -453,6 +468,14 @@ export async function generateTicketDraftService({
   mediumDesc = mediumDesc || cleanVariants.mediumDescription;
   longDesc = longDesc || cleanVariants.longDescription;
 
+  const rawTitle = (structured.title || cleanedSubject || 'Sage X3 Issue Draft')
+    .replace(/\s*[-–]\s*(IR|INC|REQ|REF)\s*#?\s*\d+[_\d-]*/gi, '')
+    .trim();
+  const finalTitle =
+    cleanUserView && cleanUserView.length <= 60 && rawTitle.length > 55
+      ? cleanUserView.charAt(0).toUpperCase() + cleanUserView.slice(1)
+      : rawTitle || 'Sage X3 Issue Draft';
+
   const draftId = await getNextSequence('ticketDraft', 'DRF', 1001);
   const draft = await TicketDraft.create({
     draftId,
@@ -465,7 +488,7 @@ export async function generateTicketDraftService({
     candidateClients: clientMatch.candidates,
     extractedText: ocrText,
     generatedFields: {
-      title: structured.title || cleanedSubject || 'Sage X3 Issue Draft',
+      title: finalTitle,
       shortDescription: shortDesc,
       mediumDescription: mediumDesc,
       longDescription: longDesc,
