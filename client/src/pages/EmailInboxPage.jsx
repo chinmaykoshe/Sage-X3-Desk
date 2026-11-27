@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Paperclip,
   Zap,
+  SlidersHorizontal,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
@@ -44,6 +45,7 @@ export default function EmailInboxPage() {
   const [unconvertedCount, setUnconvertedCount] = useState(0);
   const [autoDialogOpen, setAutoDialogOpen] = useState(false);
   const [togglingAuto, setTogglingAuto] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -238,6 +240,14 @@ export default function EmailInboxPage() {
             <Button size="sm" variant="secondary" onClick={loadData}>
               <RefreshCw className="h-3.5 w-3.5" /> Refresh
             </Button>
+            <Button
+              size="sm"
+              variant={showFilters ? 'secondary' : 'primary'}
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
             <Button size="sm" disabled={syncing} onClick={handleSyncAll}>
               <Mail className="h-3.5 w-3.5" /> {syncing ? 'Syncing...' : 'Sync Mails & Follow-ups'}
             </Button>
@@ -245,6 +255,8 @@ export default function EmailInboxPage() {
         }
       />
 
+      {showFilters && (
+        <>
       <div className="flex flex-wrap gap-1.5">
         {STATUS_TABS.map((t) => {
           const cnt =
@@ -293,6 +305,8 @@ export default function EmailInboxPage() {
             </select>
           </div>
         </Card>
+      )}
+        </>
       )}
 
       {loading ? (

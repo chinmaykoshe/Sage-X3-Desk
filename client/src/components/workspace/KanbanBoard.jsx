@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -8,12 +8,14 @@ import {
   useDroppable,
   useSensor,
   useSensors,
+  defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
+  arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
@@ -30,6 +32,18 @@ import dayjs from 'dayjs';
 import Badge from '../ui/Badge';
 import Avatar from '../ui/Avatar';
 import { STATUS_DOT_COLOR, formatStatusLabel } from '../../utils/constants';
+
+const dropAnimationConfig = {
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: {
+      active: {
+        opacity: '0',
+      },
+    },
+  }),
+  duration: 200,
+  easing: 'cubic-bezier(0.2, 0, 0, 1)',
+};
 
 function DraggableCard({
   item,
@@ -48,12 +62,34 @@ function DraggableCard({
 
   const style = {
     transform: CSS.Translate.toString(transform),
-    transition,
-    opacity: isDragging ? 0.35 : 1,
+    transition: transition || 'transform 200ms cubic-bezier(0.2, 0, 0, 1)',
   };
 
   const refId = entityType === 'ticket' ? item.ticketId : item.taskId;
   const assignees = entityType === 'ticket' ? item.assignedDevelopers || [] : item.assignedEmployees || [];
+
+  const priorityColor =
+    item.priority === 'Critical'
+      ? '#F16D64'
+      : item.priority === 'High'
+      ? '#F59E0B'
+      : item.priority === 'Medium'
+      ? '#638BEF'
+      : '#35B8A6';
+
+  if (isDragging && !isOverlay) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="relative rounded-xl border-2 border-dashed border-[#638BEF] bg-[#638BEF]/10 dark:bg-[#638BEF]/15 p-3.5 min-h-[88px] flex flex-col items-center justify-center text-xs font-semibold text-[#638BEF] transition-all duration-200 select-none shadow-inner"
+      >
+        <span className="flex items-center gap-1.5 animate-pulse">
+          Drop {entityType} here
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -70,13 +106,23 @@ function DraggableCard({
         e.preventDefault();
         onContextMenu?.(e, item);
       }}
-      className={`group relative rounded-xl border bg-white p-3 text-xs transition-all cursor-pointer select-none dark:bg-[#1C1D21] ${
-        isSelected
-          ? 'border-[#171717] ring-2 ring-[#C6F36B] dark:border-[#C6F36B]'
-          : 'border-[#E8E8E5] hover:border-[#171717]/30 dark:border-[#2C2E33] dark:hover:border-white/25'
-      } ${isOverlay ? 'shadow-2xl rotate-[1deg] cursor-grabbing' : 'shadow-[0_1px_2px_rgba(23,23,23,0.03)]'}`}
+      className={`group relative rounded-xl border p-3 text-xs select-none cursor-pointer overflow-hidden ${
+        isOverlay
+          ? 'z-50 bg-white/95 dark:bg-[#1C1D21]/95 backdrop-blur-md scale-[1.03] rotate-[1.5deg] border-[#171717]/30 dark:border-[#C6F36B]/40 ring-2 ring-[#171717]/10 dark:ring-[#C6F36B]/25 shadow-[0_24px_50px_-10px_rgba(23,23,23,0.28),0_12px_24px_-6px_rgba(23,23,23,0.14)] dark:shadow-[0_24px_50px_-10px_rgba(0,0,0,0.8)] cursor-grabbing'
+          : isSelected
+          ? 'border-[#171717] ring-2 ring-[#C6F36B] dark:border-[#C6F36B] bg-white dark:bg-[#1C1D21] shadow-sm transition-[transform,box-shadow,border-color] duration-200'
+          : 'border-[#E8E8E5] dark:border-[#2C2E33] bg-white dark:bg-[#1C1D21] shadow-[0_1px_3px_rgba(23,23,23,0.03)] hover:border-[#171717]/40 dark:hover:border-white/30 hover:-translate-y-1 hover:shadow-[0_12px_26px_-6px_rgba(23,23,23,0.09),0_4px_10px_-2px_rgba(23,23,23,0.04)] dark:hover:shadow-[0_12px_28px_-6px_rgba(0,0,0,0.55)] active:translate-y-0 active:scale-[0.99] transition-[transform,box-shadow,border-color] duration-200 ease-out'
+      }`}
     >
-      <div className="flex items-center justify-between gap-1.5">
+      {/* Priority accent strip on left edge - illuminates smoothly on hover or drag */}
+      <div
+        className={`absolute left-0 top-2.5 bottom-2.5 w-[3.5px] rounded-r-full transition-all duration-200 ${
+          isOverlay ? 'opacity-100 scale-y-100' : 'opacity-0 group-hover:opacity-100 group-hover:scale-y-100 scale-y-75'
+        }`}
+        style={{ backgroundColor: priorityColor }}
+      />
+
+      <div className="flex items-center justify-between gap-1.5 pl-0.5">
         <div className="flex items-center gap-1.5 min-w-0">
           {!isOverlay && (
             <button
@@ -85,7 +131,7 @@ function DraggableCard({
               {...listeners}
               onClick={(e) => e.stopPropagation()}
               title="Drag to move"
-              className="cursor-grab active:cursor-grabbing text-[#AAAAAA] hover:text-[#171717] dark:hover:text-white -ml-1"
+              className="cursor-grab active:cursor-grabbing text-[#B0B0AA] hover:text-[#171717] dark:hover:text-white -ml-1 p-0.5 rounded-md hover:bg-[#F4F4F2] dark:hover:bg-white/10 transition-colors"
             >
               <GripVertical className="h-3.5 w-3.5" />
             </button>
@@ -95,9 +141,9 @@ function DraggableCard({
             checked={Boolean(isSelected)}
             onClick={(e) => e.stopPropagation()}
             onChange={(e) => onToggleSelect?.(item._id, e.nativeEvent?.shiftKey)}
-            className="h-3.5 w-3.5 rounded border-[#D8D8D3] accent-[#171717]"
+            className="h-3.5 w-3.5 rounded border-[#D8D8D3] accent-[#171717] transition-transform hover:scale-110"
           />
-          <span className="font-mono text-[11px] font-semibold text-[#638BEF]">{refId}</span>
+          <span className="font-mono text-[11px] font-semibold text-[#638BEF] hover:underline">{refId}</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -113,7 +159,7 @@ function DraggableCard({
                 e.stopPropagation();
                 onContextMenu?.(e, item);
               }}
-              className="opacity-0 group-hover:opacity-100 rounded p-0.5 text-[#777777] hover:bg-[#F4F4F2] dark:hover:bg-white/10"
+              className="opacity-0 group-hover:opacity-100 rounded-md p-1 text-[#777777] hover:bg-[#F4F4F2] hover:text-[#171717] dark:hover:bg-white/10 dark:hover:text-white transition-all duration-150 hover:scale-105 active:scale-95"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
             </button>
@@ -121,7 +167,7 @@ function DraggableCard({
         </div>
       </div>
 
-      <div className="mt-1.5 font-semibold text-[#171717] dark:text-slate-100 line-clamp-2 leading-snug">
+      <div className="mt-1.5 font-semibold text-[#171717] dark:text-slate-100 line-clamp-2 leading-snug group-hover:text-black dark:group-hover:text-white transition-colors pl-0.5">
         {item.title}
       </div>
 
@@ -206,11 +252,11 @@ function KanbanColumn({
   return (
     <div
       ref={setNodeRef}
-      className={`flex flex-col rounded-2xl border transition-colors shrink-0 ${
+      className={`flex flex-col rounded-2xl border shrink-0 transition-all duration-200 ${
         collapsed ? 'w-12 items-center py-3' : 'w-72 sm:w-80'
       } ${
         isOver
-          ? 'border-[#171717] bg-[#C6F36B]/15 dark:border-[#C6F36B] dark:bg-[#C6F36B]/10'
+          ? 'border-[#171717] ring-2 ring-[#C6F36B] bg-[#C6F36B]/15 dark:border-[#C6F36B] dark:bg-[#C6F36B]/10 shadow-lg scale-[1.01]'
           : 'border-[#E8E8E5] bg-[#EBEBE8]/60 dark:border-[#26282D] dark:bg-[#141518]'
       } max-h-[72vh]`}
     >
@@ -301,86 +347,187 @@ export default function KanbanBoard({
   onMoveItem,
   visibleFields = { priority: true, client: true, dueDate: true, counts: true, progress: true },
 }) {
+  const [localItems, setLocalItems] = useState(items);
   const [activeId, setActiveId] = useState(null);
   const [collapsedCols, setCollapsedCols] = useState({});
+  const originalItemsRef = useRef(items);
+
+  // Synchronize when items prop changes outside of an active drag session
+  useEffect(() => {
+    if (!activeId) {
+      setLocalItems(items);
+      originalItemsRef.current = items;
+    }
+  }, [items, activeId]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const getColKey = useCallback(
+    (item) => {
+      if (!item) return null;
+      if (groupBy === 'status') return item.status;
+      if (groupBy === 'priority') return item.priority;
+      if (groupBy === 'client') return item.client?._id || item.client || 'none';
+      if (groupBy === 'assignee') {
+        const list = entityType === 'ticket' ? item.assignedDevelopers : item.assignedEmployees;
+        return list?.[0]?._id || list?.[0] || 'unassigned';
+      }
+      return null;
+    },
+    [groupBy, entityType]
+  );
+
+  const findContainer = useCallback(
+    (id) => {
+      if (!id) return null;
+      if (String(id).startsWith('col:')) return String(id).replace('col:', '');
+      if (columns.some((c) => c.key === id)) return id;
+      const found = localItems.find((i) => i._id === id);
+      return found ? getColKey(found) : null;
+    },
+    [columns, localItems, getColKey]
+  );
+
   const grouped = useMemo(() => {
     const map = new Map(columns.map((c) => [c.key, []]));
-    items.forEach((item) => {
-      let key;
-      if (groupBy === 'status') key = item.status;
-      else if (groupBy === 'priority') key = item.priority;
-      else if (groupBy === 'client') key = item.client?._id || 'none';
-      else if (groupBy === 'assignee') {
-        const list = entityType === 'ticket' ? item.assignedDevelopers : item.assignedEmployees;
-        key = list?.[0]?._id || 'unassigned';
-      }
-      if (!map.has(key)) map.set(key, []);
-      map.get(key).push(item);
+    localItems.forEach((item) => {
+      const key = getColKey(item);
+      if (key && !map.has(key)) map.set(key, []);
+      if (key) map.get(key).push(item);
     });
     return map;
-  }, [items, columns, groupBy, entityType]);
+  }, [localItems, columns, getColKey]);
 
   const visibleColumns = hideEmptyColumns
     ? columns.filter((c) => (grouped.get(c.key) || []).length > 0)
     : columns;
 
-  const activeItem = activeId ? items.find((i) => i._id === activeId) : null;
+  const activeItem = activeId
+    ? items.find((i) => i._id === activeId) || localItems.find((i) => i._id === activeId)
+    : null;
 
-  const findColumnForId = (id) => {
-    if (String(id).startsWith('col:')) return String(id).replace('col:', '');
-    for (const [colKey, colItems] of grouped.entries()) {
-      if (colItems.some((i) => i._id === id)) return colKey;
+  const handleDragStart = ({ active }) => {
+    setActiveId(active.id);
+    originalItemsRef.current = localItems;
+  };
+
+  const handleDragOver = ({ active, over }) => {
+    if (!over) return;
+    const activeContainer = findContainer(active.id);
+    const overContainer = findContainer(over.id);
+
+    if (!activeContainer || !overContainer) return;
+
+    if (activeContainer !== overContainer) {
+      setLocalItems((prev) => {
+        const activeIndex = prev.findIndex((i) => i._id === active.id);
+        if (activeIndex === -1) return prev;
+
+        const activeItem = { ...prev[activeIndex] };
+        if (groupBy === 'status') activeItem.status = overContainer;
+        else if (groupBy === 'priority') activeItem.priority = overContainer;
+        else if (groupBy === 'client') {
+          activeItem.client = { ...(activeItem.client || {}), _id: overContainer };
+        } else if (groupBy === 'assignee') {
+          activeItem.assignedEmployees = overContainer === 'unassigned' ? [] : [{ _id: overContainer }];
+          activeItem.assignedDevelopers = overContainer === 'unassigned' ? [] : [{ _id: overContainer }];
+        }
+
+        const next = [...prev];
+        next.splice(activeIndex, 1);
+
+        if (String(over.id).startsWith('col:')) {
+          next.push(activeItem);
+        } else {
+          const overIndex = next.findIndex((i) => i._id === over.id);
+          if (overIndex !== -1) {
+            next.splice(overIndex, 0, activeItem);
+          } else {
+            next.push(activeItem);
+          }
+        }
+        return next;
+      });
+    } else {
+      if (active.id !== over.id && !String(over.id).startsWith('col:')) {
+        setLocalItems((prev) => {
+          const oldIndex = prev.findIndex((i) => i._id === active.id);
+          const newIndex = prev.findIndex((i) => i._id === over.id);
+          if (oldIndex !== -1 && newIndex !== -1) {
+            return arrayMove(prev, oldIndex, newIndex);
+          }
+          return prev;
+        });
+      }
     }
-    return null;
   };
 
   const handleDragEnd = ({ active, over }) => {
     setActiveId(null);
-    if (!over) return;
-
-    const sourceCol = findColumnForId(active.id);
-    const destCol = findColumnForId(over.id);
-    if (!destCol) return;
-
-    const destItems = (grouped.get(destCol) || []).filter((i) => i._id !== active.id);
-    let newSortOrder = 1000;
-
-    if (String(over.id).startsWith('col:')) {
-      const last = destItems[destItems.length - 1];
-      newSortOrder = last ? (last.sortOrder || 1000) + 100 : 100;
-    } else {
-      const overIdx = destItems.findIndex((i) => i._id === over.id);
-      if (overIdx === -1) {
-        newSortOrder = 100;
-      } else {
-        const prev = destItems[overIdx - 1];
-        const next = destItems[overIdx];
-        if (!prev) newSortOrder = (next.sortOrder || 1000) - 50;
-        else newSortOrder = ((prev.sortOrder || 1000) + (next.sortOrder || 1000)) / 2;
-      }
+    if (!over) {
+      setLocalItems(originalItemsRef.current);
+      return;
     }
 
-    if (active.id === over.id && sourceCol === destCol) return;
+    const destCol = findContainer(over.id);
+    if (!destCol) {
+      setLocalItems(originalItemsRef.current);
+      return;
+    }
+
+    const colItems = grouped.get(destCol) || [];
+    const droppedIndex = colItems.findIndex((i) => i._id === active.id);
+    const destItemsWithoutActive = colItems.filter((i) => i._id !== active.id);
+
+    let afterId = null;
+    let beforeId = null;
+    let newSortOrder = 1000;
+    if (destItemsWithoutActive.length === 0) {
+      newSortOrder = 100;
+    } else if (droppedIndex <= 0) {
+      const first = destItemsWithoutActive[0];
+      beforeId = first._id;
+      newSortOrder = Math.max(1, (first.sortOrder || 1000) - 100);
+    } else if (droppedIndex >= destItemsWithoutActive.length) {
+      const last = destItemsWithoutActive[destItemsWithoutActive.length - 1];
+      afterId = last._id;
+      newSortOrder = (last.sortOrder || 1000) + 100;
+    } else {
+      const prev = destItemsWithoutActive[droppedIndex - 1];
+      const next = destItemsWithoutActive[droppedIndex];
+      afterId = prev?._id || null;
+      beforeId = next?._id || null;
+      const prevOrder = prev?.sortOrder || 1000;
+      const nextOrder = next?.sortOrder || 1000;
+      newSortOrder = prevOrder === nextOrder ? prevOrder : (prevOrder + nextOrder) / 2;
+    }
+
     onMoveItem?.({
       id: active.id,
       groupBy,
       destinationValue: destCol,
       newSortOrder,
+      afterId,
+      beforeId,
     });
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+    setLocalItems(originalItemsRef.current);
   };
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
-      onDragStart={({ active }) => setActiveId(active.id)}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <div className="flex gap-3.5 overflow-x-auto pb-3 items-start">
         {visibleColumns.map((col) => (
@@ -401,9 +548,9 @@ export default function KanbanBoard({
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={dropAnimationConfig}>
         {activeItem ? (
-          <div className="w-72 sm:w-80">
+          <div className="w-72 sm:w-80 pointer-events-none">
             <DraggableCard
               item={activeItem}
               entityType={entityType}

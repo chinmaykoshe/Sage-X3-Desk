@@ -43,6 +43,8 @@ import {
   Shield,
   FileSpreadsheet,
   LifeBuoy,
+  Minimize2,
+  Maximize2,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -135,6 +137,7 @@ export default function AppLayout() {
   } = useWorkspace();
 
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sagex3_sidebar_collapsed') === 'true');
+  const [density, setDensity] = useState(() => localStorage.getItem('sagex3_ui_density') || 'normal');
   const [adminMenuOpen, setAdminMenuOpen] = useState(() => window.location.pathname.startsWith('/admin'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -156,6 +159,21 @@ export default function AppLayout() {
   useEffect(() => {
     localStorage.setItem('sagex3_sidebar_collapsed', String(collapsed));
   }, [collapsed]);
+
+  useEffect(() => {
+    localStorage.setItem('sagex3_ui_density', density);
+    if (density === 'normal') {
+      delete document.documentElement.dataset.density;
+    } else {
+      document.documentElement.dataset.density = density;
+    }
+  }, [density]);
+
+  const cycleDensity = () => {
+    setDensity((d) => (d === 'normal' ? 'compact' : d === 'compact' ? 'ultra' : 'normal'));
+  };
+
+  const densityLabel = density === 'ultra' ? '72%' : density === 'compact' ? '85%' : '100%';
 
   // Global debounced search across tickets, clients, projects, tasks & employees
   useEffect(() => {
@@ -562,6 +580,19 @@ export default function AppLayout() {
             </button>
 
             <button
+              onClick={cycleDensity}
+              title={`Dashboard Zoom / Density: ${densityLabel} (click to cycle 100% → 85% → 72%)`}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-colors ${
+                density === 'normal'
+                  ? 'border-[#E8E8E5] bg-white text-[#555555] hover:border-[#171717] hover:text-[#171717] dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-slate-300'
+                  : 'border-[#171717] bg-[#C6F36B]/25 text-[#171717] dark:border-[#C6F36B]/60 dark:bg-[#C6F36B]/15 dark:text-[#C6F36B]'
+              }`}
+            >
+              {density === 'normal' ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              <span>{densityLabel}</span>
+            </button>
+
+            <button
               onClick={toggleTheme}
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
               className="rounded-lg p-1.5 sm:p-2 text-[#555555] hover:bg-[#F4F4F2] dark:text-slate-400 dark:hover:bg-white/10"
@@ -585,7 +616,7 @@ export default function AppLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-3 pb-20 sm:p-6">
+        <main className={`flex-1 overflow-y-auto ${density === 'normal' ? 'p-3 pb-20 sm:p-6' : 'p-2 pb-14 sm:p-3.5'}`}>
           <Breadcrumbs />
           <Outlet />
         </main>

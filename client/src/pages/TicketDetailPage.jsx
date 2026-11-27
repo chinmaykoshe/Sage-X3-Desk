@@ -19,6 +19,10 @@ import {
   Server,
   ImagePlus,
   X,
+  Search,
+  Check,
+  ExternalLink,
+  GitMerge,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
@@ -46,12 +50,18 @@ export default function TicketDetailPage() {
   const { user, isManager, hasAction } = useAuth();
   const canApproveTickets = isManager || hasAction('tickets', 'approve');
   const { addToast } = useToast();
-  const { openTaskDrawer, lastSync, notifyLocalMutation, tickets: allWorkspaceTickets } = useWorkspace();
+  const { openTaskDrawer, lastSync, notifyLocalMutation } = useWorkspace();
 
   const [ticket, setTicket] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saveState, setSaveState] = useState('idle');
+
+  const [mergeTickets, setMergeTickets] = useState([]);
+  const [mergeTicketsLoading, setMergeTicketsLoading] = useState(false);
+  const [mergeSearch, setMergeSearch] = useState('');
+  const [mergeStatusFilter, setMergeStatusFilter] = useState('');
+  const [mobileShowPicker, setMobileShowPicker] = useState(false);
 
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState('');
@@ -138,6 +148,36 @@ export default function TicketDetailPage() {
   useEffect(() => {
     loadTicket();
   }, [id]);
+
+  useEffect(() => {
+    if (!mergeModal.open) return;
+    let active = true;
+    setMergeTicketsLoading(true);
+    api
+      .get('/tickets', { params: { scope: 'all', limit: 100, sortBy: 'createdAt', sortOrder: 'desc' } })
+      .then(({ data }) => {
+        if (!active) return;
+        setMergeTickets((data.data || []).filter((t) => t._id !== id));
+      })
+      .catch((err) => {
+        if (!active) return;
+        addToast(getApiError(err, 'Failed to load tickets for merge'), 'error');
+      })
+      .finally(() => {
+        if (active) setMergeTicketsLoading(false);
+      });
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' });
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      active = false;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [mergeModal.open, id]);
 
   useEffect(() => {
     if (lastSync.lastEvent?.type === 'ticket' && String(lastSync.lastEvent.ticketId) === String(id)) {
@@ -471,14 +511,17 @@ export default function TicketDetailPage() {
           <Button
             size="xs"
             variant="secondary"
-            onClick={() =>
+            onClick={() => {
+              setMergeSearch('');
+              setMergeStatusFilter('');
+              setMobileShowPicker(true);
               setMergeModal({
                 open: true,
                 sourceTicketId: '',
                 mergedTitle: ticket.title || '',
                 mergedDescription: ticket.description || '',
-              })
-            }
+              });
+            }}
           >
             Merge
           </Button>
@@ -1395,96 +1438,315 @@ export default function TicketDetailPage() {
         confirmText="Archive"
       />
 
-      {/* Merge Ticket Modal */}
-      <Modal
-        open={mergeModal.open}
-        onClose={() => setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' })}
-        title={`Merge Another Ticket into ${ticket.ticketId}`}
-        subtitle="Combine tasks, comments, attachments, and additional changes from a second ticket into this one"
-        maxWidth="max-w-2xl"
-      >
-        <div className="space-y-3 text-xs">
-          <div>
-            <label className="block font-medium mb-1">Select Ticket to Merge Into {ticket.ticketId} *</label>
-            <select
-              value={mergeModal.sourceTicketId}
-              onChange={(e) => {
-                const sid = e.target.value;
-                const src = (allWorkspaceTickets || []).find((x) => x._id === sid);
-                setMergeModal((prev) => ({
-                  ...prev,
-                  sourceTicketId: sid,
-                  mergedDescription: src
-                    ? `${ticket.description || ''}\n\n--- Merged from ${src.ticketId}: ${src.title} ---\n${src.description || ''}`.trim()
-                    : ticket.description || '',
-                }));
-              }}
-              className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
-            >
-              <option value="">Choose ticket...</option>
-              {(allWorkspaceTickets || [])
-                .filter((t) => t._id !== ticket._id)
-                .map((t) => (
-                  <option key={t._id} value={t._id}>
-                    {t.ticketId} — {t.title} ({t.client?.companyName || 'No client'})
-                  </option>
-                ))}
-            </select>
-          </div>
+      {/* Merge Ticket Modal + Side All-Tickets Drawer */}
+      {mergeModal.open && (() => {
+        const q = mergeSearch.trim().toLowerCase();
+        const filteredMergeTickets = mergeTickets.filter((t) => {
+          if (mergeStatusFilter && t.status !== mergeStatusFilter) return false;
+          if (!q) return true;
+          return (
+            t.ticketId?.toLowerCase().includes(q) ||
+            t.title?.toLowerCase().includes(q) ||
+            t.client?.companyName?.toLowerCase().includes(q) ||
+            t.folderCode?.toLowerCase().includes(q)
+          );
+        });
+        const selectedSource = mergeTickets.find((x) => x._id === mergeModal.sourceTicketId) || null;
+        const closeMerge = () =>
+          setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' });
+        const handleSelectMergeTicket = (src) => {
+          setMergeModal((prev) => ({
+            ...prev,
+            sourceTicketId: src._id,
+            mergedDescription: `${ticket.description || ''}\n\n--- Merged from ${src.ticketId}: ${src.title} ---\n${src.description || ''}`.trim(),
+          }));
+          setMobileShowPicker(false);
+        };
 
-          <div>
-            <label className="block font-medium mb-1">Combined Title</label>
-            <input
-              type="text"
-              value={mergeModal.mergedTitle}
-              onChange={(e) => setMergeModal((p) => ({ ...p, mergedTitle: e.target.value }))}
-              className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
-            />
-          </div>
+        return (
+          <div className="fixed inset-0 z-50 flex bg-slate-950/50 backdrop-blur-[1px]">
+            {/* Backdrop click */}
+            <div className="fixed inset-0" onClick={closeMerge} />
 
-          <div>
-            <label className="block font-medium mb-1">Combined Description (Editable)</label>
-            <textarea
-              rows={6}
-              value={mergeModal.mergedDescription}
-              onChange={(e) => setMergeModal((p) => ({ ...p, mergedDescription: e.target.value }))}
-              className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
-            />
-          </div>
+            {/* Left/Center Merge Dialog */}
+            <div
+              className={`relative z-10 flex-1 items-center justify-center p-3 sm:p-6 min-w-0 ${
+                mobileShowPicker ? 'hidden lg:flex' : 'flex'
+              }`}
+            >
+              <div className="w-full max-w-2xl max-h-[92dvh] flex flex-col rounded-2xl border border-[#E8E8E5] bg-white dark:border-[#2C2E33] dark:bg-[#17181B] shadow-2xl">
+                <div className="flex items-start justify-between gap-2 border-b border-[#E8E8E5] dark:border-[#26282D] px-5 py-4">
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-semibold text-[#171717] dark:text-slate-100 flex items-center gap-2">
+                      <GitMerge className="h-4 w-4 text-[#638BEF]" />
+                      Merge Another Ticket into {ticket.ticketId}
+                    </h3>
+                    <p className="text-xs text-[#777777] mt-0.5">
+                      Select any ticket from the side drawer to combine tasks, comments, attachments, and details
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={closeMerge}
+                    className="shrink-0 rounded-lg p-1.5 text-[#777777] hover:bg-[#F4F4F2] hover:text-[#171717] dark:hover:bg-white/10 dark:hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              variant="secondary"
-              onClick={() => setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' })}
+                <div className="overflow-y-auto p-5 space-y-4 text-xs">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block font-medium text-[#171717] dark:text-slate-200">
+                        Selected Ticket to Merge Into {ticket.ticketId} *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setMobileShowPicker(true)}
+                        className="lg:hidden text-[11px] font-semibold text-[#638BEF] hover:underline"
+                      >
+                        Browse All Tickets ({mergeTickets.length})
+                      </button>
+                    </div>
+
+                    {selectedSource ? (
+                      <div className="flex items-start justify-between gap-3 rounded-xl border border-[#171717] dark:border-[#C6F36B] bg-[#C6F36B]/10 p-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-mono font-bold text-[#638BEF]">{selectedSource.ticketId}</span>
+                            <Badge variant="status" value={selectedSource.status}>
+                              {formatStatusLabel(selectedSource.status)}
+                            </Badge>
+                            <Badge variant="priority" value={selectedSource.priority}>
+                              {selectedSource.priority}
+                            </Badge>
+                          </div>
+                          <div className="mt-1 font-semibold text-[#171717] dark:text-white truncate">
+                            {selectedSource.title}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-[#777777]">
+                            {selectedSource.client?.companyName || 'No client'}
+                            {selectedSource.folderCode ? ` · ${selectedSource.folderCode}` : ''}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMergeModal((prev) => ({
+                              ...prev,
+                              sourceTicketId: '',
+                              mergedDescription: ticket.description || '',
+                            }));
+                            setMobileShowPicker(true);
+                          }}
+                          className="shrink-0 rounded-lg border border-[#E8E8E5] dark:border-[#2C2E33] bg-white dark:bg-[#1E2025] px-2.5 py-1 text-[11px] font-medium hover:bg-[#F4F4F2]"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setMobileShowPicker(true)}
+                        className="w-full rounded-xl border-2 border-dashed border-[#D8D8D3] dark:border-[#2C2E33] bg-[#F4F4F2]/50 dark:bg-white/5 px-4 py-3 text-left text-xs text-[#777777] hover:border-[#638BEF] transition-colors flex items-center justify-between"
+                      >
+                        <span>Choose a ticket from the All Tickets drawer on the right →</span>
+                        <span className="font-semibold text-[#638BEF] lg:hidden">Open List</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-1">Combined Title</label>
+                    <input
+                      type="text"
+                      value={mergeModal.mergedTitle}
+                      onChange={(e) => setMergeModal((p) => ({ ...p, mergedTitle: e.target.value }))}
+                      className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-medium mb-1">Combined Description (Editable)</label>
+                    <textarea
+                      rows={6}
+                      value={mergeModal.mergedDescription}
+                      onChange={(e) => setMergeModal((p) => ({ ...p, mergedDescription: e.target.value }))}
+                      className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-[#E8E8E5] dark:border-[#26282D]">
+                    <Button variant="secondary" onClick={closeMerge}>
+                      Cancel
+                    </Button>
+                    <Button
+                      disabled={merging || !mergeModal.sourceTicketId}
+                      onClick={async () => {
+                        setMerging(true);
+                        try {
+                          const { data } = await api.post(`/tickets/${ticket._id}/merge`, {
+                            sourceTicketId: mergeModal.sourceTicketId,
+                            mergedTitle: mergeModal.mergedTitle,
+                            mergedDescription: mergeModal.mergedDescription,
+                          });
+                          addToast(data.message || 'Tickets merged successfully', 'success');
+                          closeMerge();
+                          notifyLocalMutation?.('ticket');
+                          loadTicket();
+                        } catch (err) {
+                          addToast(getApiError(err, 'Failed to merge tickets'), 'error');
+                        } finally {
+                          setMerging(false);
+                        }
+                      }}
+                    >
+                      {merging ? 'Merging...' : `Merge into ${ticket.ticketId}`}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right-Side Drawer: All Tickets List */}
+            <aside
+              className={`relative z-20 h-full w-full lg:w-[400px] xl:w-[440px] flex-col bg-white dark:bg-[#17181B] border-l border-[#E8E8E5] dark:border-[#26282D] shadow-2xl shrink-0 animate-in slide-in-from-right ${
+                mobileShowPicker ? 'flex' : 'hidden lg:flex'
+              }`}
             >
-              Cancel
-            </Button>
-            <Button
-              disabled={merging || !mergeModal.sourceTicketId}
-              onClick={async () => {
-                setMerging(true);
-                try {
-                  const { data } = await api.post(`/tickets/${ticket._id}/merge`, {
-                    sourceTicketId: mergeModal.sourceTicketId,
-                    mergedTitle: mergeModal.mergedTitle,
-                    mergedDescription: mergeModal.mergedDescription,
-                  });
-                  addToast(data.message || 'Tickets merged successfully', 'success');
-                  setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' });
-                  notifyLocalMutation?.('ticket');
-                  loadTicket();
-                } catch (err) {
-                  addToast(getApiError(err, 'Failed to merge tickets'), 'error');
-                } finally {
-                  setMerging(false);
-                }
-              }}
-            >
-              {merging ? 'Merging...' : `Merge into ${ticket.ticketId}`}
-            </Button>
+              <div className="flex items-center justify-between gap-2 border-b border-[#E8E8E5] dark:border-[#26282D] px-4 py-3.5 shrink-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h4 className="text-sm font-semibold text-[#171717] dark:text-slate-100 truncate">
+                    All Tickets
+                  </h4>
+                  <span className="rounded-full bg-[#F4F4F2] dark:bg-white/10 px-2 py-0.5 text-[11px] font-semibold text-[#555555] dark:text-slate-300">
+                    {filteredMergeTickets.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {selectedSource && (
+                    <button
+                      type="button"
+                      onClick={() => setMobileShowPicker(false)}
+                      className="lg:hidden rounded-lg bg-[#171717] px-2.5 py-1 text-[11px] font-semibold text-[#C6F36B]"
+                    >
+                      Back to Merge
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={closeMerge}
+                    title="Close (Esc)"
+                    className="rounded-lg p-1.5 text-[#777777] hover:bg-[#F4F4F2] hover:text-[#171717] dark:hover:bg-white/10 dark:hover:text-white"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Search & Status Filter */}
+              <div className="p-3 border-b border-[#E8E8E5] dark:border-[#26282D] space-y-2 shrink-0 bg-[#F4F4F2]/40 dark:bg-[#141518]">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#777777]" />
+                  <input
+                    type="text"
+                    value={mergeSearch}
+                    onChange={(e) => setMergeSearch(e.target.value)}
+                    placeholder="Search ID, title, client, or folder..."
+                    className="w-full rounded-lg border border-[#E8E8E5] bg-white py-1.5 pl-8 pr-3 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                    autoFocus
+                  />
+                </div>
+                <select
+                  value={mergeStatusFilter}
+                  onChange={(e) => setMergeStatusFilter(e.target.value)}
+                  className="w-full rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                >
+                  <option value="">All Statuses</option>
+                  {TICKET_STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {formatStatusLabel(s)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Scrollable Ticket Cards */}
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {mergeTicketsLoading ? (
+                  <Loader label="Loading tickets..." />
+                ) : filteredMergeTickets.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[#D8D8D3] dark:border-[#2C2E33] p-6 text-center text-xs text-[#777777]">
+                    No matching tickets available to merge.
+                  </div>
+                ) : (
+                  filteredMergeTickets.map((t) => {
+                    const isSelected = mergeModal.sourceTicketId === t._id;
+                    return (
+                      <div
+                        key={t._id}
+                        onClick={() => handleSelectMergeTicket(t)}
+                        className={`group rounded-xl border p-3 text-xs cursor-pointer transition-all duration-150 ${
+                          isSelected
+                            ? 'border-[#171717] ring-2 ring-[#C6F36B] bg-[#C6F36B]/10 dark:border-[#C6F36B]'
+                            : 'border-[#E8E8E5] bg-white hover:border-[#638BEF] hover:shadow-sm dark:border-[#2C2E33] dark:bg-[#1E2025] dark:hover:border-[#638BEF]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-mono text-[11px] font-bold text-[#638BEF]">
+                              {t.ticketId}
+                            </span>
+                            <Badge variant="status" value={t.status}>
+                              {formatStatusLabel(t.status)}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Badge variant="priority" value={t.priority}>
+                              {t.priority}
+                            </Badge>
+                            {isSelected && (
+                              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717]">
+                                <Check className="h-3 w-3" />
+                              </span>
+                            )}
+                            <Link
+                              to={`/tickets/${t._id}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title="Open ticket in new tab"
+                              className="rounded p-1 text-[#777777] opacity-0 group-hover:opacity-100 hover:bg-[#F4F4F2] hover:text-[#171717] dark:hover:bg-white/10 dark:hover:text-white transition-opacity"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        </div>
+
+                        <div className="mt-1.5 font-semibold text-[#171717] dark:text-slate-100 line-clamp-2 leading-snug">
+                          {t.title}
+                        </div>
+
+                        <div className="mt-2 flex items-center justify-between gap-2 text-[11px] text-[#777777]">
+                          <span className="truncate">{t.client?.companyName || 'No client'}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {(t.folderCode || t.client?.clientFolderCode) && (
+                              <span className="rounded bg-[#F4F4F2] dark:bg-white/10 px-1.5 py-0.5 font-mono text-[10px]">
+                                {t.folderCode || t.client.clientFolderCode}
+                              </span>
+                            )}
+                            <span className="text-[10px]">{dayjs(t.createdAt).format('DD MMM')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </aside>
           </div>
-        </div>
-      </Modal>
+        );
+      })()}
 
       {/* Carry Forward Ticket Modal (Auto-logs hours to Timesheet) */}
       <Modal

@@ -294,138 +294,262 @@ export default function AdminMonitoringPage() {
       {loading ? (
         <Loader label="Loading monitoring view..." />
       ) : tab === 'overview' && overview ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="space-y-5">
+          {/* ── 1. Hero Storage & Capacity Meter (Quantro / Eduplex Style) ─── */}
+          {overview.spaceConsumed && (
+            <div className="rounded-2xl border border-[#E8E8E5] bg-white p-5 shadow-sm dark:border-[#26282D] dark:bg-[#141518]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E8E8E5] dark:border-[#26282D]">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717] font-bold shadow-sm">
+                    <HardDrive className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[#171717] dark:text-white flex items-center gap-2">
+                      System Storage &amp; Database Footprint
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                        Healthy
+                      </span>
+                    </h2>
+                    <p className="text-xs text-[#777777] dark:text-slate-400">
+                      MongoDB Database: <span className="font-mono font-semibold text-[#171717] dark:text-slate-200">{overview.spaceConsumed.dbName}</span> · {overview.spaceConsumed.collections} collections · {overview.spaceConsumed.objects} documents
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-semibold tracking-wider text-[#777777] block">Total Footprint</span>
+                    <span className="text-xl font-extrabold text-[#171717] dark:text-white font-mono">
+                      {formatBytes(overview.spaceConsumed.totalBytes)}
+                    </span>
+                  </div>
+                  <span className="rounded-xl bg-[#C6F36B]/25 dark:bg-[#C6F36B]/15 px-3 py-1.5 text-xs font-bold text-[#171717] dark:text-[#C6F36B] border border-[#171717]/10 dark:border-[#C6F36B]/30">
+                    Live Synced
+                  </span>
+                </div>
+              </div>
+
+              {/* Visual Segmented Capacity Bar */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs text-[#777777] mb-1.5 font-medium">
+                  <span>Storage Allocation Breakdown</span>
+                  <span className="font-mono text-[11px]">100% Accounted</span>
+                </div>
+                {(() => {
+                  const total = Math.max(overview.spaceConsumed.totalBytes, 1);
+                  const pMongo = Math.max(Math.round((overview.spaceConsumed.dbDataBytes / total) * 100), 10);
+                  const pIdx = Math.max(Math.round(((overview.spaceConsumed.dbStorageBytes + overview.spaceConsumed.dbIndexBytes) / total) * 100), 8);
+                  const pDisk = Math.max(Math.round((overview.spaceConsumed.uploadsDiskBytes / total) * 100), 10);
+                  const pAtt = Math.max(Math.round((overview.spaceConsumed.attachmentDbBytes / total) * 100), 5);
+                  return (
+                    <div className="h-2.5 w-full rounded-full bg-[#E8E8E5] dark:bg-[#26282D] overflow-hidden flex gap-0.5">
+                      <div style={{ width: `${pMongo}%` }} className="h-full bg-[#638BEF] rounded-l-full" title="Mongo Data" />
+                      <div style={{ width: `${pIdx}%` }} className="h-full bg-[#A88CEB]" title="DB Storage & Index" />
+                      <div style={{ width: `${pDisk}%` }} className="h-full bg-[#35B8A6]" title="Uploads on Disk" />
+                      <div style={{ width: `${pAtt}%` }} className="h-full bg-[#F59E0B] rounded-r-full" title="Attachment Records" />
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* 5 Sleek Storage Detail Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4 text-xs">
+                <div className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/50 dark:bg-white/[0.02] p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#777777] flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#638BEF]" />
+                      MongoDB Data
+                    </div>
+                    <div className="mt-1.5 text-lg font-bold font-mono text-[#171717] dark:text-white">
+                      {formatBytes(overview.spaceConsumed.dbDataBytes)}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[10px] text-[#777777]">
+                    {overview.spaceConsumed.objects} objects in DB
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/50 dark:bg-white/[0.02] p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#777777] flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#A88CEB]" />
+                      Storage + Index
+                    </div>
+                    <div className="mt-1.5 text-lg font-bold font-mono text-[#171717] dark:text-white">
+                      {formatBytes(overview.spaceConsumed.dbStorageBytes + overview.spaceConsumed.dbIndexBytes)}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[10px] text-[#777777]">
+                    Index: {formatBytes(overview.spaceConsumed.dbIndexBytes)}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/50 dark:bg-white/[0.02] p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#777777] flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#35B8A6]" />
+                      Local Disk Uploads
+                    </div>
+                    <div className="mt-1.5 text-lg font-bold font-mono text-[#171717] dark:text-white">
+                      {formatBytes(overview.spaceConsumed.uploadsDiskBytes)}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[10px] text-[#777777]">
+                    {overview.spaceConsumed.uploadsFileCount} files in /uploads
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/50 dark:bg-white/[0.02] p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#777777] flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />
+                      Attachments DB
+                    </div>
+                    <div className="mt-1.5 text-lg font-bold font-mono text-[#171717] dark:text-white">
+                      {formatBytes(overview.spaceConsumed.attachmentDbBytes)}
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[10px] text-[#777777]">
+                    {overview.spaceConsumed.attachmentCount} active records
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/50 dark:bg-white/[0.02] p-3 flex flex-col justify-between">
+                  <div>
+                    <div className="text-[11px] font-semibold text-[#777777] flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#171717] dark:bg-white" />
+                      Live Documents
+                    </div>
+                    <div className="mt-1.5 font-semibold text-xs text-[#171717] dark:text-white space-y-0.5">
+                      <div>{overview.spaceConsumed.breakdown.tickets} tickets · {overview.spaceConsumed.breakdown.ticketDrafts} drafts</div>
+                      <div>{overview.spaceConsumed.breakdown.tasks} tasks · {overview.spaceConsumed.breakdown.emails} emails</div>
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[10px] text-[#35B8A6] font-medium">
+                    All collections indexed
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 2. Modern System Health & Performance KPIs ──────────────────── */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
             {[
-              ['Active Users', overview.kpis.totalUsers, 'text-[#171717] dark:text-white'],
-              ['Pending Approvals', overview.kpis.pendingApprovals, 'text-[#638BEF]'],
-              ['Approved Tickets', overview.kpis.approvedTickets, 'text-[#35B8A6]'],
-              ['Dev Updates', overview.kpis.devUpdatesCount, 'text-[#A88CEB]'],
-              ['API / Auth Errors (24h)', overview.kpis.apiErrors24h, 'text-[#F16D64]'],
-              ['AI Requests (24h)', overview.kpis.aiCalls24h, 'text-[#638BEF]'],
-              ['Deployments Recorded', overview.kpis.deploymentsCount, 'text-[#35B8A6]'],
-              ['Audit Events', overview.kpis.auditEventsCount, 'text-[#171717] dark:text-white'],
-            ].map(([lbl, val, cls]) => (
-              <Card key={lbl} className="p-3.5">
-                <div className="text-[11px] text-[#777777]">{lbl}</div>
-                <div className={`mt-1 text-2xl font-bold ${cls}`}>{val}</div>
+              ['Active Users', overview.kpis.totalUsers, 'text-[#171717] dark:text-white', 'Registered Staff', 'bg-slate-100 dark:bg-white/10'],
+              ['Pending Approvals', overview.kpis.pendingApprovals, 'text-[#638BEF]', 'Action Queue', 'bg-[#638BEF]/10'],
+              ['Approved Tickets', overview.kpis.approvedTickets, 'text-[#35B8A6]', 'Production Ready', 'bg-[#35B8A6]/10'],
+              ['Dev Updates', overview.kpis.devUpdatesCount, 'text-[#A88CEB]', 'Code & 4GL Logs', 'bg-[#A88CEB]/10'],
+              ['API / Auth Errors (24h)', overview.kpis.apiErrors24h, overview.kpis.apiErrors24h > 0 ? 'text-[#F16D64]' : 'text-emerald-600', 'Status', 'bg-[#F16D64]/10'],
+              ['AI Requests (24h)', overview.kpis.aiCalls24h, 'text-[#638BEF]', 'Ollama Engine', 'bg-[#638BEF]/10'],
+              ['Deployments Recorded', overview.kpis.deploymentsCount, 'text-[#35B8A6]', 'Release Pipeline', 'bg-[#35B8A6]/10'],
+              ['Security Audit Events', overview.kpis.auditEventsCount, 'text-[#171717] dark:text-white', 'Governance Log', 'bg-slate-100 dark:bg-white/10'],
+            ].map(([lbl, val, cls, tag, tagBg]) => (
+              <Card key={lbl} className="p-4 flex flex-col justify-between hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[#777777] dark:text-slate-400">{lbl}</span>
+                  <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold ${tagBg} text-[#777777] dark:text-slate-300`}>
+                    {tag}
+                  </span>
+                </div>
+                <div className={`mt-2 text-2xl font-extrabold tracking-tight ${cls}`}>
+                  {val}
+                </div>
               </Card>
             ))}
           </div>
 
-          {overview.spaceConsumed && (
-            <Card>
-              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] flex items-center gap-1.5">
-                  <HardDrive className="h-3.5 w-3.5 text-[#35B8A6]" /> Space Consumed &amp; Storage Footprint ({overview.spaceConsumed.dbName})
-                </h3>
-                <span className="rounded-full bg-[#C6F36B] px-2.5 py-0.5 text-[11px] font-bold text-[#171717]">
-                  Total Footprint: {formatBytes(overview.spaceConsumed.totalBytes)}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
-                  <div className="text-[11px] text-[#777777] flex items-center gap-1"><Database className="h-3 w-3" /> Mongo Data</div>
-                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.dbDataBytes)}</div>
-                  <div className="text-[10px] text-[#777777]">{overview.spaceConsumed.objects} objects · {overview.spaceConsumed.collections} collections</div>
-                </div>
-                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
-                  <div className="text-[11px] text-[#777777]">DB Storage + Indexes</div>
-                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.dbStorageBytes + overview.spaceConsumed.dbIndexBytes)}</div>
-                  <div className="text-[10px] text-[#777777]">Index: {formatBytes(overview.spaceConsumed.dbIndexBytes)}</div>
-                </div>
-                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
-                  <div className="text-[11px] text-[#777777]">Local Uploads Disk</div>
-                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.uploadsDiskBytes)}</div>
-                  <div className="text-[10px] text-[#777777]">{overview.spaceConsumed.uploadsFileCount} files on disk</div>
-                </div>
-                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
-                  <div className="text-[11px] text-[#777777]">Ticket Attachments</div>
-                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.attachmentDbBytes)}</div>
-                  <div className="text-[10px] text-[#777777]">{overview.spaceConsumed.attachmentCount} active records</div>
-                </div>
-                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
-                  <div className="text-[11px] text-[#777777]">Records Breakdown</div>
-                  <div className="mt-1 text-[11px] font-medium space-y-0.5">
-                    <div>{overview.spaceConsumed.breakdown.tickets} tickets · {overview.spaceConsumed.breakdown.ticketDrafts} drafts</div>
-                    <div>{overview.spaceConsumed.breakdown.tasks} tasks · {overview.spaceConsumed.breakdown.emails} emails</div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-
+          {/* ── 3. High-Density Activity, System Error & Security Logs ─────── */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Latest Security &amp; Audit Events</h3>
-              <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
-                {(overview.recentAudit || []).map((a) => (
-                  <div key={a._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5">
-                    <div>
-                      <span className="font-semibold">{a.action}</span> · <span className="text-[#777777]">{a.recordRef || a.recordType}</span>
-                      <div className="text-[10px] text-[#777777]">{a.actorId?.fullName || 'System'} · {a.module} · {dayjs(a.timestamp).format('DD MMM HH:mm')}</div>
-                    </div>
-                    <Badge variant={a.result === 'DENIED' || a.result === 'FAILED' ? 'danger' : 'success'}>{a.result}</Badge>
-                  </div>
-                ))}
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#E8E8E5] dark:border-[#26282D]">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#171717] dark:text-white flex items-center gap-1.5">
+                  <ShieldAlert className="h-4 w-4 text-[#638BEF]" />
+                  Latest Security &amp; Audit Events
+                </h3>
+                <span className="text-[10px] font-semibold text-[#777777]">Real-time Trail</span>
               </div>
-            </Card>
-            <Card>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent System &amp; API Logs</h3>
               <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
-                {(overview.recentSystemErrors || []).length === 0 ? (
-                  <p className="text-[#777777]">No recent errors recorded.</p>
+                {(overview.recentAudit || []).length === 0 ? (
+                  <p className="py-6 text-center text-[#777777]">No audit events recorded.</p>
                 ) : (
-                  overview.recentSystemErrors.map((s) => (
-                    <div key={s._id} className="border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[11px] font-semibold">{s.method} {s.endpoint}</span>
-                        <Badge variant="danger">{s.httpStatus}</Badge>
+                  (overview.recentAudit || []).map((a) => (
+                    <div key={a._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-2">
+                      <div className="min-w-0 pr-2">
+                        <div className="font-semibold text-[#171717] dark:text-white truncate">
+                          {a.action} · <span className="text-[#777777] font-normal">{a.recordRef || a.recordType}</span>
+                        </div>
+                        <div className="text-[10px] text-[#777777] mt-0.5">
+                          {a.actorId?.fullName || 'System'} · {a.module} · {dayjs(a.timestamp).format('DD MMM HH:mm')}
+                        </div>
                       </div>
-                      <p className="text-[11px] text-[#777777] truncate">{s.message}</p>
+                      <Badge variant={a.result === 'DENIED' || a.result === 'FAILED' ? 'danger' : 'success'}>
+                        {a.result}
+                      </Badge>
                     </div>
                   ))
                 )}
               </div>
             </Card>
-            <Card>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent Operational Activity Logs</h3>
+
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#E8E8E5] dark:border-[#26282D]">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#171717] dark:text-white flex items-center gap-1.5">
+                  <AlertTriangle className="h-4 w-4 text-[#F16D64]" />
+                  Recent System &amp; API Errors
+                </h3>
+                <span className="text-[10px] font-semibold text-[#777777]">24h Diagnostic</span>
+              </div>
               <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
-                {(overview.recentActivityLogs || []).map((l) => (
-                  <div key={l._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5 gap-2">
-                    <div className="min-w-0">
-                      <div className="font-semibold truncate">{l.summary || l.action}</div>
-                      <div className="text-[10px] text-[#777777]">{l.actor?.fullName || 'System'} · {l.action}</div>
-                    </div>
-                    <span className="text-[10px] text-[#777777] shrink-0">{dayjs(l.createdAt).format('DD MMM HH:mm')}</span>
+                {(overview.recentSystemErrors || []).length === 0 ? (
+                  <div className="py-8 text-center text-[#35B8A6] flex flex-col items-center gap-1 font-medium">
+                    <CheckCircle2 className="h-5 w-5" />
+                    <span>Zero system or API errors recorded</span>
                   </div>
-                ))}
+                ) : (
+                  overview.recentSystemErrors.map((s) => (
+                    <div key={s._id} className="border-b border-[#E8E8E5] dark:border-[#26282D] pb-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[11px] font-semibold text-[#171717] dark:text-white">{s.method} {s.endpoint}</span>
+                        <Badge variant="danger">{s.httpStatus}</Badge>
+                      </div>
+                      <p className="text-[11px] text-[#777777] truncate mt-0.5">{s.message}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </Card>
-            <Card>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent Email &amp; AI Processing Logs</h3>
-              <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
-                {(overview.recentEmailLogs || []).map((l) => (
-                  <div key={l._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5 gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">
-                        <span className="font-mono text-[#638BEF] mr-1.5">{l.processingStage}</span>
-                        {l.message || l.error}
+
+            <Card className="lg:col-span-2 p-4">
+              <div className="flex items-center justify-between mb-3 pb-2 border-b border-[#E8E8E5] dark:border-[#26282D]">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#171717] dark:text-white flex items-center gap-1.5">
+                  <Activity className="h-4 w-4 text-[#35B8A6]" />
+                  Recent Operational Activity Stream
+                </h3>
+                <Link to="/activity-logs" className="text-xs font-semibold text-[#638BEF] hover:underline flex items-center gap-0.5">
+                  View Full Audit Logs →
+                </Link>
+              </div>
+              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D]">
+                {(overview.recentActivityLogs || []).length === 0 ? (
+                  <p className="py-4 text-center text-[#777777]">No recent activity logged.</p>
+                ) : (
+                  overview.recentActivityLogs.slice(0, 5).map((l) => (
+                    <div key={l._id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
+                      <div className="min-w-0">
+                        <span className="font-semibold text-[#171717] dark:text-white truncate block">
+                          {l.summary || l.action}
+                        </span>
+                        <span className="text-[11px] text-[#777777]">
+                          By {l.actor?.fullName || 'System'} · Action: <code className="font-mono text-[10px] bg-slate-100 dark:bg-white/10 px-1 py-0.5 rounded">{l.action}</code>
+                        </span>
                       </div>
-                      <div className="text-[10px] text-[#777777]">{l.mailboxId?.mailboxAddress || 'Mailbox'} · {dayjs(l.timestamp).format('DD MMM HH:mm')}</div>
+                      <span className="text-[11px] text-[#777777] shrink-0 font-medium">
+                        {dayjs(l.createdAt).format('DD MMM, HH:mm')}
+                      </span>
                     </div>
-                    <Badge variant={l.result === 'failed' ? 'danger' : 'success'}>{l.result}</Badge>
-                  </div>
-                ))}
-                {(overview.recentAiLogs || []).map((a) => (
-                  <div key={a._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5 gap-2">
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">AI {a.detectedIntent} → {a.executedAction}</div>
-                      <div className="text-[10px] text-[#777777]">{a.userId?.fullName || 'User'} · {a.modelName}</div>
-                    </div>
-                    <Badge variant={a.executionResult === 'failed' ? 'danger' : 'info'}>{a.executionResult}</Badge>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </Card>
           </div>

@@ -15,7 +15,7 @@ function killPort(port) {
       // find PIDs listening on the port
       const out = execSync(
         `netstat -ano | findstr ":${port} "`,
-        { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] }
+        { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true }
       );
       const pids = new Set();
       for (const line of out.split('\n')) {
@@ -24,7 +24,7 @@ function killPort(port) {
       }
       for (const pid of pids) {
         try {
-          execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore' });
+          execSync(`taskkill /PID ${pid} /F`, { stdio: 'ignore', windowsHide: true });
           console.log(`  ✓ Killed PID ${pid} on port ${port}`);
         } catch { /* already gone */ }
       }

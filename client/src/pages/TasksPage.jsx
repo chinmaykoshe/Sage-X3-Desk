@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Plus,
@@ -33,7 +33,7 @@ import SavedViewsBar from '../components/workspace/SavedViewsBar';
 export default function TasksPage({ defaultTab = 'my' }) {
   const { isManager } = useAuth();
   const { addToast } = useToast();
-  const { clients, users, projects, openQuickTask, openTaskDrawer, lastSync, notifyLocalMutation } = useWorkspace();
+  const { clients, users, projects, openQuickTask, openTaskDrawer, lastSync, suppressSocketSync } = useWorkspace();
   const [searchParams] = useSearchParams();
 
   const [scopeTab, setScopeTab] = useState(defaultTab === 'board' ? 'all' : defaultTab);
@@ -53,6 +53,7 @@ export default function TasksPage({ defaultTab = 'my' }) {
   const [selectedIds, setSelectedIds] = useState([]);
   const [lastSelectedIdx, setLastSelectedIdx] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, position: null, item: null });
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
     const qView = searchParams.get('view');
@@ -81,7 +82,7 @@ export default function TasksPage({ defaultTab = 'my' }) {
   }, []);
 
   const fetchTasks = useCallback(async () => {
-    setLoading((prev) => (tasks.length === 0 ? true : prev));
+    if (!hasLoadedRef.current) setLoading(true);
     try {
       const params = {
         scope: scopeTab === 'my' && !employeeFilter ? undefined : 'all',
@@ -94,6 +95,7 @@ export default function TasksPage({ defaultTab = 'my' }) {
       if (search) params.search = search;
       const { data } = await api.get('/tasks', { params });
       setTasks(data.data || []);
+      hasLoadedRef.current = true;
     } catch (err) {
       addToast(getApiError(err, 'Failed to load tasks'), 'error');
     } finally {
@@ -128,25 +130,38 @@ export default function TasksPage({ defaultTab = 'my' }) {
     return [];
   }, [groupBy, clients, users]);
 
-  const handleMoveTask = async ({ id, groupBy: grp, destinationValue, newSortOrder }) => {
+  const handleMoveTask = async ({ id, groupBy: grp, destinationValue, newSortOrder, afterId, beforeId }) => {
     const prevSnapshot = [...tasks];
     setSavingSync(true);
+    suppressSocketSync('task', 5000);
 
-    setTasks((prev) =>
-      prev
-        .map((t) => {
-          if (t._id !== id) return t;
-          const updated = { ...t, sortOrder: newSortOrder };
-          if (grp === 'status') updated.status = destinationValue;
-          if (grp === 'priority') updated.priority = destinationValue;
-          if (grp === 'assignee') {
-            const u = users.find((x) => x._id === destinationValue);
-            updated.assignedEmployees = u ? [u] : [];
-          }
-          return updated;
-        })
-        .sort((a, b) => (a.sortOrder || 1000) - (b.sortOrder || 1000))
-    );
+    setTasks((prev) => {
+      const target = prev.find((t) => t._id === id);
+      if (!target) return prev;
+      const updated = { ...target, sortOrder: newSortOrder };
+      if (grp === 'status') updated.status = destinationValue;
+      if (grp === 'priority') updated.priority = destinationValue;
+      if (grp === 'assignee') {
+        const u = users.find((x) => x._id === destinationValue);
+        updated.assignedEmployees = u ? [u] : [];
+      }
+      const without = prev.filter((t) => t._id !== id);
+      if (afterId) {
+        const idx = without.findIndex((t) => t._id === afterId);
+        if (idx !== -1) {
+          without.splice(idx + 1, 0, updated);
+          return without;
+        }
+      }
+      if (beforeId) {
+        const idx = without.findIndex((t) => t._id === beforeId);
+        if (idx !== -1) {
+          without.splice(idx, 0, updated);
+          return without;
+        }
+      }
+      return [...without, updated];
+    });
 
     try {
       await api.patch('/tasks/reorder', {
@@ -155,7 +170,6 @@ export default function TasksPage({ defaultTab = 'my' }) {
         destinationValue,
         newSortOrder,
       });
-      notifyLocalMutation('task');
     } catch (err) {
       setTasks(prevSnapshot);
       addToast(getApiError(err, 'Failed to move task'), 'error');
@@ -166,11 +180,11 @@ export default function TasksPage({ defaultTab = 'my' }) {
 
   const handleInlineUpdate = async (id, patch) => {
     setSavingSync(true);
+    suppressSocketSync('task', 5000);
     const prev = [...tasks];
     setTasks((list) => list.map((t) => (t._id === id ? { ...t, ...patch } : t)));
     try {
       await api.put(`/tasks/${id}`, patch);
-      notifyLocalMutation('task');
     } catch (err) {
       setTasks(prev);
       addToast(getApiError(err), 'error');
@@ -181,11 +195,11 @@ export default function TasksPage({ defaultTab = 'my' }) {
 
   const handleStatusChange = async (id, status) => {
     setSavingSync(true);
+    suppressSocketSync('task', 5000);
     const prev = [...tasks];
     setTasks((list) => list.map((t) => (t._id === id ? { ...t, status } : t)));
     try {
       await api.patch(`/tasks/${id}/status`, { status });
-      notifyLocalMutation('task');
     } catch (err) {
       setTasks(prev);
       addToast(getApiError(err), 'error');
@@ -257,11 +271,6 @@ export default function TasksPage({ defaultTab = 'my' }) {
         subtitle="Manage Sage X3 4GL tasks, nested subtasks, drag-and-drop statuses, and timelines"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {savingSync && (
-              <span className="rounded-md bg-[#C6F36B] px-2 py-1 text-[11px] font-semibold text-[#171717]">
-                Syncing...
-              </span>
-            )}
             <div className="inline-flex rounded-lg border border-[#E8E8E5] bg-white p-0.5 dark:border-[#2C2E33] dark:bg-[#17181B]">
               {[
                 { id: 'board', label: 'Board', icon: Kanban },

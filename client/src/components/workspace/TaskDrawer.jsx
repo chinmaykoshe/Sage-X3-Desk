@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
+  ArrowUpRight,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -26,6 +28,7 @@ export default function TaskDrawer() {
     useWorkspace();
   const { isManager } = useAuth();
   const { addToast } = useToast();
+  const navigate = useNavigate();
 
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -186,6 +189,13 @@ export default function TaskDrawer() {
       open={Boolean(taskDrawerId)}
       onClose={closeDrawers}
       width="max-w-2xl"
+      onOpenFullPage={
+        task?.ticket?._id
+          ? () => { closeDrawers(); navigate(`/tickets/${task.ticket._id}`); }
+          : task?.project?._id
+          ? () => { closeDrawers(); navigate(`/projects/${task.project._id}`); }
+          : undefined
+      }
       headerLeft={
         task && (
           <div className="flex items-center gap-2">
@@ -203,6 +213,47 @@ export default function TaskDrawer() {
             {saveState === 'saving' && <span className="text-[11px] text-[#777777]">Saving...</span>}
             {saveState === 'saved' && <span className="text-[11px] text-[#35B8A6] font-medium">Saved</span>}
           </div>
+        )
+      }
+      headerRight={
+        task && (
+          task.ticket?._id ? (
+            <button
+              type="button"
+              onClick={() => {
+                const tid = task.ticket._id;
+                closeDrawers();
+                navigate(`/tickets/${tid}`);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg bg-[#171717] px-2.5 py-1 text-[11px] font-semibold text-[#C6F36B] hover:bg-[#2a2a2a] dark:bg-[#C6F36B] dark:text-[#171717]"
+            >
+              Go to Ticket <ArrowUpRight className="h-3.5 w-3.5" />
+            </button>
+          ) : task.project?._id ? (
+            <button
+              type="button"
+              onClick={() => {
+                const pid = task.project._id;
+                closeDrawers();
+                navigate(`/projects/${pid}`);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#171717] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-slate-100"
+            >
+              Go to Project <ArrowUpRight className="h-3.5 w-3.5" />
+            </button>
+          ) : task.client?._id ? (
+            <button
+              type="button"
+              onClick={() => {
+                const cid = task.client._id;
+                closeDrawers();
+                navigate(`/clients/${cid}`);
+              }}
+              className="inline-flex items-center gap-1 rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1 text-[11px] font-semibold text-[#171717] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-slate-100"
+            >
+              Go to Client <ArrowUpRight className="h-3.5 w-3.5" />
+            </button>
+          ) : null
         )
       }
     >

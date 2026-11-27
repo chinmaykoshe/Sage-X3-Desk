@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Plus,
@@ -45,7 +45,7 @@ export default function TicketsPage() {
     openQuickTicket,
     openTicketDrawer,
     lastSync,
-    notifyLocalMutation,
+    suppressSocketSync,
   } = useWorkspace();
   const [searchParams] = useSearchParams();
 
@@ -60,6 +60,7 @@ export default function TicketsPage() {
     progress: false,
   });
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   const [tickets, setTickets] = useState([]);
   const [meta, setMeta] = useState(null);
@@ -71,6 +72,7 @@ export default function TicketsPage() {
   const [lastSelectedIdx, setLastSelectedIdx] = useState(null);
   const [contextMenu, setContextMenu] = useState({ open: false, position: null, item: null });
   const [waiveDialog, setWaiveDialog] = useState({ open: false, movePayload: null, reason: '' });
+  const hasLoadedRef = useRef(false);
 
   const [filters, setFilters] = useState({
     search: searchParams.get('search') || '',
@@ -88,7 +90,7 @@ export default function TicketsPage() {
   });
 
   const fetchTickets = useCallback(async () => {
-    setLoading((prev) => (tickets.length === 0 ? true : prev));
+    if (!hasLoadedRef.current) setLoading(true);
     try {
       const params = {
         ...filters,
@@ -100,6 +102,7 @@ export default function TicketsPage() {
       const { data } = await api.get('/tickets', { params });
       setTickets(data.data || []);
       setMeta(data.meta || null);
+      hasLoadedRef.current = true;
     } catch (err) {
       addToast(getApiError(err, 'Failed to load tickets'), 'error');
     } finally {
@@ -163,27 +166,41 @@ export default function TicketsPage() {
     return [];
   }, [groupBy, clients, users]);
 
-  const handleMoveTicket = async ({ id, groupBy: grp, destinationValue, newSortOrder, waive = false, waiveReason = '' }) => {
+  const handleMoveTicket = async ({ id, groupBy: grp, destinationValue, newSortOrder, afterId, beforeId, waive = false, waiveReason = '' }) => {
     const prevSnapshot = [...tickets];
     setSavingSync(true);
+    // Suppress WebSocket self-echo BEFORE the request goes out so status + reorder broadcasts don't trigger a reload
+    suppressSocketSync('ticket', 5000);
 
-    // Optimistic UI update
-    setTickets((prev) =>
-      prev
-        .map((t) => {
-          if (t._id !== id) return t;
-          const updated = { ...t, sortOrder: newSortOrder };
-          if (grp === 'status') updated.status = destinationValue;
-          if (grp === 'priority') updated.priority = destinationValue;
-          if (grp === 'client') updated.client = clients.find((c) => c._id === destinationValue) || t.client;
-          if (grp === 'assignee') {
-            const u = users.find((x) => x._id === destinationValue);
-            updated.assignedDevelopers = u ? [u] : [];
-          }
-          return updated;
-        })
-        .sort((a, b) => (a.sortOrder || 1000) - (b.sortOrder || 1000))
-    );
+    // Optimistic UI update preserving exact visual drop position
+    setTickets((prev) => {
+      const target = prev.find((t) => t._id === id);
+      if (!target) return prev;
+      const updated = { ...target, sortOrder: newSortOrder };
+      if (grp === 'status') updated.status = destinationValue;
+      if (grp === 'priority') updated.priority = destinationValue;
+      if (grp === 'client') updated.client = clients.find((c) => c._id === destinationValue) || target.client;
+      if (grp === 'assignee') {
+        const u = users.find((x) => x._id === destinationValue);
+        updated.assignedDevelopers = u ? [u] : [];
+      }
+      const without = prev.filter((t) => t._id !== id);
+      if (afterId) {
+        const idx = without.findIndex((t) => t._id === afterId);
+        if (idx !== -1) {
+          without.splice(idx + 1, 0, updated);
+          return without;
+        }
+      }
+      if (beforeId) {
+        const idx = without.findIndex((t) => t._id === beforeId);
+        if (idx !== -1) {
+          without.splice(idx, 0, updated);
+          return without;
+        }
+      }
+      return [...without, updated];
+    });
 
     try {
       await api.patch('/tickets/reorder', {
@@ -194,12 +211,11 @@ export default function TicketsPage() {
         waiveIncompleteTasks: waive,
         waiveReason,
       });
-      notifyLocalMutation('ticket');
     } catch (err) {
       setTickets(prevSnapshot); // Rollback on failure
       const msg = getApiError(err, 'Could not move ticket');
       if (grp === 'status' && destinationValue === 'Closed' && msg.includes('associated task') && isManager) {
-        setWaiveDialog({ open: true, movePayload: { id, groupBy: grp, destinationValue, newSortOrder }, reason: '' });
+        setWaiveDialog({ open: true, movePayload: { id, groupBy: grp, destinationValue, newSortOrder, afterId, beforeId }, reason: '' });
       } else {
         addToast(msg, 'error');
       }
@@ -210,11 +226,11 @@ export default function TicketsPage() {
 
   const handleInlineUpdate = async (id, patch) => {
     setSavingSync(true);
+    suppressSocketSync('ticket', 5000);
     const prev = [...tickets];
     setTickets((list) => list.map((t) => (t._id === id ? { ...t, ...patch } : t)));
     try {
       await api.put(`/tickets/${id}`, patch);
-      notifyLocalMutation('ticket');
     } catch (err) {
       setTickets(prev);
       addToast(getApiError(err), 'error');
@@ -225,11 +241,11 @@ export default function TicketsPage() {
 
   const handleStatusChange = async (id, status) => {
     setSavingSync(true);
+    suppressSocketSync('ticket', 5000);
     const prev = [...tickets];
     setTickets((list) => list.map((t) => (t._id === id ? { ...t, status } : t)));
     try {
       await api.patch(`/tickets/${id}/status`, { status });
-      notifyLocalMutation('ticket');
     } catch (err) {
       setTickets(prev);
       addToast(getApiError(err), 'error');
@@ -335,11 +351,6 @@ export default function TicketsPage() {
         subtitle="Drag and drop across statuses, customize views, edit inline, or open any ticket in the side drawer"
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {savingSync && (
-              <span className="rounded-md bg-[#C6F36B] px-2 py-1 text-[11px] font-semibold text-[#171717]">
-                Syncing...
-              </span>
-            )}
             <div className="inline-flex rounded-lg border border-[#E8E8E5] bg-white p-0.5 dark:border-[#2C2E33] dark:bg-[#17181B]">
               {[
                 { id: 'board', label: 'Board', icon: Kanban },
@@ -363,6 +374,15 @@ export default function TicketsPage() {
               })}
             </div>
 
+            <Button
+              size="sm"
+              variant={showFilters ? 'secondary' : 'primary'}
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+
             <Button onClick={() => openQuickTicket()}>
               <Plus className="h-4 w-4" /> New Ticket
             </Button>
@@ -370,6 +390,8 @@ export default function TicketsPage() {
         }
       />
 
+      {showFilters && (
+        <>
       {/* Saved Views Bar */}
       <SavedViewsBar
         entityType="ticket"
@@ -497,6 +519,8 @@ export default function TicketsPage() {
           )}
         </div>
       </Card>
+        </>
+      )}
 
       {loading ? (
         <Loader label="Loading tickets..." />

@@ -5,8 +5,8 @@
   "description": "Sage X3 Desk - Team Ticketing & Operations Management System",
   "scripts": {
     "dev": "concurrently -n API,WEB -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
-    "start": "node kill-ports.cjs && npm --prefix server start",
-    "start:full": "node kill-ports.cjs && concurrently -n API,WEB -c blue,green \"npm --prefix server start\" \"npm --prefix client run dev\"",
+    "start": "node kill-ports.cjs && node start-ai.cjs && npm --prefix server start",
+    "start:full": "node kill-ports.cjs && node start-ai.cjs && concurrently -n API,WEB -c blue,green \"npm --prefix server start\" \"npm --prefix client run dev\"",
     "seed": "npm --prefix server run seed",
     "build": "npm --prefix client run build",
     "test:api": "node server/tests/api.test.js"

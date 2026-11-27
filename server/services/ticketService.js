@@ -214,7 +214,7 @@ export async function changeTicketStatusService(ticketIdOrObjId, { status, note,
     includeActor: true,
   });
 
-  emitBroadcast('ticket:changed', { action: 'status', ticketId: ticket._id });
+  emitBroadcast('ticket:changed', { action: 'status', ticketId: ticket._id, actorId: actor._id });
   return ticket;
 }
 
@@ -303,7 +303,7 @@ export async function assignTicketService(id, { assignedDevelopers, assignedTeam
     includeActor: false,
   });
 
-  emitBroadcast('ticket:changed', { action: 'assigned', ticketId: ticket._id });
+  emitBroadcast('ticket:changed', { action: 'assigned', ticketId: ticket._id, actorId: actor._id });
   return ticket;
 }
 

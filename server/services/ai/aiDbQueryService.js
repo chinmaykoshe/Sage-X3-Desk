@@ -66,9 +66,11 @@ function buildSearchRegex(search) {
 const SEARCH_STOP_WORDS = new Set([
   'a', 'an', 'the', 'with', 'name', 'named', 'called', 'for', 'of', 'in', 'on', 'at', 'to', 'by', 'from',
   'find', 'search', 'show', 'get', 'list', 'give', 'fetch', 'check', 'who', 'is', 'are', 'was', 'were',
-  'what', 'about', 'details', 'detail', 'info', 'information', 'please', 'me', 'all', 'db', 'database',
+  'what', 'why', 'how', 'when', 'where', 'which', 'about', 'details', 'detail', 'info', 'information',
+  'please', 'me', 'my', 'your', 'you', 'our', 'we', 'i', 'all', 'db', 'database', 'can', 'could', 'would',
+  'should', 'do', 'does', 'did', 'hi', 'hii', 'hello', 'hey', 'thanks', 'thank', 'tell', 'explain', 'help',
   'user', 'users', 'employee', 'employees', 'member', 'members', 'client', 'clients', 'ticket', 'tickets',
-  'task', 'tasks', 'project', 'projects', 'email', 'emails', 'recent', 'latest', 'new', 'any', 'my',
+  'task', 'tasks', 'project', 'projects', 'email', 'emails', 'recent', 'latest', 'new', 'any',
 ]);
 
 function extractSearchKeywords(raw = '') {
@@ -82,9 +84,8 @@ function extractSearchKeywords(raw = '') {
 
 function getSearchTokens(raw = '') {
   const kw = extractSearchKeywords(raw);
-  const parts = (kw || String(raw || '').trim())
-    .split(/\s+/)
-    .filter((t) => t.length >= 2);
+  if (!kw) return [];
+  const parts = kw.split(/\s+/).filter((t) => t.length >= 2 || /^\d+$/.test(t));
   return [...new Set(parts)].slice(0, 5);
 }
 

@@ -8,6 +8,7 @@ import {
   Sparkles,
   ExternalLink,
   Search,
+  SlidersHorizontal,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
@@ -71,6 +72,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
   const [rejectModal, setRejectModal] = useState({ open: false, reason: '' });
   const [changesModal, setChangesModal] = useState({ open: false, comments: '' });
   const [acting, setActing] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   const loadDrafts = useCallback(async () => {
     setLoading(true);
@@ -413,7 +415,15 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
           title="Ticket Intake & TL Approval Inbox"
           subtitle="Review AI-generated ticket drafts, OCR screenshots, and suggested tasks before publishing to the Active Tickets board"
           actions={
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant={showFilters ? 'secondary' : 'primary'}
+                size="sm"
+                onClick={() => setShowFilters((v) => !v)}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                {showFilters ? 'Hide Filters' : 'Show Filters'}
+              </Button>
               <Link to="/tickets">
                 <Button variant="secondary" size="sm">
                   Active Tickets Board <ExternalLink className="h-3.5 w-3.5" />
@@ -429,48 +439,58 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
         />
       </div>
 
+      {showFilters && (
+        <>
       {/* Real MongoDB-Backed Folders */}
-      {/* TL Approvals Dashboard KPIs (clickable route links) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+      {/* TL Approvals Dashboard KPIs (compact strip) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 shrink-0">
         <Link to="/approvals" onClick={() => setFolder('Pending TL Approval')} className="text-left block">
-          <Card className="p-2.5 sm:p-3 hover:border-[#171717]/40 transition-colors">
-            <div className="text-[11px] font-medium text-[#777777]">Pending Ticket Approvals</div>
-            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#171717] dark:text-white">
-              {(counts['Pending TL Approval'] || 0) + pendingTickets.length}
+          <Card className="px-3 py-1.5 hover:border-[#171717]/40 transition-colors flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium text-[#777777] truncate">Pending Ticket Approvals</div>
+              <div className="text-[10px] text-[#777777] truncate">
+                {counts['Pending TL Approval'] || 0} AI Drafts · {pendingTickets.length} Dev/Email
+              </div>
             </div>
-            <div className="text-[10px] text-[#777777]">
-              {counts['Pending TL Approval'] || 0} AI Drafts · {pendingTickets.length} Dev/Email Tickets
+            <div className="text-lg font-bold text-[#171717] dark:text-white shrink-0">
+              {(counts['Pending TL Approval'] || 0) + pendingTickets.length}
             </div>
           </Card>
         </Link>
         <Link to="/approvals/requests" onClick={() => setFolder('Pending TL Approval')} className="text-left block">
-          <Card className="p-2.5 sm:p-3 hover:border-[#638BEF]/50 transition-colors">
-            <div className="text-[11px] font-medium text-[#777777]">Pending Users / Clients / Projects</div>
-            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#638BEF]">
+          <Card className="px-3 py-1.5 hover:border-[#638BEF]/50 transition-colors flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium text-[#777777] truncate">Pending Users / Clients / Projects</div>
+              <div className="text-[10px] text-[#777777] truncate">Open dedicated queue</div>
+            </div>
+            <div className="text-lg font-bold text-[#638BEF] shrink-0">
               {actionCounts['Pending TL Approval'] || 0}
             </div>
-            <div className="text-[10px] text-[#777777]">Click to open dedicated queue</div>
           </Card>
         </Link>
         <Link to="/approvals/drafts" onClick={() => setFolder('Approved')} className="text-left block">
-          <Card className="p-2.5 sm:p-3 hover:border-[#35B8A6]/50 transition-colors">
-            <div className="text-[11px] font-medium text-[#777777]">Approved Total</div>
-            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#35B8A6]">
-              {(counts['Approved'] || 0) + (actionCounts['Approved'] || 0)}
+          <Card className="px-3 py-1.5 hover:border-[#35B8A6]/50 transition-colors flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium text-[#777777] truncate">Approved Total</div>
+              <div className="text-[10px] text-[#777777] truncate">
+                {counts['Approved'] || 0} Tickets · {actionCounts['Approved'] || 0} Records
+              </div>
             </div>
-            <div className="text-[10px] text-[#777777]">
-              {counts['Approved'] || 0} Tickets · {actionCounts['Approved'] || 0} Records
+            <div className="text-lg font-bold text-[#35B8A6] shrink-0">
+              {(counts['Approved'] || 0) + (actionCounts['Approved'] || 0)}
             </div>
           </Card>
         </Link>
         <Link to="/approvals/drafts" onClick={() => setFolder('Rejected')} className="text-left block">
-          <Card className="p-2.5 sm:p-3 hover:border-[#F16D64]/50 transition-colors">
-            <div className="text-[11px] font-medium text-[#777777]">Rejected Total</div>
-            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#F16D64]">
-              {(counts['Rejected'] || 0) + (actionCounts['Rejected'] || 0)}
+          <Card className="px-3 py-1.5 hover:border-[#F16D64]/50 transition-colors flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <div className="text-[11px] font-medium text-[#777777] truncate">Rejected Total</div>
+              <div className="text-[10px] text-[#777777] truncate">
+                {counts['Rejected'] || 0} Drafts · {actionCounts['Rejected'] || 0} Requests
+              </div>
             </div>
-            <div className="text-[10px] text-[#777777]">
-              {counts['Rejected'] || 0} Drafts · {actionCounts['Rejected'] || 0} Requests
+            <div className="text-lg font-bold text-[#F16D64] shrink-0">
+              {(counts['Rejected'] || 0) + (actionCounts['Rejected'] || 0)}
             </div>
           </Card>
         </Link>
@@ -519,9 +539,12 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
           Users, Clients &amp; Projects ({actionCounts['Pending TL Approval'] || 0} pending)
         </Link>
       </div>
+        </>
+      )}
 
       {activeTab === 'all' ? (
         <div className="space-y-3 lg:space-y-0 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:gap-2.5">
+          {showFilters && (
           <div className="flex flex-wrap gap-1.5 shrink-0">
             {FOLDERS.map((f) => {
               const count = f.id === 'All' ? Object.values(counts).reduce((a, b) => a + b, 0) : counts[f.id] || 0;
@@ -542,6 +565,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
               );
             })}
           </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch lg:flex-1 lg:min-h-0">
             {/* Tray 1: AI Ticket Drafts */}
@@ -562,7 +586,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
                   drafts
                     .filter((d) => folder === 'All' || d.approvalStatus === folder)
                     .map((d) => (
-                      <div key={d._id} onClick={() => openDraft(d._id)} className="cursor-pointer rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 space-y-2 hover:border-[#171717]/40 bg-white dark:bg-[#1E2025]">
+                      <div key={d._id} onClick={() => openDraft(d._id)} className="cursor-pointer rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 space-y-2 hover:border-[#171717]/40 hover:-translate-y-0.5 hover:shadow-md bg-white dark:bg-[#1E2025] transition-all duration-200">
                         <div className="flex items-center justify-between gap-1.5">
                           <span className="font-mono text-[11px] font-bold text-[#638BEF]">{d.draftId}</span>
                           <Badge variant="priority" value={d.generatedFields?.priority}>{d.generatedFields?.priority}</Badge>
@@ -621,7 +645,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
                     <div
                       key={t._id}
                       onClick={() => navigate(`/tickets/${t._id}`)}
-                      className="cursor-pointer rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 space-y-2 hover:border-[#171717]/40 bg-white dark:bg-[#1E2025] transition-colors"
+                      className="cursor-pointer rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 space-y-2 hover:border-[#171717]/40 hover:-translate-y-0.5 hover:shadow-md bg-white dark:bg-[#1E2025] transition-all duration-200"
                     >
                       <div className="flex items-center justify-between gap-1.5">
                         <span className="font-mono text-[11px] font-bold text-[#638BEF]">{t.ticketId}</span>
@@ -676,7 +700,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
                     <div
                       key={req._id}
                       onClick={() => setSelectedAction(req)}
-                      className="cursor-pointer rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 space-y-2 hover:border-[#171717]/40 bg-white dark:bg-[#1E2025] transition-colors"
+                      className="cursor-pointer rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 space-y-2 hover:border-[#171717]/40 hover:-translate-y-0.5 hover:shadow-md bg-white dark:bg-[#1E2025] transition-all duration-200"
                     >
                       <div className="flex items-center justify-between gap-1.5">
                         <Badge variant={req.status === 'Approved' ? 'success' : req.status === 'Rejected' ? 'danger' : 'warning'}>
@@ -1312,6 +1336,16 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
 
             {/* Approval Actions */}
             <div className="flex flex-wrap justify-end gap-2 border-t border-[#E8E8E5] dark:border-[#26282D] pt-3">
+              {selectedDraft.approvedTicketId && (
+                <Link
+                  to={`/tickets/${selectedDraft.approvedTicketId._id || selectedDraft.approvedTicketId}`}
+                  onClick={() => setSelectedDraft(null)}
+                >
+                  <Button variant="primary">
+                    <ExternalLink className="h-3.5 w-3.5" /> Go to Ticket
+                  </Button>
+                </Link>
+              )}
               {isManager && ['Pending TL Approval', 'Changes Requested', 'Incoming'].includes(selectedDraft.approvalStatus) && (
                 <>
                   <Button variant="danger" onClick={() => setRejectModal({ open: true, reason: '' })} disabled={acting}>

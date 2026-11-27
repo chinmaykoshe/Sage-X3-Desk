@@ -240,6 +240,7 @@ export const aiChat = asyncHandler(async (req, res) => {
     user: req.user,
     conversation,
     effectivePermissions: req.effectivePermissions,
+    ollamaAvailable: ollamaStatus.available && ollamaStatus.modelReady,
   });
 
   await recordAIActivity({

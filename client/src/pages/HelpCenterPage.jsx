@@ -12,6 +12,7 @@ import {
   ExternalLink,
   AlertTriangle,
   FileText,
+  SlidersHorizontal,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
@@ -88,6 +89,7 @@ export default function HelpCenterPage() {
   const [replyText, setReplyText] = useState('');
   const [replyFiles, setReplyFiles] = useState([]);
   const [sendingReply, setSendingReply] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
 
   const loadTickets = useCallback(async () => {
     setLoading(true);
@@ -246,12 +248,24 @@ export default function HelpCenterPage() {
             : 'Report software bugs, upload screenshots or error logs directly to Administrators (separate from client tickets)'
         }
         actions={
-          <Button size="sm" onClick={handleOpenCreate}>
-            <Plus className="h-3.5 w-3.5" /> Report Software Issue
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant={showFilters ? 'secondary' : 'primary'}
+              onClick={() => setShowFilters((v) => !v)}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              {showFilters ? 'Hide Filters' : 'Show Filters'}
+            </Button>
+            <Button size="sm" onClick={handleOpenCreate}>
+              <Plus className="h-3.5 w-3.5" /> Report Software Issue
+            </Button>
+          </div>
         }
       />
 
+      {showFilters && (
+        <>
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-950 dark:text-amber-200 flex items-start gap-2">
         <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600" />
         <span>
@@ -259,8 +273,8 @@ export default function HelpCenterPage() {
         </span>
       </div>
 
-      {/* Status Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      {/* Status Summary Cards (compact strip) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {[
           ['All', totalCount, 'text-[#171717] dark:text-white'],
           ['Open', counts.Open || 0, 'text-amber-600'],
@@ -273,14 +287,14 @@ export default function HelpCenterPage() {
             key={st}
             type="button"
             onClick={() => setStatusFilter(st)}
-            className={`text-left rounded-xl border p-3 transition-colors ${
+            className={`flex items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 transition-colors ${
               statusFilter === st
                 ? 'border-[#171717] bg-[#C6F36B]/25 dark:border-[#C6F36B]'
                 : 'border-[#E8E8E5] bg-white hover:border-[#171717]/40 dark:border-[#26282D] dark:bg-[#17181B]'
             }`}
           >
-            <div className="text-[11px] font-medium text-[#777777]">{st}</div>
-            <div className={`mt-0.5 text-xl font-bold ${cls}`}>{cnt}</div>
+            <span className="text-[11px] font-medium text-[#777777] truncate">{st}</span>
+            <span className={`text-sm font-bold shrink-0 ${cls}`}>{cnt}</span>
           </button>
         ))}
       </div>
@@ -310,6 +324,8 @@ export default function HelpCenterPage() {
           </select>
         </div>
       </Card>
+        </>
+      )}
 
       {/* Help Ticket List */}
       {loading ? (

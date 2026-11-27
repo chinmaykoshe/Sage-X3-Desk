@@ -10,6 +10,7 @@ import { ROLES } from '../../config/constants.js';
 import { getNextSequence } from '../../models/Counter.js';
 import AppError from '../../utils/AppError.js';
 import { matchClientDeterministic, matchEmployeeDeterministic } from './aiContextService.js';
+import { generateAssistantReply } from './aiIntentService.js';
 import { userHasScreen } from '../rbacService.js';
 import {
   isSensitiveCredentialQuery,
@@ -185,7 +186,7 @@ export async function createEntityFromActionPayload(actionType, payload = {}, ac
 /**
  * Validates permissions, executes read-only MongoDB queries, and builds a safe frontend action payload.
  */
-export async function executeIntent({ parsed, message, user, conversation, effectivePermissions = null }) {
+export async function executeIntent({ parsed, message, user, conversation, effectivePermissions = null, ollamaAvailable = true }) {
   const { intent, entities = {} } = parsed;
   const canCreateDirectly = [ROLES.ADMIN, ROLES.TEAM_LEAD].includes(user?.role);
 
@@ -673,7 +674,21 @@ export async function executeIntent({ parsed, message, user, conversation, effec
   }
 
   const rawResponse = parsed.needsClarification ? parsed.clarificationQuestion || parsed.response : parsed.response;
-  if (containsCredentialHallucination(rawResponse) || parsed.needsClarification || parsed.parsedBy === 'text-fallback') {
+  if (containsCredentialHallucination(rawResponse)) {
+    return {
+      statusType: 'warning',
+      response: SENSITIVE_REFUSAL_RESPONSE,
+      action: null,
+      contextUpdates,
+    };
+  }
+
+  // Only run global DB keyword search when the user explicitly asked to search/find records
+  const looksLikeRecordSearch =
+    intent === 'SEARCH_RECORDS' ||
+    /\b(find|search|lookup|look\s+up|locate|show|list|filter|tkt-\d+|tsk-\d+|drf-\d+|clt-\d+|emp-\d+)\b/i.test(message);
+
+  if (looksLikeRecordSearch && (parsed.needsClarification || parsed.parsedBy === 'text-fallback' || intent === 'SEARCH_RECORDS')) {
     const fallbackDb = await querySafeDatabase({ queryType: 'auto', search: message, message, user });
     if (fallbackDb?.action || (fallbackDb?.response && !fallbackDb.response.startsWith('No database records matched'))) {
       return {
@@ -683,7 +698,22 @@ export async function executeIntent({ parsed, message, user, conversation, effec
         contextUpdates: { ...contextUpdates, ...(fallbackDb.contextUpdates || {}) },
       };
     }
-    if (containsCredentialHallucination(rawResponse)) {
+  }
+
+  // For conversational or general questions, answer like a proper AI Assistant using Ollama + live workspace context
+  if (
+    intent === 'GENERAL_ANSWER' ||
+    parsed.needsClarification ||
+    parsed.parsedBy === 'text-fallback' ||
+    !rawResponse
+  ) {
+    const assistantReply = await generateAssistantReply({
+      message,
+      history: conversation?.messages || [],
+      user,
+      ollamaAvailable,
+    });
+    if (containsCredentialHallucination(assistantReply)) {
       return {
         statusType: 'warning',
         response: SENSITIVE_REFUSAL_RESPONSE,
@@ -691,10 +721,16 @@ export async function executeIntent({ parsed, message, user, conversation, effec
         contextUpdates,
       };
     }
+    return {
+      statusType: 'response',
+      response: assistantReply,
+      action: null,
+      contextUpdates,
+    };
   }
 
   return {
-    statusType: parsed.needsClarification ? 'warning' : 'response',
+    statusType: 'response',
     response: rawResponse,
     action: null,
     contextUpdates,

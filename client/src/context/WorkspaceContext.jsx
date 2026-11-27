@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -26,6 +26,13 @@ export function WorkspaceProvider({ children }) {
     lastEvent: null,
   });
 
+  // Guard: suppress socket echo for N ms after a local mutation (avoid header/board re-render flicker)
+  const suppressUntilRef = useRef({});
+
+  const suppressSocketSync = useCallback((type, durationMs = 5000) => {
+    suppressUntilRef.current[type] = Date.now() + durationMs;
+  }, []);
+
   const refreshLookups = useCallback(async () => {
     if (!user) return;
     try {
@@ -49,10 +56,16 @@ export function WorkspaceProvider({ children }) {
   useEffect(() => {
     if (!socket) return;
 
-    const onTicket = (payload) =>
+    const onTicket = (payload) => {
+      if (suppressUntilRef.current.ticket && Date.now() < suppressUntilRef.current.ticket) return;
+      if (user?._id && payload?.actorId && String(payload.actorId) === String(user._id)) return;
       setLastSync((s) => ({ ...s, ticket: Date.now(), lastEvent: { type: 'ticket', ...payload } }));
-    const onTask = (payload) =>
+    };
+    const onTask = (payload) => {
+      if (suppressUntilRef.current.task && Date.now() < suppressUntilRef.current.task) return;
+      if (user?._id && payload?.actorId && String(payload.actorId) === String(user._id)) return;
       setLastSync((s) => ({ ...s, task: Date.now(), lastEvent: { type: 'task', ...payload } }));
+    };
     const onDeployment = (payload) =>
       setLastSync((s) => ({ ...s, deployment: Date.now(), lastEvent: { type: 'deployment', ...payload } }));
     const onComment = (payload) =>
@@ -123,7 +136,12 @@ export function WorkspaceProvider({ children }) {
         commandPaletteOpen,
         setCommandPaletteOpen,
         lastSync,
-        notifyLocalMutation: (type) => setLastSync((s) => ({ ...s, [type]: Date.now() })),
+        suppressSocketSync,
+        notifyLocalMutation: (type) => {
+          // Suppress the socket echo for this type so other listeners only sync once
+          suppressUntilRef.current[type] = Date.now() + 2500;
+          setLastSync((s) => ({ ...s, [type]: Date.now() }));
+        },
       }}
     >
       {children}

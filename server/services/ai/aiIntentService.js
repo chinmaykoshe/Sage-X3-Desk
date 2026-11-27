@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { chatWithOllama, extractJsonFromText } from './ollamaService.js';
-import { buildIntentSystemPrompt } from './aiPromptService.js';
-import { isSensitiveCredentialQuery, SENSITIVE_REFUSAL_RESPONSE } from './aiDbQueryService.js';
+import { buildIntentSystemPrompt, buildAssistantConversationPrompt } from './aiPromptService.js';
+import { isSensitiveCredentialQuery, SENSITIVE_REFUSAL_RESPONSE, getGroundedDbSummary } from './aiDbQueryService.js';
 
 export const ALLOWED_INTENTS = [
   'BLOCK_SENSITIVE',
@@ -536,6 +536,22 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
+  // Conversational greetings, identity, or how-to/help questions -> route to conversational AI Assistant
+  if (
+    /^(hi+|hello+|hey+|yo|hola|good\s+(morning|afternoon|evening)|how\s+are\s+you|who\s+are\s+you|what(\s+is|'s)?\s+your\s+name|your\s+name|tell\s+me\s+your\s+name|what\s+can\s+you\s+do|help\s*me?|how\s+to\s+use|thanks?|thank\s+you)[!?. '\"]*$/i.test(
+      lower
+    ) ||
+    (/^(how\s+(do|can|to)|what\s+(is|are|does)|why\s+(is|are|does|did)|can\s+i|can\s+you\s+explain|explain|guide\s+me)\b/i.test(lower) &&
+      !/\b(how\s+many|counts?|stats?|password|secret|token)\b/i.test(lower))
+  ) {
+    return {
+      intent: 'GENERAL_ANSWER',
+      entities: { conversational: true },
+      needsClarification: false,
+      response: '',
+    };
+  }
+
   // Natural ticket topic lookups like "ticket for 2 bank setup" or "bank setup ticket"
   if (/\btickets?\b/i.test(lower) && !/(create|log|draft|raise|open|submit)\s+(a\s+)?(new\s+)?ticket\b/i.test(lower)) {
     const topic = message
@@ -672,4 +688,55 @@ export async function parseUserIntent({ message, history = [], context, ollamaAv
       parsedBy: 'error-fallback',
     };
   }
+}
+
+/**
+ * Generates a natural, conversational AI Assistant reply grounded in user + workspace context.
+ */
+export async function generateAssistantReply({ message, history = [], user, ollamaAvailable = true }) {
+  const lower = String(message || '').toLowerCase().trim();
+  const userName = user?.fullName ? user.fullName.split(' ')[0] : 'there';
+
+  const offlineReply = () => {
+    if (/^(hi+|hello+|hey+|yo|good\s+(morning|afternoon|evening))/i.test(lower)) {
+      return `Hi ${userName}! I'm **X3 AI**, your Sage X3 Desk Operations Assistant. I can help you search tickets, check clients or team members, review your timesheet, draft ticket descriptions, or explain any workflow in Sage X3 Desk. What would you like to work on?`;
+    }
+    if (/your\s+name|who\s+are\s+you/i.test(lower)) {
+      return `I'm **X3 AI**, the operations assistant built into **Sage X3 Desk**. Ask me to find tickets (e.g. \`ticket for 2 bank setup\`), check users or clients, summarize work, or help with Sage X3 issues.`;
+    }
+    if (/what\s+can\s+you\s+do|^help/i.test(lower)) {
+      return `Here is how I can help you in Sage X3 Desk:\n• **Find records**: "show ticket with 2 bank setup", "user with name chinmay", "client hightide"\n• **Operations**: "show pending TL approvals", "duplicate tickets", "my timesheet"\n• **Create**: Upload a screenshot or describe an issue to draft a ticket\n• **Guidance**: Ask me about Merge Tickets, Carry Forward, Email Auto-Creation, or Help Center.`;
+    }
+    return `I'm **X3 AI**, your Sage X3 Desk assistant. Ask me anything about Sage X3 Desk workflows, or try searching tickets, users, clients, or timesheets.`;
+  };
+
+  if (!ollamaAvailable) {
+    return offlineReply();
+  }
+
+  try {
+    const dbSummary = await getGroundedDbSummary(user);
+    const systemPrompt = buildAssistantConversationPrompt({ user, dbSummary });
+    const recentHistory = (history || []).slice(-6).map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content,
+    }));
+
+    const aiRes = await chatWithOllama({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...recentHistory,
+        { role: 'user', content: message },
+      ],
+      expectJson: false,
+      temperature: 0.35,
+      timeoutMs: 30000,
+    });
+
+    const text = String(aiRes?.content || '').trim();
+    if (text) return text;
+  } catch {
+    // Fall back cleanly if Ollama times out or fails
+  }
+  return offlineReply();
 }

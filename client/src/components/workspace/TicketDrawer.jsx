@@ -262,6 +262,7 @@ export default function TicketDrawer() {
         open={Boolean(ticketDrawerId)}
         onClose={closeDrawers}
         width="max-w-3xl"
+        onOpenFullPage={ticket ? () => { closeDrawers(); navigate(`/tickets/${ticket._id}`); } : undefined}
         headerLeft={
           ticket && (
             <div className="flex items-center gap-2 min-w-0">

@@ -3,6 +3,19 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-size: 16px;
+    transition: font-size 0.15s ease;
+  }
+
+  html[data-density="compact"] {
+    font-size: 13.5px;
+  }
+
+  html[data-density="ultra"] {
+    font-size: 11.5px;
+  }
+
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     background-color: #F4F4F2;
