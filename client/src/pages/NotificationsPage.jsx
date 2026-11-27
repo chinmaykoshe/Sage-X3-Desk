@@ -68,7 +68,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="space-y-5 max-w-5xl">
+    <div className="w-full space-y-5">
       <PageHeader
         title="Inbox Updates"
         subtitle={`${unreadCount} unread workspace & ticket updates (in-app real-time feed)`}

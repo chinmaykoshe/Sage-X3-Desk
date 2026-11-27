@@ -18,7 +18,7 @@ import AuditLog from '../models/AuditLog.js';
 import EmailMessage from '../models/EmailMessage.js';
 import EmailProcessingLog from '../models/EmailProcessingLog.js';
 import { uploadRoot } from '../middleware/upload.js';
-import { emitBroadcast } from '../services/notificationService.js';
+import { emitBroadcast, createNotification } from '../services/notificationService.js';
 import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess, buildPagination, buildPaginationMeta } from '../utils/response.js';
@@ -159,6 +159,7 @@ export const getGovernanceData = asyncHandler(async (req, res) => {
     Ticket.find({ isDeleted: false })
       .populate('client', 'clientId companyName')
       .populate('createdBy', 'fullName email role')
+      .populate('assignedDevelopers', 'fullName')
       .sort({ createdAt: -1 })
       .limit(200)
       .lean(),
@@ -171,9 +172,10 @@ export const getGovernanceData = asyncHandler(async (req, res) => {
       .lean(),
   ]);
 
-  // Group duplicate / identical-title tickets
+  // Group duplicate / identical-title tickets (excluding tickets explicitly marked as Not Duplicate)
   const groupsMap = new Map();
   for (const t of tickets) {
+    if (t.notDuplicateDismissed) continue;
     const key = normalizeTicketTitleKey(t.title);
     if (!key) continue;
     if (!groupsMap.has(key)) groupsMap.set(key, []);
@@ -252,42 +254,137 @@ export const adminDeleteTicket = asyncHandler(async (req, res) => {
   return sendSuccess(res, { ticketId: ticket.ticketId, summary }, summary);
 });
 
-export const adminDeleteUser = asyncHandler(async (req, res) => {
-  if (String(req.user._id) === String(req.params.id)) {
-    throw new AppError('You cannot delete your own active administrator account.', 400);
-  }
-  const reason = String(req.body?.reason || req.query?.reason || 'Removed via Admin Data Governance').trim();
-  const user = await User.findOneAndUpdate(
+export const markTicketNotDuplicate = asyncHandler(async (req, res) => {
+  const { primaryTicketId, primaryTicketRef, note } = req.body || {};
+  const ticket = await Ticket.findOneAndUpdate(
     { _id: req.params.id, isDeleted: false },
-    { isDeleted: true, deletedAt: new Date(), status: 'Inactive' },
+    { notDuplicateDismissed: true, notDuplicateOf: primaryTicketId || null },
     { new: true }
   );
-  if (!user) throw new AppError('User not found or already deleted.', 404);
+  if (!ticket) throw new AppError('Ticket not found.', 404);
 
-  const summary = `Admin ${req.user.fullName} deleted user ${user.employeeId || user.email} (${user.fullName}) — ${reason}`;
+  const summary = `Admin ${req.user.fullName} marked ${ticket.ticketId} as NOT a duplicate${primaryTicketRef ? ` of ${primaryTicketRef}` : ''}${note ? ` — ${note}` : ''}`;
+
   await Promise.all([
     recordActivity({
       actor: req.user._id,
-      action: 'USER_DELETED_BY_ADMIN',
-      entityType: 'user',
-      entityId: user._id,
-      entityRef: user.employeeId || user.email,
+      action: 'TICKET_MARKED_NOT_DUPLICATE',
+      entityType: 'ticket',
+      entityId: ticket._id,
+      entityRef: ticket.ticketId,
+      client: ticket.client,
+      ticket: ticket._id,
       summary,
-      metadata: { reason },
     }),
     recordAudit({
       actorId: req.user._id,
-      action: 'USER_DELETED_BY_ADMIN',
-      recordType: 'User',
-      recordId: user._id,
-      recordRef: user.employeeId || user.email,
-      previousValue: { fullName: user.fullName, email: user.email, role: user.role },
-      newValue: { isDeleted: true, status: 'Inactive', reason, summary },
+      action: 'TICKET_MARKED_NOT_DUPLICATE',
+      recordType: 'Ticket',
+      recordId: ticket._id,
+      recordRef: ticket.ticketId,
+      newValue: { notDuplicateDismissed: true, primaryTicketRef, summary },
       module: 'admin_governance',
     }),
   ]);
 
-  return sendSuccess(res, { userId: user._id, summary }, summary);
+  return sendSuccess(res, ticket, summary);
+});
+
+export const requestDuplicateTicketChanges = asyncHandler(async (req, res) => {
+  const { primaryTicketRef, note } = req.body || {};
+  const ticket = await Ticket.findOne({ _id: req.params.id, isDeleted: false });
+  if (!ticket) throw new AppError('Ticket not found.', 404);
+
+  const changeMsg =
+    String(note || '').trim() ||
+    `Please update the details/title of ${ticket.ticketId} as it appears to be a duplicate${primaryTicketRef ? ` of ${primaryTicketRef}` : ''}.`;
+
+  ticket.approvalStatus = 'CHANGES_REQUESTED';
+  ticket.changeRequestNotes = changeMsg;
+  await ticket.save();
+
+  const summary = `Admin ${req.user.fullName} requested detail changes on ${ticket.ticketId} (appears duplicate${primaryTicketRef ? ` of ${primaryTicketRef}` : ''})`;
+
+  const recipients = new Set([String(ticket.createdBy)]);
+  for (const devId of ticket.assignedDevelopers || []) recipients.add(String(devId));
+
+  await Promise.all([
+    ...Array.from(recipients).map((uid) =>
+      createNotification({
+        recipient: uid,
+        sender: req.user._id,
+        type: 'ticket_updated',
+        title: `Changes Requested: ${ticket.ticketId}`,
+        message: changeMsg,
+        relatedTicket: ticket._id,
+        link: `/tickets/${ticket._id}`,
+      })
+    ),
+    recordActivity({
+      actor: req.user._id,
+      action: 'TICKET_DUPLICATE_CHANGES_REQUESTED',
+      entityType: 'ticket',
+      entityId: ticket._id,
+      entityRef: ticket.ticketId,
+      client: ticket.client,
+      ticket: ticket._id,
+      summary,
+    }),
+    recordAudit({
+      actorId: req.user._id,
+      action: 'TICKET_DUPLICATE_CHANGES_REQUESTED',
+      recordType: 'Ticket',
+      recordId: ticket._id,
+      recordRef: ticket.ticketId,
+      newValue: { approvalStatus: 'CHANGES_REQUESTED', changeRequestNotes: changeMsg, summary },
+      module: 'admin_governance',
+    }),
+  ]);
+
+  emitBroadcast('ticket:changed', { action: 'changes_requested', ticketId: ticket._id, actorId: req.user._id });
+  return sendSuccess(res, ticket, summary);
+});
+
+export const adminDeleteUser = asyncHandler(async (req, res) => {
+  if (String(req.user._id) === String(req.params.id)) {
+    throw new AppError('You cannot deactivate your own active administrator account.', 400);
+  }
+  const targetStatus = req.body?.status === 'Active' ? 'Active' : 'Inactive';
+  const reason = String(
+    req.body?.reason || req.query?.reason || `Marked ${targetStatus} via Admin Data Governance`
+  ).trim();
+  const user = await User.findOneAndUpdate(
+    { _id: req.params.id, isDeleted: false },
+    { status: targetStatus },
+    { new: true }
+  );
+  if (!user) throw new AppError('User not found.', 404);
+
+  const actionName = targetStatus === 'Active' ? 'USER_REACTIVATED_BY_ADMIN' : 'USER_DEACTIVATED_BY_ADMIN';
+  const summary = `Admin ${req.user.fullName} marked user ${user.employeeId || user.email} (${user.fullName}) as ${targetStatus} — ${reason}`;
+  await Promise.all([
+    recordActivity({
+      actor: req.user._id,
+      action: actionName,
+      entityType: 'user',
+      entityId: user._id,
+      entityRef: user.employeeId || user.email,
+      summary,
+      metadata: { reason, status: targetStatus },
+    }),
+    recordAudit({
+      actorId: req.user._id,
+      action: actionName,
+      recordType: 'User',
+      recordId: user._id,
+      recordRef: user.employeeId || user.email,
+      previousValue: { fullName: user.fullName, email: user.email, role: user.role },
+      newValue: { status: targetStatus, reason, summary },
+      module: 'admin_governance',
+    }),
+  ]);
+
+  return sendSuccess(res, { userId: user._id, status: targetStatus, summary }, summary);
 });
 
 export const getDevelopmentActivities = asyncHandler(async (req, res) => {

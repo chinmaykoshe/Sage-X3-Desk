@@ -80,6 +80,34 @@ export async function notifyUsers({
  * Notifies the ticket creator, assigned developers, assigned Team Lead, and all active TLs & Admins
  * via the in-app Inbox Updates section with a direct redirect link.
  */
+/**
+ * Creates a single in-app notification for one recipient.
+ * Convenience wrapper around notifyUsers for single-recipient use in controllers.
+ */
+export async function createNotification({
+  recipient,
+  actor = null,
+  type,
+  title,
+  message,
+  link = '',
+  entityType = '',
+  entityId = null,
+}) {
+  if (!recipient) return null;
+  const docs = await notifyUsers({
+    recipientIds: [recipient],
+    actorId: actor,
+    type,
+    title,
+    message,
+    link,
+    entityType,
+    entityId,
+  });
+  return docs?.[0] || null;
+}
+
 export async function notifyTicketStakeholders({
   ticket,
   actorId = null,

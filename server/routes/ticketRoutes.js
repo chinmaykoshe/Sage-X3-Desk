@@ -8,6 +8,8 @@ import {
   assignTicket,
   reorderTicket,
   duplicateTicket,
+  mergeTickets,
+  carryForwardTicket,
   bulkTicketAction,
   deleteTicket,
   getPendingApprovalTickets,
@@ -48,6 +50,8 @@ router
 router.patch('/:id/status', requireActionPermission('tickets', 'change_status'), validate(ticketStatusSchema), updateTicketStatus);
 router.patch('/:id/assign', requireActionPermission('tickets', 'assign', 'canAssignTickets'), validate(ticketAssignSchema), assignTicket);
 router.post('/:id/duplicate', requireActionPermission('tickets', 'create'), duplicateTicket);
+router.post('/:id/merge', requireActionPermission('tickets', 'edit'), mergeTickets);
+router.post('/:id/carry-forward', requireActionPermission('tickets', 'edit'), carryForwardTicket);
 router.post('/:id/approve', requireActionPermission('tickets', 'approve'), approveTicket);
 router.post('/:id/reject', requireActionPermission('tickets', 'reject'), rejectTicket);
 router.post('/:id/request-changes', requireActionPermission('tickets', 'request_changes'), requestTicketChanges);

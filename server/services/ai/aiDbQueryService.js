@@ -11,6 +11,7 @@ import EmailMessage from '../../models/EmailMessage.js';
 import KnowledgeBase from '../../models/KnowledgeBase.js';
 import ActivityLog from '../../models/ActivityLog.js';
 import AuditLog from '../../models/AuditLog.js';
+import TimeLog from '../../models/TimeLog.js';
 import { ROLES } from '../../config/constants.js';
 
 export const SENSITIVE_REFUSAL_RESPONSE =
@@ -60,6 +61,55 @@ function buildSearchRegex(search) {
   const cleaned = String(search || '').trim();
   if (!cleaned) return null;
   return new RegExp(escapeRegex(cleaned), 'i');
+}
+
+const SEARCH_STOP_WORDS = new Set([
+  'a', 'an', 'the', 'with', 'name', 'named', 'called', 'for', 'of', 'in', 'on', 'at', 'to', 'by', 'from',
+  'find', 'search', 'show', 'get', 'list', 'give', 'fetch', 'check', 'who', 'is', 'are', 'was', 'were',
+  'what', 'about', 'details', 'detail', 'info', 'information', 'please', 'me', 'all', 'db', 'database',
+  'user', 'users', 'employee', 'employees', 'member', 'members', 'client', 'clients', 'ticket', 'tickets',
+  'task', 'tasks', 'project', 'projects', 'email', 'emails', 'recent', 'latest', 'new', 'any', 'my',
+]);
+
+function extractSearchKeywords(raw = '') {
+  const tokens = String(raw || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9@._-]/g, ' ')
+    .split(/\s+/)
+    .filter((t) => (t.length >= 2 || /^\d+$/.test(t)) && !SEARCH_STOP_WORDS.has(t));
+  return tokens.join(' ').trim();
+}
+
+function getSearchTokens(raw = '') {
+  const kw = extractSearchKeywords(raw);
+  const parts = (kw || String(raw || '').trim())
+    .split(/\s+/)
+    .filter((t) => t.length >= 2);
+  return [...new Set(parts)].slice(0, 5);
+}
+
+function buildMultiTokenFilter(search, fields = []) {
+  const tokens = getSearchTokens(search);
+  if (tokens.length === 0 || fields.length === 0) return null;
+  if (tokens.length === 1) {
+    const rx = new RegExp(escapeRegex(tokens[0]), 'i');
+    return { $or: fields.map((f) => ({ [f]: rx })) };
+  }
+  return {
+    allFilter: {
+      $and: tokens.map((tok) => {
+        const rx = new RegExp(escapeRegex(tok), 'i');
+        return { $or: fields.map((f) => ({ [f]: rx })) };
+      }),
+    },
+    anyFilter: {
+      $or: tokens.flatMap((tok) => {
+        const rx = new RegExp(escapeRegex(tok), 'i');
+        return fields.map((f) => ({ [f]: rx }));
+      }),
+    },
+    tokens,
+  };
 }
 
 function formatDateShort(dateVal) {
@@ -114,12 +164,18 @@ async function queryUsers({ search }) {
       `• ${u.fullName} (${u.employeeId || 'NO-ID'}) — ${u.role}${u.designation ? ` · ${u.designation}` : ''} · ${u.status || 'Active'} · ${u.email} (joined ${formatDateShort(u.createdAt)})`
   );
 
+  const buttons = [];
+  if (users.length === 1) {
+    buttons.push({ label: `Open ${users[0].fullName}`, route: `/team/${users[0]._id}` });
+  }
+  buttons.push({ label: 'Open Team Directory', route: '/team' });
+
   return {
     statusType: 'search',
     response: `Found ${total} user(s)${search ? ` matching "${search}"` : ''} (showing newest ${users.length}):\n${lines.join('\n')}`,
     action: {
       type: 'DB_QUERY_RESULT',
-      buttons: [{ label: 'Open Team Directory', route: '/team' }],
+      buttons,
     },
   };
 }
@@ -167,61 +223,118 @@ async function queryClients({ search }) {
       `• ${c.companyName} (${c.clientId}) — ${c.sageX3Version || 'X3'} · Folders: ${[c.clientFolderCode, c.pilotFolderCode, c.productionFolderCode].filter(Boolean).join('/') || 'N/A'}`
   );
 
+  const clientButtons = [];
+  if (clients.length === 1) {
+    clientButtons.push({ label: `Open ${clients[0].companyName}`, route: `/clients/${clients[0]._id}` });
+  }
+  clientButtons.push({ label: 'View Clients', route: `/clients${search ? `?search=${encodeURIComponent(search)}` : ''}` });
+
   return {
     statusType: 'search',
     response: `Found ${totalMatched} client(s)${search ? ` matching "${search}"` : ''}:\n${lines.join('\n')}`,
     action: {
       type: 'DB_QUERY_RESULT',
-      buttons: [
-        { label: 'View Clients', route: `/clients${search ? `?search=${encodeURIComponent(search)}` : ''}` },
-      ],
+      buttons: clientButtons,
     },
   };
 }
 
 async function queryTickets({ search, filterMode = 'recent', user }) {
-  const filter = buildTicketScope(user);
+  const baseScope = buildTicketScope(user);
   if (filterMode === 'pending') {
-    filter.status = { $in: ['New', 'Assigned', 'In Progress', 'On Hold', 'Awaiting Client Response', 'Testing', 'Reopened'] };
+    baseScope.status = { $in: ['New', 'Assigned', 'In Progress', 'On Hold', 'Awaiting Client Response', 'Testing', 'Reopened'] };
   } else if (filterMode === 'completed') {
-    filter.status = { $in: ['Resolved', 'Closed'] };
+    baseScope.status = { $in: ['Resolved', 'Closed'] };
   } else if (filterMode === 'unapproved') {
-    filter.approvalStatus = 'PENDING_APPROVAL';
+    baseScope.approvalStatus = 'PENDING_APPROVAL';
   }
 
-  const rx = buildSearchRegex(search);
-  if (rx) {
-    const searchOr = [
-      { ticketId: rx },
-      { title: rx },
-      { description: rx },
-      { category: rx },
-      { folderCode: rx },
-    ];
-    if (filter.$or) {
-      filter.$and = [{ $or: filter.$or }, { $or: searchOr }];
-      delete filter.$or;
-    } else {
-      filter.$or = searchOr;
+  const cleanSearch = String(search || '').trim();
+  const combineFilter = (extra) => {
+    if (!extra) return { ...baseScope };
+    if (baseScope.$or) {
+      const f = { ...baseScope, $and: [{ $or: baseScope.$or }, extra] };
+      delete f.$or;
+      return f;
+    }
+    return { ...baseScope, ...extra };
+  };
+
+  let filter = combineFilter(null);
+  let fallbackAnyFilter = null;
+  let tokens = [];
+
+  if (cleanSearch) {
+    const tokenSpec = buildMultiTokenFilter(cleanSearch, ['ticketId', 'title', 'description', 'category', 'folderCode', 'priority', 'status']);
+    if (tokenSpec?.allFilter) {
+      filter = combineFilter(tokenSpec.allFilter);
+      fallbackAnyFilter = combineFilter(tokenSpec.anyFilter);
+      tokens = tokenSpec.tokens || [];
+    } else if (tokenSpec) {
+      filter = combineFilter(tokenSpec);
+      tokens = getSearchTokens(cleanSearch);
     }
   }
 
-  const [total, tickets] = await Promise.all([
+  let [total, tickets] = await Promise.all([
     Ticket.countDocuments(filter),
     Ticket.find(filter)
       .populate('client', 'companyName')
       .populate('assignedDevelopers', 'fullName')
-      .select('ticketId title status approvalStatus priority category client assignedDevelopers createdAt')
+      .select('ticketId title description status approvalStatus priority category client assignedDevelopers createdAt')
       .sort({ createdAt: -1 })
-      .limit(10)
+      .limit(8)
       .lean(),
   ]);
 
-  if (tickets.length === 0) {
+  let matchedMode = 'exact';
+  if (tickets.length === 0 && fallbackAnyFilter) {
+    const [anyTotal, anyRows] = await Promise.all([
+      Ticket.countDocuments(fallbackAnyFilter),
+      Ticket.find(fallbackAnyFilter)
+        .populate('client', 'companyName')
+        .populate('assignedDevelopers', 'fullName')
+        .select('ticketId title description status approvalStatus priority category client assignedDevelopers createdAt')
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .lean(),
+    ]);
+    if (anyRows.length > 0) {
+      matchedMode = 'partial';
+      total = anyTotal;
+      anyRows.sort((a, b) => {
+        const hayA = `${a.ticketId} ${a.title} ${a.description || ''}`.toLowerCase();
+        const hayB = `${b.ticketId} ${b.title} ${b.description || ''}`.toLowerCase();
+        const scoreA = tokens.reduce((acc, t) => acc + (hayA.includes(t) ? 1 : 0), 0);
+        const scoreB = tokens.reduce((acc, t) => acc + (hayB.includes(t) ? 1 : 0), 0);
+        return scoreB - scoreA || new Date(b.createdAt) - new Date(a.createdAt);
+      });
+      tickets = anyRows.slice(0, 6);
+    }
+  } else {
+    tickets = tickets.slice(0, 6);
+  }
+
+  // Also check AI TicketDrafts if searching for a topic and few/no published tickets matched
+  let matchingDrafts = [];
+  if (cleanSearch && tokens.length > 0 && tickets.length < 3) {
+    const draftRxOr = tokens.flatMap((t) => {
+      const rx = new RegExp(escapeRegex(t), 'i');
+      return [{ draftId: rx }, { 'generatedFields.title': rx }, { 'generatedFields.description': rx }];
+    });
+    matchingDrafts = await TicketDraft.find({ isDeleted: false, $or: draftRxOr })
+      .populate('clientId', 'companyName')
+      .select('draftId approvalStatus generatedFields.title clientId createdAt')
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .lean();
+  }
+
+  if (tickets.length === 0 && matchingDrafts.length === 0) {
     return {
       statusType: 'search',
-      response: search
-        ? `No tickets matched "${search}".`
+      response: cleanSearch
+        ? `No tickets or drafts matched "${cleanSearch}".`
         : 'No matching tickets found in the database.',
       action: { type: 'DB_QUERY_RESULT', buttons: [{ label: 'Open Tickets', route: '/tickets' }] },
     };
@@ -231,16 +344,35 @@ async function queryTickets({ search, filterMode = 'recent', user }) {
     const devNames = (t.assignedDevelopers || []).map((d) => d.fullName).join(', ') || 'Unassigned';
     return `• ${t.ticketId} [${t.status} · ${t.priority}] ${t.title} (${t.client?.companyName || 'No client'} · ${devNames})`;
   });
+  if (matchingDrafts.length > 0) {
+    lines.push(
+      `\nMatching TL Approval Drafts (${matchingDrafts.length}):`,
+      ...matchingDrafts.map(
+        (d) => `• ${d.draftId} [${d.approvalStatus}] ${d.generatedFields?.title || 'Draft'} (${d.clientId?.companyName || 'Unverified'})`
+      )
+    );
+  }
+
+  const buttons = tickets.slice(0, 3).map((t) => ({
+    label: `Open ${t.ticketId}`,
+    route: `/tickets/${t._id}`,
+  }));
+  if (matchingDrafts.length > 0 && buttons.length < 3) {
+    buttons.push({ label: `Review ${matchingDrafts[0].draftId}`, route: `/approvals/drafts?draft=${matchingDrafts[0]._id}&status=All` });
+  }
+  buttons.push({ label: 'All Tickets', route: `/tickets${cleanSearch ? `?search=${encodeURIComponent(tokens[0] || cleanSearch)}` : ''}` });
+
+  const headerText =
+    tickets.length > 0
+      ? `Found ${total} ticket(s)${cleanSearch ? ` matching "${cleanSearch}"${matchedMode === 'partial' ? ' (best token matches)' : ''}` : ''} (showing top ${tickets.length}):`
+      : `No published tickets matched "${cleanSearch}", found ${matchingDrafts.length} matching TL approval draft(s):`;
 
   return {
     statusType: 'search',
-    response: `Found ${total} ticket(s)${search ? ` matching "${search}"` : ''} (showing latest ${tickets.length}):\n${lines.join('\n')}`,
+    response: `${headerText}\n${lines.join('\n')}`,
     action: {
       type: 'DB_QUERY_RESULT',
-      buttons: [
-        { label: `Open ${tickets[0].ticketId}`, route: `/tickets/${tickets[0]._id}` },
-        { label: 'All Tickets', route: `/tickets${search ? `?search=${encodeURIComponent(search)}` : ''}` },
-      ],
+      buttons,
     },
     contextUpdates: {
       lastResultIds: tickets.map((t) => t._id),
@@ -677,77 +809,135 @@ async function queryStats({ user }) {
   };
 }
 
+async function queryTimesheets({ search, user }) {
+  const filter = { isDeleted: false };
+  if (user?.role === ROLES.DEVELOPER) {
+    filter.employee = user._id;
+  }
+  const rx = buildSearchRegex(search);
+  if (rx) {
+    filter.$or = [{ projectCode: rx }, { taskTitle: rx }, { workDescription: rx }, { taskType: rx }, { entryStatus: rx }];
+  }
+
+  const rows = await TimeLog.find(filter)
+    .populate('client', 'companyName')
+    .populate('employee', 'fullName')
+    .select('date client projectCode taskTitle taskType entryStatus hoursSpent workDescription employee')
+    .sort({ date: -1 })
+    .limit(8)
+    .lean();
+
+  if (rows.length === 0) {
+    return {
+      statusType: 'search',
+      response: search ? `No timesheet entries matched "${search}".` : 'No timesheet entries logged yet.',
+      action: { type: 'DB_QUERY_RESULT', buttons: [{ label: 'Open Timesheet', route: '/timesheet' }] },
+    };
+  }
+
+  const totalHrs = Number(rows.reduce((s, r) => s + Number(r.hoursSpent || 0), 0).toFixed(2));
+  const lines = rows.map(
+    (r) =>
+      `• [${formatDateShort(r.date)}] ${r.hoursSpent}h · ${r.client?.companyName || 'No Client'} · ${r.projectCode || '—'} · ${r.taskTitle || 'Work'} (${r.entryStatus || 'DONE'}) — ${r.employee?.fullName || ''}`
+  );
+
+  return {
+    statusType: 'search',
+    response: `Latest ${rows.length} timesheet entry/entries (${totalHrs}h shown):\n${lines.join('\n')}`,
+    action: { type: 'DB_QUERY_RESULT', buttons: [{ label: 'Open Timesheet', route: '/timesheet' }] },
+  };
+}
+
 async function queryGlobalSearch({ search, user }) {
-  const q = String(search || '').trim();
+  const raw = String(search || '').trim();
+  const q = extractSearchKeywords(raw) || raw;
   if (!q) {
     return queryStats({ user });
   }
-  const rx = buildSearchRegex(q);
+  const tokens = getSearchTokens(q);
+  const mkOr = (fields) => ({
+    $or: (tokens.length > 0 ? tokens : [q]).flatMap((tok) => {
+      const rx = new RegExp(escapeRegex(tok), 'i');
+      return fields.map((f) => ({ [f]: rx }));
+    }),
+  });
   const ticketScope = buildTicketScope(user);
   const isPrivileged = [ROLES.ADMIN, ROLES.TEAM_LEAD].includes(user?.role);
 
-  const [users, clients, tickets, tasks, projects, kb, emails] = await Promise.all([
-    User.find({ isDeleted: false, $or: [{ fullName: rx }, { email: rx }, { employeeId: rx }, { designation: rx }] })
+  const [users, clients, tickets, drafts, tasks, projects, kb, emails, timeLogs] = await Promise.all([
+    User.find({ isDeleted: false, ...mkOr(['fullName', 'email', 'employeeId', 'designation']) })
       .select('employeeId fullName role designation')
       .limit(5)
       .lean(),
-    Client.find({ isDeleted: false, $or: [{ companyName: rx }, { clientId: rx }, { clientFolderCode: rx }] })
+    Client.find({ isDeleted: false, ...mkOr(['companyName', 'clientId', 'clientFolderCode']) })
       .select('clientId companyName clientFolderCode')
       .limit(5)
       .lean(),
     Ticket.find({
       ...ticketScope,
-      $or: [{ ticketId: rx }, { title: rx }, { description: rx }],
+      ...mkOr(['ticketId', 'title', 'description']),
     })
       .select('ticketId title status')
       .limit(5)
       .lean(),
-    Task.find({ isDeleted: false, $or: [{ taskId: rx }, { title: rx }] })
+    TicketDraft.find({ isDeleted: false, ...mkOr(['draftId', 'generatedFields.title', 'generatedFields.description']) })
+      .select('draftId approvalStatus generatedFields.title')
+      .limit(4)
+      .lean(),
+    Task.find({ isDeleted: false, ...mkOr(['taskId', 'title']) })
       .select('taskId title status')
       .limit(4)
       .lean(),
-    Project.find({ isDeleted: false, $or: [{ projectId: rx }, { name: rx }] })
+    Project.find({ isDeleted: false, ...mkOr(['projectId', 'name']) })
       .select('projectId name status')
       .limit(4)
       .lean(),
-    KnowledgeBase.find({ isDeleted: false, $or: [{ articleId: rx }, { title: rx }, { tags: rx }] })
+    KnowledgeBase.find({ isDeleted: false, ...mkOr(['articleId', 'title', 'tags']) })
       .select('articleId title category')
       .limit(3)
       .lean(),
     isPrivileged
-      ? EmailMessage.find({ $or: [{ subject: rx }, { 'sender.email': rx }] })
+      ? EmailMessage.find(mkOr(['subject', 'sender.email', 'plainBody']))
           .select('subject processingStatus sender')
           .limit(3)
           .lean()
       : Promise.resolve([]),
+    TimeLog.find({ isDeleted: false, ...(user?.role === ROLES.DEVELOPER ? { employee: user._id } : {}), ...mkOr(['projectCode', 'taskTitle', 'workDescription']) })
+      .select('projectCode taskTitle hoursSpent date')
+      .limit(3)
+      .lean(),
   ]);
 
   const hits = [];
   if (users.length) hits.push(`Users (${users.length}): ${users.map((u) => `${u.fullName} (${u.employeeId})`).join(', ')}`);
   if (clients.length) hits.push(`Clients (${clients.length}): ${clients.map((c) => `${c.companyName} (${c.clientId})`).join(', ')}`);
   if (tickets.length) hits.push(`Tickets (${tickets.length}): ${tickets.map((t) => `${t.ticketId}: ${t.title} [${t.status}]`).join(' | ')}`);
+  if (drafts.length) hits.push(`Ticket Drafts (${drafts.length}): ${drafts.map((d) => `${d.draftId}: ${d.generatedFields?.title || 'Draft'}`).join(' | ')}`);
   if (tasks.length) hits.push(`Tasks (${tasks.length}): ${tasks.map((t) => `${t.taskId}: ${t.title}`).join(', ')}`);
   if (projects.length) hits.push(`Projects (${projects.length}): ${projects.map((p) => `${p.projectId}: ${p.name}`).join(', ')}`);
   if (kb.length) hits.push(`Knowledge Base (${kb.length}): ${kb.map((k) => `${k.articleId}: ${k.title}`).join(', ')}`);
   if (emails.length) hits.push(`Emails (${emails.length}): ${emails.map((e) => `"${e.subject}"`).join(', ')}`);
+  if (timeLogs.length) hits.push(`Timesheet (${timeLogs.length}): ${timeLogs.map((l) => `${l.hoursSpent}h · ${l.taskTitle || l.projectCode}`).join(', ')}`);
 
   if (hits.length === 0) {
     return {
       statusType: 'search',
-      response: `No database records matched "${q}". You can ask for: "new users", "list clients", "duplicate tickets", "pending approvals", "recent emails", "deployments", or "database stats".`,
+      response: `No database records matched "${q}". You can ask for: "new users", "list clients", "duplicate tickets", "pending approvals", "recent emails", "timesheet", "deployments", or "database stats".`,
       action: null,
     };
   }
 
   const buttons = [];
   if (tickets.length) buttons.push({ label: `Open ${tickets[0].ticketId}`, route: `/tickets/${tickets[0]._id}` });
-  if (clients.length) buttons.push({ label: 'View Clients', route: `/clients?search=${encodeURIComponent(q)}` });
+  if (drafts.length) buttons.push({ label: `Review ${drafts[0].draftId}`, route: `/approvals/drafts?draft=${drafts[0]._id}&status=All` });
+  if (clients.length) buttons.push({ label: `Open ${clients[0].companyName}`, route: `/clients/${clients[0]._id}` });
   if (users.length) buttons.push({ label: 'View Team', route: '/team' });
+  if (timeLogs.length) buttons.push({ label: 'Open Timesheet', route: '/timesheet' });
 
   return {
     statusType: 'search',
     response: `Database matches for "${q}":\n${hits.map((h) => `• ${h}`).join('\n')}`,
-    action: buttons.length ? { type: 'DB_QUERY_RESULT', buttons } : null,
+    action: buttons.length ? { type: 'DB_QUERY_RESULT', buttons: buttons.slice(0, 4) } : null,
   };
 }
 
@@ -795,6 +985,9 @@ export async function querySafeDatabase({ queryType = 'auto', search = '', messa
     case 'counts':
     case 'space_consumed':
       return queryStats({ user });
+    case 'timesheet':
+    case 'time_logs':
+      return queryTimesheets({ search: cleanSearch, user });
     case 'global_search':
     case 'auto':
     default:

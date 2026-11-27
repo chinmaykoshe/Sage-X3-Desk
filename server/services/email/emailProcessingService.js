@@ -437,9 +437,9 @@ export async function processNormalizedEmail(integration, normalized) {
       return emailDoc;
     }
 
-    if (rules.autoCreateTickets === false) {
+    if (rules.autoCreateTickets !== true) {
       emailDoc.processingStatus = 'Pending Review';
-      emailDoc.matchRationale = 'Auto-create disabled in mailbox rules — awaiting manual creation.';
+      emailDoc.matchRationale = 'Manual ticket creation mode — click "Create Ticket" to create a ticket.';
       await emailDoc.save();
       return emailDoc;
     }

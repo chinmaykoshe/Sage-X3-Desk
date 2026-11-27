@@ -307,9 +307,9 @@ export default function TimesheetPage() {
   const colHeaders = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col min-h-[calc(100dvh-8.2rem)]">
       {/* Spreadsheet Toolbar (Google Sheets / Excel Style Header) */}
-      <div className="rounded-t-xl border border-[#CBD5E1] bg-white px-3 py-2.5 shadow-sm dark:border-[#2C2E33] dark:bg-[#17181B]">
+      <div className="rounded-t-xl border border-[#CBD5E1] bg-white px-3 py-2.5 shadow-sm dark:border-[#2C2E33] dark:bg-[#17181B] shrink-0">
         <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-2.5 min-w-0">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0F9D58] text-white shadow-xs">
@@ -453,16 +453,16 @@ export default function TimesheetPage() {
       </div>
 
       {/* Main Excel Sheet Container */}
-      <div className="-mt-3 border-x border-b border-[#CBD5E1] bg-white shadow-sm dark:border-[#2C2E33] dark:bg-[#141518] rounded-b-xl overflow-hidden">
+      <div className="flex-1 flex flex-col border-x border-b border-[#CBD5E1] bg-white shadow-sm dark:border-[#2C2E33] dark:bg-[#141518] rounded-b-xl overflow-hidden">
         {loading ? (
-          <div className="p-8">
+          <div className="flex-1 flex items-center justify-center p-8">
             <Loader label="Loading timesheet..." />
           </div>
         ) : (
           <>
             {/* Mobile Compact Card Mode (when toggled on < sm) */}
             {mobileMode === 'cards' && (
-              <div className="sm:hidden p-3 space-y-2.5">
+              <div className="sm:hidden flex-1 p-3 space-y-2.5">
                 {entries.map((entry, idx) => (
                   <div
                     key={entry._id}
@@ -568,7 +568,7 @@ export default function TimesheetPage() {
             )}
 
             {/* Authentic Excel / Google Sheets Grid (always visible on sm+, or when 'sheet' selected on mobile) */}
-            <div className={`${mobileMode === 'cards' ? 'hidden sm:block' : 'block'} overflow-x-auto`}>
+            <div className={`${mobileMode === 'cards' ? 'hidden sm:block' : 'block'} flex-1 overflow-auto`}>
               <table className="w-full min-w-[1120px] border-collapse text-left text-[12px] leading-snug text-[#171717] dark:text-slate-100">
                 <thead>
                   {/* Excel Column Letter Strip (A, B, C...) */}
@@ -920,6 +920,18 @@ export default function TimesheetPage() {
                     </td>
                     <td colSpan={2} className="border border-[#CBD5E1] dark:border-[#2C2E33]" />
                   </tr>
+
+                  {/* Blank Excel Filler Grid Rows so the sheet fills full viewport height */}
+                  {Array.from({ length: Math.max(0, 12 - entries.length) }).map((_, fIdx) => (
+                    <tr key={`filler-${fIdx}`} className="h-7">
+                      <td className="border border-[#CBD5E1] dark:border-[#2C2E33] bg-[#F1F5F9] dark:bg-[#1E2025] text-center text-[11px] text-[#94A3B8]">
+                        {entries.length + 3 + fIdx}
+                      </td>
+                      {colHeaders.map((c) => (
+                        <td key={c} className="border border-[#E2E8F0] dark:border-[#26282D]" />
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

@@ -3,7 +3,7 @@ import { PRIORITIES } from '../config/constants.js';
 
 const automationRulesSchema = new mongoose.Schema(
   {
-    autoCreateTickets: { type: Boolean, default: true },
+    autoCreateTickets: { type: Boolean, default: false },
     autoUpdateExistingTickets: { type: Boolean, default: true },
     ignoreSenders: [{ type: String, trim: true, lowercase: true }],
     ignoreFoldersOrLabels: [{ type: String, trim: true }],

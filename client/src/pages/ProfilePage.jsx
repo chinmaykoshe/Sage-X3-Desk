@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { ShieldCheck, CheckCircle2, XCircle, Sun, Moon } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { ShieldCheck, CheckCircle2, XCircle, Sun, Moon, History, Sparkles, Trash2, MessageSquare } from 'lucide-react';
+import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -10,11 +12,14 @@ import Card from '../components/ui/Card';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import Loader from '../components/ui/Loader';
 
 export default function ProfilePage() {
   const { user, setUser, isManager, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { addToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'ai-history' ? 'ai-history' : 'profile';
 
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [designation, setDesignation] = useState(user?.designation || '');
@@ -22,6 +27,38 @@ export default function ProfilePage() {
   const [skillsText, setSkillsText] = useState((user?.skills || []).join(', '));
   const [emailNotifications, setEmailNotifications] = useState(user?.preferences?.emailNotifications ?? true);
   const [saving, setSaving] = useState(false);
+
+  const [aiHistory, setAiHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [expandedConvId, setExpandedConvId] = useState(null);
+
+  const loadAiHistory = useCallback(async () => {
+    setLoadingHistory(true);
+    try {
+      const { data } = await api.get('/ai/conversations');
+      setAiHistory(data.data || []);
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to load AI chat history'), 'error');
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'ai-history') {
+      loadAiHistory();
+    }
+  }, [activeTab, loadAiHistory]);
+
+  const handleDeleteConversation = async (id) => {
+    try {
+      await api.delete(`/ai/conversations/${id}`);
+      addToast('AI conversation removed');
+      setAiHistory((prev) => prev.filter((c) => c._id !== id));
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to delete conversation'), 'error');
+    }
+  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -90,6 +127,123 @@ export default function ProfilePage() {
         </div>
       </Card>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setSearchParams({})}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            activeTab === 'profile'
+              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+          }`}
+        >
+          Profile &amp; Permissions
+        </button>
+        <button
+          type="button"
+          onClick={() => setSearchParams({ tab: 'ai-history' })}
+          className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+            activeTab === 'ai-history'
+              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+          }`}
+        >
+          <History className="h-3.5 w-3.5" /> X3 AI Chat History
+        </button>
+      </div>
+
+      {activeTab === 'ai-history' ? (
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-[#007AFF]" /> Your Retained X3 AI Conversations
+              </h3>
+              <p className="text-xs text-[#777777] mt-0.5">
+                Every conversation started with + in X3 AI Assistant is saved here automatically.
+              </p>
+            </div>
+            <Button size="xs" variant="secondary" onClick={loadAiHistory}>
+              Refresh
+            </Button>
+          </div>
+
+          {loadingHistory ? (
+            <Loader label="Loading X3 AI history..." />
+          ) : aiHistory.length === 0 ? (
+            <p className="py-8 text-center text-xs text-[#777777]">No saved X3 AI conversations yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {aiHistory.map((conv) => {
+                const isExpanded = expandedConvId === conv._id;
+                const msgs = conv.messages || [];
+                return (
+                  <div
+                    key={conv._id}
+                    className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 text-xs space-y-2"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-[#171717] dark:text-white truncate">
+                          {conv.title || 'X3 AI Conversation'}
+                        </div>
+                        <div className="text-[11px] text-[#777777]">
+                          {msgs.length} message(s) · Updated {dayjs(conv.updatedAt).format('DD MMM YYYY, HH:mm')}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <Button
+                          size="xs"
+                          variant="secondary"
+                          onClick={() => setExpandedConvId(isExpanded ? null : conv._id)}
+                        >
+                          <MessageSquare className="h-3 w-3 mr-1" /> {isExpanded ? 'Hide Messages' : 'View Messages'}
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="primary"
+                          onClick={() => window.dispatchEvent(new CustomEvent('x3ai:open-conversation', { detail: conv }))}
+                        >
+                          <Sparkles className="h-3 w-3 mr-1" /> Resume in X3 AI
+                        </Button>
+                        <Button
+                          size="xs"
+                          variant="danger"
+                          onClick={() => handleDeleteConversation(conv._id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="mt-2 space-y-2 border-t border-[#E8E8E5] dark:border-[#26282D] pt-2.5 max-h-72 overflow-y-auto">
+                        {msgs.length === 0 ? (
+                          <div className="text-[11px] text-[#777777]">Empty conversation.</div>
+                        ) : (
+                          msgs.map((m, idx) => (
+                            <div
+                              key={m._id || idx}
+                              className={`rounded-lg px-2.5 py-1.5 text-[11px] whitespace-pre-line ${
+                                m.role === 'user'
+                                  ? 'bg-[#007AFF]/10 text-[#171717] dark:text-white font-medium'
+                                  : 'bg-[#F4F4F2]/70 dark:bg-white/5 text-[#333333] dark:text-slate-300'
+                              }`}
+                            >
+                              <span className="font-bold uppercase text-[9px] mr-1.5 opacity-60">{m.role}:</span>
+                              {m.content}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <Card className="lg:col-span-2">
           <h3 className="text-sm font-semibold mb-4">Personal & Role Details</h3>
@@ -163,6 +317,7 @@ export default function ProfilePage() {
           </div>
         </Card>
       </div>
+      )}
     </div>
   );
 }

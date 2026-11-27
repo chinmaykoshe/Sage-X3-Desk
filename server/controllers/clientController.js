@@ -207,22 +207,22 @@ export const updateClient = asyncHandler(async (req, res) => {
 export const deleteClient = asyncHandler(async (req, res) => {
   const client = await Client.findOneAndUpdate(
     { _id: req.params.id, isDeleted: false },
-    { isDeleted: true, deletedAt: new Date(), accountStatus: 'Inactive' },
+    { isActive: false, accountStatus: 'Inactive' },
     { new: true }
   );
   if (!client) throw new AppError('Client not found.', 404);
 
   await recordActivity({
     actor: req.user._id,
-    action: 'CLIENT_ARCHIVED',
+    action: 'CLIENT_DEACTIVATED',
     entityType: 'client',
     entityId: client._id,
     entityRef: client.clientId,
     client: client._id,
-    summary: `Soft-deleted client ${client.clientId} - ${client.companyName}`,
+    summary: `Marked client ${client.clientId} - ${client.companyName} as Inactive`,
   });
 
-  return sendSuccess(res, null, 'Client archived successfully');
+  return sendSuccess(res, client, 'Client marked as Inactive');
 });
 
 export const addClientEnvironment = asyncHandler(async (req, res) => {

@@ -4,6 +4,8 @@ import {
   getGovernanceData,
   adminDeleteTicket,
   adminDeleteUser,
+  markTicketNotDuplicate,
+  requestDuplicateTicketChanges,
   getDevelopmentActivities,
   createDevelopmentActivity,
   getEmployeeUnifiedActivity,
@@ -29,6 +31,8 @@ router.route('/dev-activities')
 router.get('/overview', requireScreenAccess('admin_overview'), getMonitoringOverview);
 router.get('/governance', authorizeRoles(ROLES.ADMIN), getGovernanceData);
 router.delete('/governance/tickets/:id', authorizeRoles(ROLES.ADMIN), adminDeleteTicket);
+router.post('/governance/tickets/:id/not-duplicate', authorizeRoles(ROLES.ADMIN), markTicketNotDuplicate);
+router.post('/governance/tickets/:id/request-changes', authorizeRoles(ROLES.ADMIN), requestDuplicateTicketChanges);
 router.delete('/governance/users/:id', authorizeRoles(ROLES.ADMIN), adminDeleteUser);
 router.get('/employee-activity/:employeeId', requireScreenAccess('admin_user_activity'), getEmployeeUnifiedActivity);
 router.get('/system-logs', requireScreenAccess('admin_system_logs'), getSystemLogs);

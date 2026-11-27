@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { DndContext, PointerSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
 import { useWorkspace } from '../context/WorkspaceContext';
@@ -10,6 +10,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Loader from '../components/ui/Loader';
 import Badge from '../components/ui/Badge';
+import Modal from '../components/ui/Modal';
 
 function DraggableCalItem({ ev, onOpen }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -95,6 +96,16 @@ export default function CalendarPage() {
   const [cursor, setCursor] = useState(dayjs());
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [carryModal, setCarryModal] = useState({
+    open: false,
+    ticketId: '',
+    label: '',
+    nextDate: '',
+    hoursSpent: '4',
+    workDescription: '',
+    entryStatus: 'IN PROGRESS',
+  });
+  const [carrying, setCarrying] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -115,6 +126,7 @@ export default function CalendarPage() {
             rawId: t._id,
             date: dayjs(t.dueDate).format('YYYY-MM-DD'),
             label: `${t.ticketId}: ${t.title}`,
+            description: t.description || '',
             type: 'ticket',
             priority: t.priority,
             status: t.status,
@@ -316,10 +328,31 @@ export default function CalendarPage() {
                     <div
                       key={ev.id}
                       onClick={() => openEvent(ev)}
-                      className="flex items-center justify-between rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 text-xs cursor-pointer hover:bg-[#F4F4F2]/60"
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E8E8E5] dark:border-[#26282D] p-3 text-xs cursor-pointer hover:bg-[#F4F4F2]/60"
                     >
                       <span className="font-semibold">{ev.label}</span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {ev.type === 'ticket' && (
+                          <Button
+                            type="button"
+                            size="xs"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCarryModal({
+                                open: true,
+                                ticketId: ev.rawId,
+                                label: ev.label,
+                                nextDate: dayjs(ev.date).add(1, 'day').format('YYYY-MM-DD'),
+                                hoursSpent: '4',
+                                workDescription: ev.description || ev.label,
+                                entryStatus: 'IN PROGRESS',
+                              });
+                            }}
+                          >
+                            Carry Forward <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        )}
                         {ev.priority && <Badge variant="priority" value={ev.priority}>{ev.priority}</Badge>}
                         {ev.status && <Badge value={ev.status}>{ev.status}</Badge>}
                       </div>
@@ -330,6 +363,97 @@ export default function CalendarPage() {
           )}
         </DndContext>
       )}
+
+      <Modal
+        open={carryModal.open}
+        onClose={() => setCarryModal((p) => ({ ...p, open: false }))}
+        title="Carry Ticket Forward & Log Timesheet Hours"
+        subtitle={carryModal.label}
+        maxWidth="max-w-md"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setCarrying(true);
+            try {
+              const { data } = await api.post(`/tickets/${carryModal.ticketId}/carry-forward`, {
+                nextDate: carryModal.nextDate,
+                hoursSpent: Number(carryModal.hoursSpent || 0),
+                workDescription: carryModal.workDescription,
+                entryStatus: carryModal.entryStatus,
+              });
+              addToast(data.message || 'Ticket carried forward & Timesheet updated', 'success');
+              setCarryModal((p) => ({ ...p, open: false }));
+              notifyLocalMutation('ticket');
+              loadEvents();
+            } catch (err) {
+              addToast(getApiError(err, 'Failed to carry ticket forward'), 'error');
+            } finally {
+              setCarrying(false);
+            }
+          }}
+          className="space-y-3 text-xs"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label className="block font-medium mb-1">Carry Forward To Date *</label>
+              <input
+                type="date"
+                required
+                value={carryModal.nextDate}
+                onChange={(e) => setCarryModal((p) => ({ ...p, nextDate: e.target.value }))}
+                className="w-full rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Hours Worked on That Day *</label>
+              <input
+                type="number"
+                step="0.25"
+                min="0"
+                max="24"
+                required
+                value={carryModal.hoursSpent}
+                onChange={(e) => setCarryModal((p) => ({ ...p, hoursSpent: e.target.value }))}
+                className="w-full rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Timesheet Entry Status</label>
+            <select
+              value={carryModal.entryStatus}
+              onChange={(e) => setCarryModal((p) => ({ ...p, entryStatus: e.target.value }))}
+              className="w-full rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            >
+              <option value="IN PROGRESS">IN PROGRESS</option>
+              <option value="DONE">DONE</option>
+              <option value="PENDING">PENDING</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Work Description (Copied to Timesheet)</label>
+            <textarea
+              rows={3}
+              required
+              value={carryModal.workDescription}
+              onChange={(e) => setCarryModal((p) => ({ ...p, workDescription: e.target.value }))}
+              className="w-full rounded-lg border border-[#E8E8E5] px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setCarryModal((p) => ({ ...p, open: false }))}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={carrying}>
+              {carrying ? 'Updating...' : 'Carry Forward & Update TS'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

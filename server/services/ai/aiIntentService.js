@@ -378,12 +378,13 @@ function deterministicFallbackIntent(message, context) {
   }
 
   if (
-    /^(?:list|show|get|find|who\s+are|recent|latest|new|all)?\s*(?:the\s+)?(?:new|latest|recent|all)?\s*(?:users?|team\s*members?|employees?|developers?)(?:\s+in\s+(?:db|database))?$/i.test(
+    /^(?:list|show|get|find|give|fetch|who\s+are|recent|latest|new|all)?\s*(?:me\s+)?(?:all\s+|new\s+|latest\s+|recent\s+|the\s+)*(?:users?|team\s*members?|employees?|developers?)(?:\s+in\s+(?:db|database))?$/i.test(
       lower
     ) ||
-    /\b(new\s+users?|list\s+(?:all\s+|new\s+|recent\s+)?(?:users?|team\s*members?|employees?)|show\s+(?:all\s+|new\s+|recent\s+)?(?:users?|team\s*members?|employees?)|users?\s+in\s+(?:db|database))\b/i.test(
+    /\b(?:list|show|get|find|give|fetch)\s+(?:me\s+)?(?:all\s+|new\s+|recent\s+|latest\s+|the\s+)*(?:users?|team\s*members?|employees?|developers?)\b/i.test(
       lower
-    )
+    ) ||
+    /\b(?:new\s+users?|users?\s+in\s+(?:db|database))\b/i.test(lower)
   ) {
     return {
       intent: 'QUERY_DATABASE',
@@ -393,7 +394,7 @@ function deterministicFallbackIntent(message, context) {
   }
 
   if (
-    /\b(list|show|get|find)\s+(?:all\s+|new\s+|recent\s+|latest\s+)?clients?\b/i.test(lower) ||
+    /\b(list|show|get|find|give|fetch)\s+(?:me\s+)?(?:all\s+|new\s+|recent\s+|latest\s+|the\s+)*clients?\b/i.test(lower) ||
     /\b(new|latest|recent)\s+clients?\b/i.test(lower) ||
     /\bclients?\s+in\s+(?:db|database)\b/i.test(lower)
   ) {
@@ -404,7 +405,7 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
-  if (/\b(?:recent|latest|list|show|check)\s+(?:all\s+|recent\s+)?emails?\b/i.test(lower)) {
+  if (/\b(?:recent|latest|list|show|check|get|fetch)\s+(?:all\s+|recent\s+|the\s+)*emails?\b/i.test(lower)) {
     return {
       intent: 'QUERY_DATABASE',
       entities: { queryType: 'emails', search: '' },
@@ -412,16 +413,32 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
-  if (/\b(?:recent|latest|list|show|check)\s+(?:all\s+|recent\s+)?(?:tickets?)\b/i.test(lower) && !context.matchedClient && !context.matchedEmployee) {
+  if (/\b(?:recent|latest|list|show|check|get|fetch)\s+(?:all\s+|recent\s+|the\s+)*(?:tickets?)\b/i.test(lower) && !context.matchedClient && !context.matchedEmployee) {
     const qType = /pending|open/i.test(lower)
       ? 'pending_tickets'
       : /completed|closed|resolved/i.test(lower)
         ? 'completed_tickets'
         : 'tickets';
+    const strippedTopic = message
+      .replace(/\b(recent|latest|list|show|check|get|fetch|find|all|the|pending|open|completed|closed|resolved|tickets?|with|for|about|on|regarding)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     return {
       intent: 'QUERY_DATABASE',
-      entities: { queryType: qType, search: '' },
-      response: 'Fetching tickets from the database.',
+      entities: { queryType: qType, search: strippedTopic },
+      response: strippedTopic ? `Searching tickets matching "${strippedTopic}".` : 'Fetching tickets from the database.',
+    };
+  }
+
+  if (/\b(time\s*sheet|my\s+hours|logged\s+hours|time\s*logs?)\b/i.test(lower)) {
+    const cleanedTs = message
+      .replace(/\b(show|get|list|my|time\s*sheet|hours|logged|time\s*logs?|for|about)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'timesheet', search: cleanedTs },
+      response: 'Fetching timesheet entries.',
     };
   }
 
@@ -450,12 +467,28 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
-  // Phrases like "<something> client" when no existing client matched deterministically
-  if (/\bclient\b/i.test(lower) && !context.matchedClient && !/(create|add|onboard|format|template|go\s+to|open|navigate)/i.test(lower)) {
-    const cleaned = lower.replace(/\b(find|search|show|open|get|client|clients|for|named)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+  // Specific user/employee lookup (e.g. "user with name chinmay", "find user rohan", "who is chinmay")
+  if (
+    (/\b(?:user|employee|member|developer)\b/i.test(lower) && !/(create|add|onboard|format|template|go\s+to|open|navigate)/i.test(lower)) ||
+    (context.matchedEmployee && !/ticket|task|overdue/i.test(lower))
+  ) {
+    const cleanedUser = message
+      .replace(/\b(find|search|show|get|who|is|are|user|users|employee|employees|member|members|with|the|name|named|called|about|details|for|please)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
     return {
       intent: 'QUERY_DATABASE',
-      entities: { queryType: 'clients', search: cleaned || message },
+      entities: { queryType: 'users', search: context.matchedEmployee?.name || cleanedUser },
+      response: 'Searching users in the database.',
+    };
+  }
+
+  // Specific client lookup (both matched and unmatched, e.g. "client hightide" or "dumb client")
+  if (/\bclient\b/i.test(lower) && !/(create|add|onboard|format|template|go\s+to|open|navigate|ticket|summarize|summary)/i.test(lower)) {
+    const cleaned = lower.replace(/\b(find|search|show|open|get|client|clients|for|named|with|name|about|details)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'clients', search: context.matchedClient?.name || cleaned || message },
       response: 'Checking clients in the database.',
     };
   }
@@ -500,6 +533,19 @@ function deterministicFallbackIntent(message, context) {
           : undefined,
       },
       response: 'Applying ticket filters.',
+    };
+  }
+
+  // Natural ticket topic lookups like "ticket for 2 bank setup" or "bank setup ticket"
+  if (/\btickets?\b/i.test(lower) && !/(create|log|draft|raise|open|submit)\s+(a\s+)?(new\s+)?ticket\b/i.test(lower)) {
+    const topic = message
+      .replace(/\b(find|search|show|get|give|any|the|a|an|tickets?|for|with|about|on|regarding|related|to)\b/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'tickets', search: topic },
+      response: topic ? `Searching tickets for "${topic}".` : 'Fetching tickets from the database.',
     };
   }
 

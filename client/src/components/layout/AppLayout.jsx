@@ -42,6 +42,7 @@ import {
   Sliders,
   Shield,
   FileSpreadsheet,
+  LifeBuoy,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -113,6 +114,7 @@ const SIDEBAR_GROUPS = [
   {
     label: 'SYSTEM',
     items: [
+      { to: '/help-center', label: 'Help Center', icon: LifeBuoy },
       { to: '/settings/general', label: 'General Settings', icon: Sliders, screenKey: 'settings' },
       { to: '/settings/access-control', label: 'Access Control', icon: Shield, screenKey: 'settings' },
       { to: '/settings/email-integrations', label: 'Email Integrations', icon: Mail, screenKey: 'settings' },

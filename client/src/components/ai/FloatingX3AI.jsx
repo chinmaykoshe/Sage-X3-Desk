@@ -17,6 +17,7 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  History,
 } from 'lucide-react';
 import api, { getApiError } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -61,6 +62,18 @@ export default function FloatingX3AI() {
       setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 60);
     }
   }, [open, messages.length]);
+
+  useEffect(() => {
+    const onResume = (e) => {
+      const conv = e.detail;
+      if (!conv?._id) return;
+      setConversationId(conv._id);
+      setMessages(conv.messages || []);
+      setOpen(true);
+    };
+    window.addEventListener('x3ai:open-conversation', onResume);
+    return () => window.removeEventListener('x3ai:open-conversation', onResume);
+  }, []);
 
   // Centralized Frontend AI Action Executor (Part 3, Section 8)
   const executeFrontendAction = (action) => {
@@ -176,23 +189,23 @@ export default function FloatingX3AI() {
 
   const getMsgStyle = (msg) => {
     if (msg.role === 'user') {
-      return 'ml-auto bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]';
+      return 'ml-auto rounded-[18px] rounded-br-[6px] bg-gradient-to-b from-[#0A84FF] to-[#007AFF] text-white shadow-[0_4px_14px_rgba(0,122,255,0.28),inset_0_1px_0_rgba(255,255,255,0.3)]';
     }
     switch (msg.statusType) {
       case 'navigation':
-        return 'border border-[#638BEF]/30 bg-[#638BEF]/10 text-[#171717] dark:text-slate-100';
+        return 'rounded-[18px] rounded-bl-[6px] border border-[#007AFF]/20 bg-[#007AFF]/10 backdrop-blur-md text-[#1D1D1F] dark:text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]';
       case 'search':
       case 'success':
-        return 'border border-[#35B8A6]/35 bg-[#35B8A6]/10 text-[#171717] dark:text-slate-100';
+        return 'rounded-[18px] rounded-bl-[6px] border border-white/75 bg-white/65 backdrop-blur-md text-[#1D1D1F] dark:border-white/15 dark:bg-white/[0.1] dark:text-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.75)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]';
       case 'draft':
       case 'approval':
-        return 'border border-[#C6F36B] bg-[#C6F36B]/20 text-[#171717] dark:text-slate-100';
+        return 'rounded-[18px] rounded-bl-[6px] border border-[#34C759]/30 bg-[#34C759]/12 backdrop-blur-md text-[#1D1D1F] dark:text-slate-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]';
       case 'warning':
-        return 'border border-amber-500/40 bg-amber-500/10 text-[#171717] dark:text-amber-100';
+        return 'rounded-[18px] rounded-bl-[6px] border border-[#FF9F0A]/35 bg-[#FF9F0A]/12 backdrop-blur-md text-[#1D1D1F] dark:text-amber-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]';
       case 'error':
-        return 'border border-[#F16D64]/40 bg-[#F16D64]/10 text-[#c93e35] dark:text-[#ff9c95]';
+        return 'rounded-[18px] rounded-bl-[6px] border border-[#FF3B30]/35 bg-[#FF3B30]/12 backdrop-blur-md text-[#c93e35] dark:text-[#ff9c95] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]';
       default:
-        return 'border border-[#E8E8E5] bg-[#F4F4F2]/70 text-[#171717] dark:border-[#2C2E33] dark:bg-white/5 dark:text-slate-100';
+        return 'rounded-[18px] rounded-bl-[6px] border border-white/75 bg-white/65 backdrop-blur-md text-[#1D1D1F] dark:border-white/15 dark:bg-white/[0.1] dark:text-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.04),inset_0_1px_0_rgba(255,255,255,0.75)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]';
     }
   };
 
@@ -207,87 +220,97 @@ export default function FloatingX3AI() {
 
   return (
     <>
-      {/* Closed Floating Trigger Button */}
+      {/* Closed Floating Trigger Button (Apple Liquid Glass Orb) */}
       {!open && (
         <button
           onClick={() => setOpen(true)}
           title="Ask X3 AI"
           aria-label="Ask X3 AI"
-          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 group flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-full bg-[#171717] p-3 sm:p-3.5 text-[#C6F36B] shadow-[0_8px_28px_rgba(23,23,23,0.35)] ring-2 ring-[#C6F36B]/50 hover:ring-[#C6F36B] hover:scale-105 transition-all duration-200"
+          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 group flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-full border border-white/80 bg-white/70 backdrop-blur-2xl backdrop-saturate-[1.8] p-3 sm:p-3.5 text-[#007AFF] shadow-[0_12px_32px_rgba(0,0,0,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] hover:scale-105 hover:bg-white/85 dark:border-white/20 dark:bg-[#1C1C1E]/75 dark:text-[#0A84FF] dark:shadow-[0_12px_32px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.18)] transition-all duration-200"
         >
           <Sparkles className="h-5 w-5" />
           <span
             title={status.available && status.modelReady ? 'Ollama Online' : 'Ollama Offline'}
-            className={`absolute -top-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white dark:border-[#101113] ${
-              status.available && status.modelReady ? 'bg-[#35B8A6]' : 'bg-[#F16D64]'
+            className={`absolute top-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-[#1C1C1E] ${
+              status.available && status.modelReady ? 'bg-[#34C759]' : 'bg-[#FF3B30]'
             }`}
           />
         </button>
       )}
 
-      {/* Expanded Floating AI Workspace */}
+      {/* Expanded Floating AI Workspace (Apple Liquid Glass Sheet) */}
       {open && (
         <div
-          className={`fixed z-50 flex flex-col border border-[#E8E8E5] bg-white shadow-2xl dark:border-[#2C2E33] dark:bg-[#17181B] transition-all duration-200 inset-x-2 bottom-2 top-14 sm:inset-auto sm:bottom-5 sm:right-5 rounded-2xl overflow-hidden ${
+          className={`fixed z-50 flex flex-col border border-white/75 bg-white/60 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[0_24px_64px_-12px_rgba(0,0,0,0.24),inset_0_1px_0_rgba(255,255,255,0.85)] ring-1 ring-black/[0.04] dark:border-white/15 dark:bg-[#1C1C1E]/65 dark:shadow-[0_24px_64px_-12px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.12)] dark:ring-white/10 transition-all duration-200 inset-x-2 bottom-2 top-14 sm:inset-auto sm:bottom-5 sm:right-5 rounded-[24px] overflow-hidden ${
             expandedSize ? 'sm:w-[540px] sm:h-[680px]' : 'sm:w-[410px] sm:h-[560px]'
           }`}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] bg-[#171717] px-4 py-3 text-white">
+          {/* Apple Frosted Header */}
+          <div className="flex items-center justify-between border-b border-black/[0.06] dark:border-white/[0.1] bg-white/45 dark:bg-white/[0.05] backdrop-blur-xl px-4 py-3 text-[#1D1D1F] dark:text-white">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#C6F36B] text-[#171717]">
-                <Sparkles className="h-4 w-4" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#0A84FF] via-[#5E5CE6] to-[#BF5AF2] text-white shadow-[0_2px_8px_rgba(10,132,255,0.35)]">
+                <Sparkles className="h-3.5 w-3.5" />
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold">X3 AI Assistant</span>
+                  <span className="text-xs font-semibold tracking-tight">X3 AI Assistant</span>
                   <span
-                    className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium backdrop-blur-sm ${
                       status.available && status.modelReady
-                        ? 'bg-[#35B8A6]/20 text-[#6fe0d0]'
-                        : 'bg-[#F16D64]/20 text-[#ff9c95]'
+                        ? 'bg-[#34C759]/15 text-[#1f8a3d] dark:text-[#30D158]'
+                        : 'bg-[#FF3B30]/15 text-[#c93e35] dark:text-[#FF453A]'
                     }`}
                   >
                     <span
                       className={`h-1.5 w-1.5 rounded-full ${
-                        status.available && status.modelReady ? 'bg-[#35B8A6]' : 'bg-[#F16D64]'
+                        status.available && status.modelReady ? 'bg-[#34C759]' : 'bg-[#FF3B30]'
                       }`}
                     />
-                    {status.available && status.modelReady ? 'Local Ready' : 'Offline'}
+                    {status.available && status.modelReady ? 'Ready' : 'Offline'}
                   </span>
                 </div>
-                <div className="text-[10px] font-mono text-white/60 truncate">
-                  {status.model} {status.digest ? `(${status.digest})` : ''}
+                <div className="text-[10px] font-medium text-black/45 dark:text-white/50 truncate">
+                  {status.model} {status.digest ? `· ${status.digest}` : ''}
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
               <button
+                onClick={() => {
+                  setOpen(false);
+                  navigate('/profile?tab=ai-history');
+                }}
+                title="AI Chat History (Profile)"
+                className="rounded-full p-1.5 text-black/55 hover:bg-black/[0.06] hover:text-black dark:text-white/65 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
+              >
+                <History className="h-4 w-4" />
+              </button>
+              <button
                 onClick={handleNewConversation}
                 title="New conversation"
-                className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                className="rounded-full p-1.5 text-black/55 hover:bg-black/[0.06] hover:text-black dark:text-white/65 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
               >
                 <PlusCircle className="h-4 w-4" />
               </button>
               <button
                 onClick={handleClear}
                 title="Clear conversation"
-                className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                className="rounded-full p-1.5 text-black/55 hover:bg-black/[0.06] hover:text-black dark:text-white/65 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setExpandedSize((s) => !s)}
                 title="Resize panel"
-                className="hidden sm:inline-flex rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                className="hidden sm:inline-flex rounded-full p-1.5 text-black/55 hover:bg-black/[0.06] hover:text-black dark:text-white/65 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
               >
                 {expandedSize ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </button>
               <button
                 onClick={() => setOpen(false)}
                 title="Close"
-                className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+                className="rounded-full p-1.5 text-black/55 hover:bg-black/[0.06] hover:text-black dark:text-white/65 dark:hover:bg-white/10 dark:hover:text-white transition-colors"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -305,7 +328,7 @@ export default function FloatingX3AI() {
           <div className="flex-1 overflow-y-auto p-3.5 space-y-3 text-xs">
             {messages.length === 0 ? (
               <div className="space-y-3">
-                <div className="rounded-xl border border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/60 dark:bg-white/5 p-3">
+                <div className="rounded-xl border border-white/50 dark:border-white/15 bg-white/55 dark:bg-white/5 backdrop-blur-md p-3 shadow-xs">
                   <div className="font-semibold text-[#171717] dark:text-slate-100">
                     Local Sage X3 Operations Assistant
                   </div>
@@ -333,14 +356,14 @@ export default function FloatingX3AI() {
                     </div>
 
                     {(msg.action?.buttons?.length > 0 || (msg.action?.route && ['OPEN_DRAFT', 'OPEN_CREATED'].includes(msg.action?.type))) && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
+                      <div className="mt-2.5 flex flex-wrap gap-1.5">
                         {(msg.action.buttons || [{ label: msg.action.label || 'Review in TL Approval Inbox', route: msg.action.route }]).map((btn, bIdx) => (
                           <button
                             key={bIdx}
                             onClick={() => {
                               navigate(btn.route);
                             }}
-                            className="inline-flex items-center gap-1 rounded-md bg-[#171717] px-2.5 py-1 text-[11px] font-semibold text-[#C6F36B] hover:opacity-90"
+                            className="inline-flex items-center gap-1 rounded-full bg-black/[0.06] hover:bg-black/[0.11] dark:bg-white/15 dark:hover:bg-white/25 backdrop-blur-sm px-3 py-1 text-[11px] font-semibold text-[#007AFF] dark:text-[#0A84FF] transition-colors"
                           >
                             {btn.label} <ArrowUpRight className="h-3 w-3" />
                           </button>
@@ -375,17 +398,17 @@ export default function FloatingX3AI() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* Input Bar & Always-Available Suggested Commands */}
-          <div className="border-t border-[#E8E8E5] dark:border-[#26282D] bg-white dark:bg-[#17181B]">
-            <div className="px-3 pt-2 pb-1 border-b border-[#E8E8E5]/70 dark:border-[#26282D]/70 bg-[#FAFAF9] dark:bg-[#141518]">
+          {/* Input Bar & Always-Available Suggested Commands (Apple Frosted Dock) */}
+          <div className="border-t border-black/[0.06] dark:border-white/[0.1] bg-white/45 dark:bg-white/[0.04] backdrop-blur-xl">
+            <div className="px-3.5 pt-2 pb-1.5 border-b border-black/[0.05] dark:border-white/[0.07]">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#777777]">
-                  Suggested Commands
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-black/45 dark:text-white/45">
+                  Suggestions
                 </span>
                 <button
                   type="button"
                   onClick={() => setShowSuggestions((v) => !v)}
-                  className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-[#777777] hover:text-[#171717] hover:bg-[#E8E8E5]/60 dark:hover:text-slate-200 dark:hover:bg-[#26282D] transition-colors"
+                  className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-black/50 hover:text-black hover:bg-black/[0.05] dark:text-white/55 dark:hover:text-white dark:hover:bg-white/10 transition-colors"
                 >
                   {showSuggestions ? (
                     <>
@@ -401,13 +424,13 @@ export default function FloatingX3AI() {
                 </button>
               </div>
               {showSuggestions && (
-                <div className="mt-1.5 pb-1 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                <div className="mt-1.5 pb-0.5 flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                   {suggestions.map((cmd) => (
                     <button
                       key={cmd}
                       type="button"
                       onClick={() => handleSend(cmd)}
-                      className="rounded-lg border border-[#E8E8E5] bg-white px-2 py-1 text-[11px] text-[#171717] hover:border-[#171717] hover:bg-[#C6F36B]/25 dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-slate-200 transition-colors text-left"
+                      className="rounded-full border border-white/75 bg-white/60 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-[#1D1D1F] hover:bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-white/15 dark:bg-white/[0.08] dark:text-slate-200 dark:hover:bg-white/15 transition-all text-left"
                     >
                       {cmd}
                     </button>
@@ -422,7 +445,7 @@ export default function FloatingX3AI() {
                 {files.map((f, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center gap-1 rounded-md bg-[#F4F4F2] dark:bg-white/10 px-2 py-0.5 text-[11px]"
+                    className="inline-flex items-center gap-1 rounded-full bg-black/[0.06] dark:bg-white/15 px-2.5 py-0.5 text-[11px]"
                   >
                     {f.name}
                     <button onClick={() => setFiles((prev) => prev.filter((_, i) => i !== idx))}>
@@ -442,7 +465,7 @@ export default function FloatingX3AI() {
             >
               <label
                 title="Upload screenshot or CSV file"
-                className="cursor-pointer rounded-lg border border-[#E8E8E5] p-2 text-[#555555] hover:bg-[#F4F4F2] dark:border-[#2C2E33] dark:text-slate-300 dark:hover:bg-white/10"
+                className="cursor-pointer rounded-full border border-white/75 bg-white/65 p-2 text-black/60 hover:bg-white/90 hover:text-black shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:border-white/15 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20 transition-colors"
               >
                 <ImagePlus className="h-4 w-4" />
                 <input
@@ -458,14 +481,14 @@ export default function FloatingX3AI() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask X3 AI or describe an issue..."
-                className="flex-1 rounded-lg border border-[#E8E8E5] bg-[#F4F4F2]/60 px-3 py-2 text-xs text-[#171717] placeholder-[#777777] focus:border-[#171717] focus:bg-white focus:outline-none dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-slate-100"
+                placeholder="Ask X3 AI..."
+                className="flex-1 rounded-full border border-white/80 bg-white/70 backdrop-blur-md px-3.5 py-2 text-xs text-[#1D1D1F] placeholder-black/40 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)] focus:border-[#007AFF]/50 focus:bg-white/90 focus:outline-none dark:border-white/15 dark:bg-white/10 dark:text-slate-100 dark:placeholder-white/40"
               />
 
               <button
                 type="submit"
                 disabled={sending}
-                className="rounded-lg bg-[#171717] p-2 text-[#C6F36B] hover:bg-[#2a2a2a] disabled:opacity-50 dark:bg-[#C6F36B] dark:text-[#171717]"
+                className="rounded-full bg-gradient-to-b from-[#0A84FF] to-[#007AFF] p-2 text-white shadow-[0_3px_10px_rgba(0,122,255,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] hover:opacity-95 disabled:opacity-50 transition-opacity"
               >
                 <Send className="h-4 w-4" />
               </button>

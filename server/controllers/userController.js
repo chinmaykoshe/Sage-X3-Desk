@@ -170,13 +170,13 @@ export const updateUser = asyncHandler(async (req, res) => {
 
 export const deleteUser = asyncHandler(async (req, res) => {
   if (String(req.user._id) === String(req.params.id)) {
-    throw new AppError('You cannot archive your own active account.', 400);
+    throw new AppError('You cannot deactivate your own active account.', 400);
   }
   const user = await User.findOneAndUpdate(
     { _id: req.params.id, isDeleted: false },
-    { isDeleted: true, deletedAt: new Date(), status: 'Inactive' },
+    { status: 'Inactive' },
     { new: true }
   );
   if (!user) throw new AppError('Employee not found.', 404);
-  return sendSuccess(res, null, 'Employee archived successfully');
+  return sendSuccess(res, user, 'Employee marked as Inactive');
 });

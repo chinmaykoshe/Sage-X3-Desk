@@ -37,6 +37,16 @@ export const DEFAULT_SCREENS = [
     availableActions: ['view', 'create', 'edit', 'delete', 'export'],
   },
   {
+    screenKey: 'help_center',
+    label: 'Help Center',
+    route: '/help-center',
+    navigationGroup: 'SYSTEM',
+    description: 'Report software bugs, UI issues, and support tickets directly to Administrators',
+    sortOrder: 185,
+    defaultRoleAccess: { admin: true, team_lead: true, developer: true },
+    availableActions: ['view', 'create', 'edit'],
+  },
+  {
     screenKey: 'inbox',
     label: 'Inbox',
     route: '/notifications',

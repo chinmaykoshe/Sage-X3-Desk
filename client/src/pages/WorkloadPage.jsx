@@ -200,24 +200,26 @@ export default function WorkloadPage() {
   const unassignedTasks = tasks.filter((t) => (t.assignedEmployees || []).length === 0 && t.status !== 'Completed');
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="Team Workload & Capacity"
-        subtitle={
-          isManager
-            ? 'Monitor capacity and drag tasks onto any employee row to balance workload'
-            : 'Live team workload and task distribution across Sage X3 consultants'
-        }
-      />
+    <div className="space-y-4 xl:space-y-0 xl:flex xl:flex-col xl:h-[calc(100dvh-8.2rem)] xl:gap-3 xl:overflow-hidden">
+      <div className="shrink-0">
+        <PageHeader
+          title="Team Workload & Capacity"
+          subtitle={
+            isManager
+              ? 'Monitor capacity and drag tasks onto any employee row to balance workload'
+              : 'Live team workload and task distribution across Sage X3 consultants'
+          }
+        />
+      </div>
 
       <DndContext
         sensors={sensors}
         onDragStart={({ active }) => setActiveTask(tasks.find((t) => t._id === active.id) || null)}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-stretch xl:flex-1 xl:min-h-0">
           {/* Unassigned Queue — Independent Vertical Scroll */}
-          <Card className="xl:col-span-1 flex flex-col xl:h-[calc(100vh-12.5rem)]">
+          <Card className="xl:col-span-1 flex flex-col xl:h-full xl:min-h-0">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3 shrink-0">
               Unassigned Queue ({unassignedTasks.length})
             </h3>
@@ -233,7 +235,7 @@ export default function WorkloadPage() {
           </Card>
 
           {/* Employee Capacity Rows — Independent Vertical Scroll */}
-          <div className="xl:col-span-3 space-y-3.5 xl:h-[calc(100vh-12.5rem)] xl:overflow-y-auto pr-1">
+          <div className="xl:col-span-3 space-y-3.5 xl:h-full xl:min-h-0 xl:overflow-y-auto pr-1">
             {employees.map((emp) => (
               <EmployeeDropZone
                 key={emp._id}

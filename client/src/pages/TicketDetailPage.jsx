@@ -46,7 +46,7 @@ export default function TicketDetailPage() {
   const { user, isManager, hasAction } = useAuth();
   const canApproveTickets = isManager || hasAction('tickets', 'approve');
   const { addToast } = useToast();
-  const { openTaskDrawer, lastSync, notifyLocalMutation } = useWorkspace();
+  const { openTaskDrawer, lastSync, notifyLocalMutation, tickets: allWorkspaceTickets } = useWorkspace();
 
   const [ticket, setTicket] = useState(null);
   const [users, setUsers] = useState([]);
@@ -70,6 +70,16 @@ export default function TicketDetailPage() {
   const [waiveModal, setWaiveModal] = useState({ open: false, reason: '' });
   const [timeLogModal, setTimeLogModal] = useState({ open: false, task: null });
   const [archiveConfirm, setArchiveConfirm] = useState(false);
+  const [mergeModal, setMergeModal] = useState({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' });
+  const [merging, setMerging] = useState(false);
+  const [carryForwardModal, setCarryForwardModal] = useState({
+    open: false,
+    nextDate: '',
+    hoursSpent: '4',
+    workDescription: '',
+    entryStatus: 'IN PROGRESS',
+  });
+  const [carryingForward, setCarryingForward] = useState(false);
   const [devModalOpen, setDevModalOpen] = useState(false);
   const [devForm, setDevForm] = useState({
     description: '',
@@ -395,7 +405,7 @@ export default function TicketDetailPage() {
   }, {});
 
   return (
-    <div className="-m-4 sm:-m-6 flex flex-col min-h-[calc(100vh-3.5rem)] bg-[#F4F4F2] dark:bg-[#101113]">
+    <div className="-mx-3 sm:-mx-6 -mb-20 sm:-mb-6 flex flex-col min-h-[calc(100dvh-7rem)] bg-[#F4F4F2] dark:bg-[#101113]">
       {/* Top Workspace Sub-header Bar (Keeps AppLayout Sidebar & Top Header intact!) */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8E8E5] bg-white dark:border-[#26282D] dark:bg-[#17181B] px-4 sm:px-6 py-2.5">
         <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -442,6 +452,35 @@ export default function TicketDetailPage() {
           </Button>
           <Button size="xs" variant="secondary" onClick={handleDuplicate}>
             <Plus className="h-3.5 w-3.5" /> Duplicate
+          </Button>
+          <Button
+            size="xs"
+            variant="secondary"
+            onClick={() =>
+              setCarryForwardModal({
+                open: true,
+                nextDate: dayjs(ticket.dueDate || undefined).add(1, 'day').format('YYYY-MM-DD'),
+                hoursSpent: '4',
+                workDescription: ticket.description || ticket.title || '',
+                entryStatus: 'IN PROGRESS',
+              })
+            }
+          >
+            Carry Forward
+          </Button>
+          <Button
+            size="xs"
+            variant="secondary"
+            onClick={() =>
+              setMergeModal({
+                open: true,
+                sourceTicketId: '',
+                mergedTitle: ticket.title || '',
+                mergedDescription: ticket.description || '',
+              })
+            }
+          >
+            Merge
           </Button>
           <Button size="xs" onClick={() => setTaskModalOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> Add Task
@@ -820,7 +859,7 @@ export default function TicketDetailPage() {
                         key={att._id}
                         className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] px-2.5 py-1.5 text-xs space-y-1.5"
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2 pr-14 sm:pr-16 xl:pr-14">
                           <a
                             href={att.url}
                             target="_blank"
@@ -868,7 +907,7 @@ export default function TicketDetailPage() {
                 <div className="space-y-2 text-xs">
                   {ticket.deployments.map((d) => (
                     <div key={d._id} className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap items-center justify-between gap-2 pr-14 sm:pr-16 xl:pr-14">
                         <span className="font-mono font-semibold flex items-center gap-1">
                           <Rocket className="h-3.5 w-3.5 text-[#35B8A6]" /> {d.deploymentId}
                         </span>
@@ -948,7 +987,7 @@ export default function TicketDetailPage() {
               <div className="space-y-2 text-xs">
                 {ticket.devActivities.map((d) => (
                   <div key={d._id} className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5 space-y-1">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pr-14 sm:pr-16 xl:pr-14">
                       <div className="flex items-center gap-2">
                         <span className="font-semibold">{d.employeeId?.fullName}</span>
                         <Badge variant="info">{d.workStatus}</Badge>
@@ -967,7 +1006,7 @@ export default function TicketDetailPage() {
         </div>
 
         {/* RIGHT SIDE COMMENTS & ACTIVITY SIDEBAR */}
-        <aside className="xl:col-span-4 border-t xl:border-t-0 xl:border-l border-[#E8E8E5] dark:border-[#26282D] bg-white dark:bg-[#17181B] flex flex-col xl:h-[calc(100vh-6.8rem)] xl:sticky xl:top-0">
+        <aside className="xl:col-span-4 border-t xl:border-t-0 xl:border-l border-[#E8E8E5] dark:border-[#26282D] bg-white dark:bg-[#17181B] flex flex-col xl:h-[calc(100dvh-10.5rem)] xl:sticky xl:top-0 pb-16 sm:pb-14 xl:pb-0">
           <div className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] px-4 py-3">
             <span className="text-sm font-semibold">Activity</span>
             <div className="inline-flex rounded-lg bg-[#F4F4F2] dark:bg-white/5 p-0.5 text-xs">
@@ -1164,7 +1203,7 @@ export default function TicketDetailPage() {
               placeholder="Add a comment... (@FirstName to mention, paste or attach images)"
               className="w-full rounded-lg border border-[#E8E8E5] bg-[#F4F4F2]/40 px-3 py-2 text-xs focus:border-[#171717] focus:bg-white focus:outline-none dark:border-[#2C2E33] dark:bg-[#1E2025]"
             />
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2 pr-14 sm:pr-16 xl:pr-14">
               <div className="flex items-center gap-3">
                 <label className="inline-flex items-center gap-1.5 text-[11px] text-[#777777] cursor-pointer">
                   <input type="checkbox" checked={isInternalComment} onChange={(e) => setIsInternalComment(e.target.checked)} />
@@ -1355,6 +1394,189 @@ export default function TicketDetailPage() {
         message={`Archive ${ticket.ticketId}? It will be hidden from active boards.`}
         confirmText="Archive"
       />
+
+      {/* Merge Ticket Modal */}
+      <Modal
+        open={mergeModal.open}
+        onClose={() => setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' })}
+        title={`Merge Another Ticket into ${ticket.ticketId}`}
+        subtitle="Combine tasks, comments, attachments, and additional changes from a second ticket into this one"
+        maxWidth="max-w-2xl"
+      >
+        <div className="space-y-3 text-xs">
+          <div>
+            <label className="block font-medium mb-1">Select Ticket to Merge Into {ticket.ticketId} *</label>
+            <select
+              value={mergeModal.sourceTicketId}
+              onChange={(e) => {
+                const sid = e.target.value;
+                const src = (allWorkspaceTickets || []).find((x) => x._id === sid);
+                setMergeModal((prev) => ({
+                  ...prev,
+                  sourceTicketId: sid,
+                  mergedDescription: src
+                    ? `${ticket.description || ''}\n\n--- Merged from ${src.ticketId}: ${src.title} ---\n${src.description || ''}`.trim()
+                    : ticket.description || '',
+                }));
+              }}
+              className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            >
+              <option value="">Choose ticket...</option>
+              {(allWorkspaceTickets || [])
+                .filter((t) => t._id !== ticket._id)
+                .map((t) => (
+                  <option key={t._id} value={t._id}>
+                    {t.ticketId} — {t.title} ({t.client?.companyName || 'No client'})
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Combined Title</label>
+            <input
+              type="text"
+              value={mergeModal.mergedTitle}
+              onChange={(e) => setMergeModal((p) => ({ ...p, mergedTitle: e.target.value }))}
+              className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            />
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Combined Description (Editable)</label>
+            <textarea
+              rows={6}
+              value={mergeModal.mergedDescription}
+              onChange={(e) => setMergeModal((p) => ({ ...p, mergedDescription: e.target.value }))}
+              className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' })}
+            >
+              Cancel
+            </Button>
+            <Button
+              disabled={merging || !mergeModal.sourceTicketId}
+              onClick={async () => {
+                setMerging(true);
+                try {
+                  const { data } = await api.post(`/tickets/${ticket._id}/merge`, {
+                    sourceTicketId: mergeModal.sourceTicketId,
+                    mergedTitle: mergeModal.mergedTitle,
+                    mergedDescription: mergeModal.mergedDescription,
+                  });
+                  addToast(data.message || 'Tickets merged successfully', 'success');
+                  setMergeModal({ open: false, sourceTicketId: '', mergedTitle: '', mergedDescription: '' });
+                  notifyLocalMutation?.('ticket');
+                  loadTicket();
+                } catch (err) {
+                  addToast(getApiError(err, 'Failed to merge tickets'), 'error');
+                } finally {
+                  setMerging(false);
+                }
+              }}
+            >
+              {merging ? 'Merging...' : `Merge into ${ticket.ticketId}`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Carry Forward Ticket Modal (Auto-logs hours to Timesheet) */}
+      <Modal
+        open={carryForwardModal.open}
+        onClose={() => setCarryForwardModal((p) => ({ ...p, open: false }))}
+        title={`Carry Forward ${ticket.ticketId}`}
+        subtitle="Move ticket to the next day and log hours automatically in Timesheet"
+        maxWidth="max-w-md"
+      >
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setCarryingForward(true);
+            try {
+              const { data } = await api.post(`/tickets/${ticket._id}/carry-forward`, {
+                nextDate: carryForwardModal.nextDate,
+                hoursSpent: Number(carryForwardModal.hoursSpent || 0),
+                workDescription: carryForwardModal.workDescription,
+                entryStatus: carryForwardModal.entryStatus,
+              });
+              addToast(data.message || 'Ticket carried forward & Timesheet updated', 'success');
+              setCarryForwardModal((p) => ({ ...p, open: false }));
+              notifyLocalMutation?.('ticket');
+              loadTicket();
+            } catch (err) {
+              addToast(getApiError(err, 'Failed to carry forward'), 'error');
+            } finally {
+              setCarryingForward(false);
+            }
+          }}
+          className="space-y-3 text-xs"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div>
+              <label className="block font-medium mb-1">Carry Forward Date *</label>
+              <input
+                type="date"
+                required
+                value={carryForwardModal.nextDate}
+                onChange={(e) => setCarryForwardModal((p) => ({ ...p, nextDate: e.target.value }))}
+                className="w-full rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+              />
+            </div>
+            <div>
+              <label className="block font-medium mb-1">Hours Worked *</label>
+              <input
+                type="number"
+                step="0.25"
+                min="0"
+                max="24"
+                required
+                value={carryForwardModal.hoursSpent}
+                onChange={(e) => setCarryForwardModal((p) => ({ ...p, hoursSpent: e.target.value }))}
+                className="w-full rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Timesheet Status</label>
+            <select
+              value={carryForwardModal.entryStatus}
+              onChange={(e) => setCarryForwardModal((p) => ({ ...p, entryStatus: e.target.value }))}
+              className="w-full rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            >
+              <option value="IN PROGRESS">IN PROGRESS</option>
+              <option value="DONE">DONE</option>
+              <option value="PENDING">PENDING</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-medium mb-1">Work Description (Copied to Timesheet)</label>
+            <textarea
+              rows={3}
+              required
+              value={carryForwardModal.workDescription}
+              onChange={(e) => setCarryForwardModal((p) => ({ ...p, workDescription: e.target.value }))}
+              className="w-full rounded-lg border border-[#E8E8E5] px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="secondary" onClick={() => setCarryForwardModal((p) => ({ ...p, open: false }))}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={carryingForward}>
+              {carryingForward ? 'Updating...' : 'Carry Forward & Update TS'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

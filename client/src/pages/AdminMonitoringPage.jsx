@@ -4,12 +4,16 @@ import {
   Activity,
   AlertTriangle,
   BrainCircuit,
+  CheckCircle2,
   Clock,
   Database,
   DatabaseZap,
   Download,
+  Eye,
+  GitMerge,
   HardDrive,
   History,
+  MessageSquareWarning,
   Rocket,
   Server,
   ShieldAlert,
@@ -24,6 +28,7 @@ import PageHeader from '../components/ui/PageHeader';
 import Card from '../components/ui/Card';
 import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
 import Loader from '../components/ui/Loader';
 
 const TABS = [
@@ -66,6 +71,8 @@ export default function AdminMonitoringPage() {
   const [governance, setGovernance] = useState(null);
   const [governanceSubTab, setGovernanceSubTab] = useState('duplicates');
   const [deleteReason, setDeleteReason] = useState('Duplicate / test cleanup by Admin');
+  const [ticketInspectModal, setTicketInspectModal] = useState({ open: false, ticket: null, primaryTicket: null, note: '' });
+  const [actingGovernance, setActingGovernance] = useState(false);
   const [employeeReport, setEmployeeReport] = useState(null);
   const [devLogs, setDevLogs] = useState([]);
   const [systemLogs, setSystemLogs] = useState([]);
@@ -136,27 +143,105 @@ export default function AdminMonitoringPage() {
     loadTabData();
   }, [loadTabData]);
 
-  const handleAdminDeleteTicket = async (ticket) => {
+  const openTicketReviewModal = (ticket, primaryTicket = null) => {
+    setTicketInspectModal({
+      open: true,
+      ticket,
+      primaryTicket,
+      note: primaryTicket
+        ? `Duplicate of ${primaryTicket.ticketId} (${primaryTicket.title})`
+        : deleteReason,
+    });
+  };
+
+  const handleConfirmDeleteTicket = async () => {
+    const ticket = ticketInspectModal.ticket;
+    if (!ticket) return;
+    setActingGovernance(true);
     try {
       const { data } = await api.delete(`/monitoring/governance/tickets/${ticket._id}`, {
-        data: { reason: deleteReason },
+        data: { reason: ticketInspectModal.note || deleteReason },
       });
       addToast(data.message || `Admin deleted ${ticket.ticketId}`, 'success');
+      setTicketInspectModal({ open: false, ticket: null, primaryTicket: null, note: '' });
       loadTabData();
     } catch (err) {
       addToast(getApiError(err, 'Failed to delete ticket'), 'error');
+    } finally {
+      setActingGovernance(false);
+    }
+  };
+
+  const handleMarkNotDuplicate = async () => {
+    const { ticket, primaryTicket, note } = ticketInspectModal;
+    if (!ticket) return;
+    setActingGovernance(true);
+    try {
+      const { data } = await api.post(`/monitoring/governance/tickets/${ticket._id}/not-duplicate`, {
+        primaryTicketId: primaryTicket?._id || null,
+        primaryTicketRef: primaryTicket?.ticketId || '',
+        note,
+      });
+      addToast(data.message || `${ticket.ticketId} marked as Not Duplicate`, 'success');
+      setTicketInspectModal({ open: false, ticket: null, primaryTicket: null, note: '' });
+      loadTabData();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to mark as not duplicate'), 'error');
+    } finally {
+      setActingGovernance(false);
+    }
+  };
+
+  const handleRequestDuplicateChanges = async () => {
+    const { ticket, primaryTicket, note } = ticketInspectModal;
+    if (!ticket) return;
+    setActingGovernance(true);
+    try {
+      const { data } = await api.post(`/monitoring/governance/tickets/${ticket._id}/request-changes`, {
+        primaryTicketRef: primaryTicket?.ticketId || '',
+        note:
+          note && !note.startsWith('Duplicate of ')
+            ? note
+            : `Please update the details/title of ${ticket.ticketId} as it appears to be a duplicate${primaryTicket?.ticketId ? ` of ${primaryTicket.ticketId}` : ''}.`,
+      });
+      addToast(data.message || `Requested detail changes for ${ticket.ticketId}`, 'info');
+      setTicketInspectModal({ open: false, ticket: null, primaryTicket: null, note: '' });
+      loadTabData();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to request changes'), 'error');
+    } finally {
+      setActingGovernance(false);
     }
   };
 
   const handleAdminDeleteUser = async (u) => {
+    const nextStatus = u.status === 'Inactive' ? 'Active' : 'Inactive';
     try {
       const { data } = await api.delete(`/monitoring/governance/users/${u._id}`, {
-        data: { reason: deleteReason },
+        data: { reason: deleteReason, status: nextStatus },
       });
-      addToast(data.message || `Admin deleted user ${u.fullName}`, 'success');
+      addToast(data.message || `User ${u.fullName} marked ${nextStatus}`, 'success');
       loadTabData();
     } catch (err) {
-      addToast(getApiError(err, 'Failed to delete user'), 'error');
+      addToast(getApiError(err, 'Failed to update user status'), 'error');
+    }
+  };
+
+  const handleMergeDuplicateIntoPrimary = async () => {
+    const { ticket, primaryTicket } = ticketInspectModal;
+    if (!ticket || !primaryTicket) return;
+    setActingGovernance(true);
+    try {
+      const { data } = await api.post(`/tickets/${primaryTicket._id}/merge`, {
+        sourceTicketId: ticket._id,
+      });
+      addToast(data.message || `Merged ${ticket.ticketId} into ${primaryTicket.ticketId}`, 'success');
+      setTicketInspectModal({ open: false, ticket: null, primaryTicket: null, note: '' });
+      loadTabData();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to merge tickets'), 'error');
+    } finally {
+      setActingGovernance(false);
     }
   };
 
@@ -432,9 +517,26 @@ export default function AdminMonitoringPage() {
                               Client: {t.client?.companyName || 'None'} · Created by {t.createdBy?.fullName || 'System'} · {dayjs(t.createdAt).format('DD MMM YYYY HH:mm')}
                             </div>
                           </div>
-                          <Button type="button" size="xs" variant="danger" onClick={() => handleAdminDeleteTicket(t)}>
-                            <Trash2 className="h-3 w-3 mr-1" /> Delete Ticket
-                          </Button>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            {idx > 0 && (
+                              <Button
+                                type="button"
+                                size="xs"
+                                variant="secondary"
+                                onClick={() => openTicketReviewModal(t, g.tickets[0])}
+                              >
+                                <Eye className="h-3 w-3 mr-1" /> Compare &amp; Review
+                              </Button>
+                            )}
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="danger"
+                              onClick={() => openTicketReviewModal(t, idx > 0 ? g.tickets[0] : null)}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" /> Delete Ticket
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -444,7 +546,7 @@ export default function AdminMonitoringPage() {
             </div>
           ) : governanceSubTab === 'tickets' ? (
             <Card>
-              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs max-h-[65vh] overflow-y-auto pr-1">
+              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs">
                 {governance.newTickets.map((t) => (
                   <div key={t._id} className="py-2.5 flex flex-wrap items-center justify-between gap-2">
                     <div className="space-y-0.5 min-w-0">
@@ -460,8 +562,8 @@ export default function AdminMonitoringPage() {
                         Client: {t.client?.companyName || 'None'} · By {t.createdBy?.fullName || 'System'} · {dayjs(t.createdAt).format('DD MMM YYYY HH:mm')}
                       </div>
                     </div>
-                    <Button type="button" size="xs" variant="danger" onClick={() => handleAdminDeleteTicket(t)}>
-                      <Trash2 className="h-3 w-3 mr-1" /> Delete Ticket
+                    <Button type="button" size="xs" variant="danger" onClick={() => openTicketReviewModal(t, null)}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Review &amp; Delete
                     </Button>
                   </div>
                 ))}
@@ -469,7 +571,7 @@ export default function AdminMonitoringPage() {
             </Card>
           ) : governanceSubTab === 'users' ? (
             <Card>
-              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs max-h-[65vh] overflow-y-auto pr-1">
+              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs">
                 {governance.newUsers.map((u) => (
                   <div key={u._id} className="py-2.5 flex flex-wrap items-center justify-between gap-2">
                     <div className="space-y-0.5">
@@ -477,13 +579,19 @@ export default function AdminMonitoringPage() {
                         <span className="font-mono font-bold text-[#638BEF]">{u.employeeId}</span>
                         <Link to={`/team/${u._id}`} className="font-semibold hover:underline">{u.fullName}</Link>
                         <Badge>{u.role}</Badge>
+                        <Badge variant={u.status === 'Inactive' ? 'danger' : 'success'}>{u.status || 'Active'}</Badge>
                       </div>
                       <div className="text-[11px] text-[#777777]">
                         {u.email} · {u.designation} · Created {dayjs(u.createdAt).format('DD MMM YYYY HH:mm')}
                       </div>
                     </div>
-                    <Button type="button" size="xs" variant="danger" onClick={() => handleAdminDeleteUser(u)}>
-                      <Trash2 className="h-3 w-3 mr-1" /> Delete User
+                    <Button
+                      type="button"
+                      size="xs"
+                      variant={u.status === 'Inactive' ? 'secondary' : 'danger'}
+                      onClick={() => handleAdminDeleteUser(u)}
+                    >
+                      {u.status === 'Inactive' ? 'Reactivate User' : 'Make Inactive'}
                     </Button>
                   </div>
                 ))}
@@ -750,6 +858,164 @@ export default function AdminMonitoringPage() {
           </div>
         </Card>
       )}
+
+      {/* Whole-Ticket Review, Duplicate Comparison & Delete Confirmation Modal */}
+      <Modal
+        open={ticketInspectModal.open && Boolean(ticketInspectModal.ticket)}
+        onClose={() => setTicketInspectModal({ open: false, ticket: null, primaryTicket: null, note: '' })}
+        title={
+          ticketInspectModal.primaryTicket
+            ? `Compare & Review Duplicate Ticket: ${ticketInspectModal.ticket?.ticketId}`
+            : `Confirm Ticket Deletion: ${ticketInspectModal.ticket?.ticketId}`
+        }
+        subtitle={
+          ticketInspectModal.primaryTicket
+            ? `Comparing against 1st / Oldest Primary Ticket (${ticketInspectModal.primaryTicket.ticketId})`
+            : 'Review the complete ticket details before confirming deletion'
+        }
+        maxWidth={ticketInspectModal.primaryTicket ? 'max-w-5xl' : 'max-w-2xl'}
+      >
+        {ticketInspectModal.ticket && (() => {
+          const target = ticketInspectModal.ticket;
+          const primary = ticketInspectModal.primaryTicket;
+          const renderTicketSnapshot = (tk, heading, isPrimaryCard) => (
+            <div
+              className={`rounded-xl border p-3.5 space-y-2.5 text-xs ${
+                isPrimaryCard
+                  ? 'border-emerald-300 bg-emerald-50/40 dark:border-emerald-500/30 dark:bg-emerald-500/5'
+                  : 'border-rose-300 bg-rose-50/30 dark:border-rose-500/30 dark:bg-rose-500/5'
+              }`}
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E8E8E5] dark:border-[#26282D] pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#777777]">{heading}</span>
+                  <Link to={`/tickets/${tk._id}`} className="font-mono font-bold text-[#638BEF] hover:underline">
+                    {tk.ticketId}
+                  </Link>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Badge>{tk.approvalStatus || 'APPROVED'}</Badge>
+                  <Badge value={tk.status}>{tk.status}</Badge>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[10px] uppercase text-[#777777]">Title</div>
+                <div className="font-semibold text-sm text-[#171717] dark:text-white">{tk.title}</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div>
+                  <span className="text-[#777777]">Client:</span>{' '}
+                  <strong>{tk.client?.companyName || 'None'}</strong>
+                </div>
+                <div>
+                  <span className="text-[#777777]">Created By:</span>{' '}
+                  <strong>{tk.createdBy?.fullName || 'System'}</strong>
+                </div>
+                <div>
+                  <span className="text-[#777777]">Category:</span> <strong>{tk.category || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span className="text-[#777777]">Priority:</span> <strong>{tk.priority || 'Medium'}</strong>
+                </div>
+                <div>
+                  <span className="text-[#777777]">Env / Folder:</span>{' '}
+                  <strong className="font-mono">{tk.sageX3Environment || 'Pilot'} · {tk.folderCode || 'N/A'}</strong>
+                </div>
+                <div>
+                  <span className="text-[#777777]">Created At:</span>{' '}
+                  <strong>{dayjs(tk.createdAt).format('DD MMM YYYY, HH:mm')}</strong>
+                </div>
+              </div>
+
+              <div>
+                <div className="text-[10px] uppercase text-[#777777] mb-1">Full Description</div>
+                <div className="max-h-48 overflow-y-auto whitespace-pre-line rounded-lg border border-[#E8E8E5] bg-white p-2.5 text-xs text-[#333333] dark:border-[#2C2E33] dark:bg-[#17181B] dark:text-slate-200">
+                  {tk.description || 'No description provided.'}
+                </div>
+              </div>
+            </div>
+          );
+
+          return (
+            <div className="space-y-4 text-xs">
+              {primary ? (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+                  {renderTicketSnapshot(primary, '1st / Primary Ticket (Original)', true)}
+                  {renderTicketSnapshot(target, 'Selected Ticket (Supposed Copy)', false)}
+                </div>
+              ) : (
+                renderTicketSnapshot(target, 'Complete Ticket Details', false)
+              )}
+
+              <div>
+                <label className="block text-[11px] font-semibold text-[#555555] dark:text-slate-300 mb-1">
+                  Audit / Deletion / Change Request Note
+                </label>
+                <input
+                  type="text"
+                  value={ticketInspectModal.note}
+                  onChange={(e) => setTicketInspectModal((prev) => ({ ...prev, note: e.target.value }))}
+                  placeholder="Enter reason for deletion or message for requester..."
+                  className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-2 text-xs dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-2 border-t border-[#E8E8E5] dark:border-[#26282D] pt-3">
+                {primary && (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="primary"
+                      disabled={actingGovernance}
+                      onClick={handleMergeDuplicateIntoPrimary}
+                    >
+                      <GitMerge className="h-3.5 w-3.5 mr-1" /> Merge into {primary.ticketId}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={actingGovernance}
+                      onClick={handleMarkNotDuplicate}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1 text-[#35B8A6]" /> Mark as Not Duplicate
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={actingGovernance}
+                      onClick={handleRequestDuplicateChanges}
+                    >
+                      <MessageSquareWarning className="h-3.5 w-3.5 mr-1 text-amber-600" /> Request Changes (Appears Duplicate)
+                    </Button>
+                  </>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="danger"
+                  disabled={actingGovernance}
+                  onClick={handleConfirmDeleteTicket}
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Confirm Delete Ticket
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => setTicketInspectModal({ open: false, ticket: null, primaryTicket: null, note: '' })}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
+      </Modal>
     </div>
   );
 }

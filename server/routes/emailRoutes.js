@@ -15,6 +15,7 @@ import {
   outlookWebhook,
   gmailWebhook,
   listEmailMessages,
+  toggleAutoCreateTickets,
   getEmailMessageDetail,
   createTicketFromEmail,
   linkEmailToTicket,
@@ -54,6 +55,7 @@ router.delete('/integrations/:id', authorizeRoles(ROLES.ADMIN), deleteIntegratio
 
 // Email Inbox, Review & Logs (Admin & Team Lead)
 router.post('/sync', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), syncAllMailboxes);
+router.post('/auto-create-toggle', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), toggleAutoCreateTickets);
 router.get('/messages', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), listEmailMessages);
 router.get('/messages/:id', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), getEmailMessageDetail);
 router.post('/messages/:id/create-ticket', authorizeRoles(ROLES.ADMIN, ROLES.TEAM_LEAD), createTicketFromEmail);

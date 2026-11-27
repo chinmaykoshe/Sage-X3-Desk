@@ -401,33 +401,41 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
   };
 
   return (
-    <div className="space-y-4">
-      <PageHeader
-        title="Ticket Intake & TL Approval Inbox"
-        subtitle="Review AI-generated ticket drafts, OCR screenshots, and suggested tasks before publishing to the Active Tickets board"
-        actions={
-          <div className="flex items-center gap-2">
-            <Link to="/tickets">
-              <Button variant="secondary" size="sm">
-                Active Tickets Board <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
-            <Link to="/smart-intake">
-              <Button size="sm">
-                <Sparkles className="h-3.5 w-3.5" /> Smart Intake
-              </Button>
-            </Link>
-          </div>
-        }
-      />
+    <div
+      className={
+        activeTab === 'all'
+          ? 'space-y-3 lg:space-y-0 lg:flex lg:flex-col lg:h-[calc(100dvh-8.2rem)] lg:gap-2.5 lg:overflow-hidden'
+          : 'space-y-4'
+      }
+    >
+      <div className="shrink-0">
+        <PageHeader
+          title="Ticket Intake & TL Approval Inbox"
+          subtitle="Review AI-generated ticket drafts, OCR screenshots, and suggested tasks before publishing to the Active Tickets board"
+          actions={
+            <div className="flex items-center gap-2">
+              <Link to="/tickets">
+                <Button variant="secondary" size="sm">
+                  Active Tickets Board <ExternalLink className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+              <Link to="/smart-intake">
+                <Button size="sm">
+                  <Sparkles className="h-3.5 w-3.5" /> Smart Intake
+                </Button>
+              </Link>
+            </div>
+          }
+        />
+      </div>
 
       {/* Real MongoDB-Backed Folders */}
       {/* TL Approvals Dashboard KPIs (clickable route links) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
         <Link to="/approvals" onClick={() => setFolder('Pending TL Approval')} className="text-left block">
-          <Card className="p-3 hover:border-[#171717]/40 transition-colors">
+          <Card className="p-2.5 sm:p-3 hover:border-[#171717]/40 transition-colors">
             <div className="text-[11px] font-medium text-[#777777]">Pending Ticket Approvals</div>
-            <div className="mt-1 text-2xl font-bold text-[#171717] dark:text-white">
+            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#171717] dark:text-white">
               {(counts['Pending TL Approval'] || 0) + pendingTickets.length}
             </div>
             <div className="text-[10px] text-[#777777]">
@@ -436,18 +444,18 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
           </Card>
         </Link>
         <Link to="/approvals/requests" onClick={() => setFolder('Pending TL Approval')} className="text-left block">
-          <Card className="p-3 hover:border-[#638BEF]/50 transition-colors">
+          <Card className="p-2.5 sm:p-3 hover:border-[#638BEF]/50 transition-colors">
             <div className="text-[11px] font-medium text-[#777777]">Pending Users / Clients / Projects</div>
-            <div className="mt-1 text-2xl font-bold text-[#638BEF]">
+            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#638BEF]">
               {actionCounts['Pending TL Approval'] || 0}
             </div>
             <div className="text-[10px] text-[#777777]">Click to open dedicated queue</div>
           </Card>
         </Link>
         <Link to="/approvals/drafts" onClick={() => setFolder('Approved')} className="text-left block">
-          <Card className="p-3 hover:border-[#35B8A6]/50 transition-colors">
+          <Card className="p-2.5 sm:p-3 hover:border-[#35B8A6]/50 transition-colors">
             <div className="text-[11px] font-medium text-[#777777]">Approved Total</div>
-            <div className="mt-1 text-2xl font-bold text-[#35B8A6]">
+            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#35B8A6]">
               {(counts['Approved'] || 0) + (actionCounts['Approved'] || 0)}
             </div>
             <div className="text-[10px] text-[#777777]">
@@ -456,9 +464,9 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
           </Card>
         </Link>
         <Link to="/approvals/drafts" onClick={() => setFolder('Rejected')} className="text-left block">
-          <Card className="p-3 hover:border-[#F16D64]/50 transition-colors">
+          <Card className="p-2.5 sm:p-3 hover:border-[#F16D64]/50 transition-colors">
             <div className="text-[11px] font-medium text-[#777777]">Rejected Total</div>
-            <div className="mt-1 text-2xl font-bold text-[#F16D64]">
+            <div className="mt-0.5 text-xl sm:text-2xl font-bold text-[#F16D64]">
               {(counts['Rejected'] || 0) + (actionCounts['Rejected'] || 0)}
             </div>
             <div className="text-[10px] text-[#777777]">
@@ -469,7 +477,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
       </div>
 
       {/* Route-based Queue Switcher (reload-safe separate URLs) */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
         <Link
           to="/approvals"
           className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
@@ -513,8 +521,8 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
       </div>
 
       {activeTab === 'all' ? (
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-1.5">
+        <div className="space-y-3 lg:space-y-0 lg:flex-1 lg:min-h-0 lg:flex lg:flex-col lg:gap-2.5">
+          <div className="flex flex-wrap gap-1.5 shrink-0">
             {FOLDERS.map((f) => {
               const count = f.id === 'All' ? Object.values(counts).reduce((a, b) => a + b, 0) : counts[f.id] || 0;
               return (
@@ -535,9 +543,9 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch lg:flex-1 lg:min-h-0">
             {/* Tray 1: AI Ticket Drafts */}
-            <Card className="p-3 flex flex-col lg:h-[calc(100vh-21rem)]">
+            <Card className="p-3 flex flex-col lg:h-full lg:min-h-0">
               <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#E8E8E5] dark:border-[#26282D] shrink-0">
                 <div>
                   <div className="text-xs font-bold text-[#171717] dark:text-white">Ticket Drafts</div>
@@ -595,7 +603,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
             </Card>
 
             {/* Tray 2: Dev & Email Tickets */}
-            <Card className="p-3 flex flex-col lg:h-[calc(100vh-21rem)]">
+            <Card className="p-3 flex flex-col lg:h-full lg:min-h-0">
               <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#E8E8E5] dark:border-[#26282D] shrink-0">
                 <div>
                   <div className="text-xs font-bold text-[#171717] dark:text-white">Dev &amp; Email Tickets</div>
@@ -650,7 +658,7 @@ export default function ApprovalInboxPage({ queue = 'all' }) {
             </Card>
 
             {/* Tray 3: Users, Clients & Projects */}
-            <Card className="p-3 flex flex-col lg:h-[calc(100vh-21rem)]">
+            <Card className="p-3 flex flex-col lg:h-full lg:min-h-0">
               <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#E8E8E5] dark:border-[#26282D] shrink-0">
                 <div>
                   <div className="text-xs font-bold text-[#171717] dark:text-white">Users, Clients &amp; Projects</div>

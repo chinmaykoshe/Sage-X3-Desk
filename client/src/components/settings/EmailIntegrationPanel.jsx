@@ -20,7 +20,7 @@ import Badge from '../ui/Badge';
 import Modal from '../ui/Modal';
 
 const DEFAULT_RULES = {
-  autoCreateTickets: true,
+  autoCreateTickets: false,
   autoUpdateExistingTickets: true,
   filterSpamAndAutoReplies: true,
   defaultPriority: 'Medium',

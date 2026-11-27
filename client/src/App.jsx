@@ -33,6 +33,7 @@ import ApprovalInboxPage from './pages/ApprovalInboxPage';
 import AdminMonitoringPage from './pages/AdminMonitoringPage';
 import EmailInboxPage from './pages/EmailInboxPage';
 import TimesheetPage from './pages/TimesheetPage';
+import HelpCenterPage from './pages/HelpCenterPage';
 
 function AccessDeniedView({ screenKey }) {
   return (
@@ -162,6 +163,7 @@ export default function App() {
                   <Route path="reports" element={<ProtectedRoute screenKey="reports"><ReportsPage /></ProtectedRoute>} />
                   <Route path="activity-logs" element={<ProtectedRoute screenKey="activity_logs"><ActivityLogsPage /></ProtectedRoute>} />
                   <Route path="knowledge-base" element={<ProtectedRoute screenKey="knowledge_base"><KnowledgeBasePage /></ProtectedRoute>} />
+                  <Route path="help-center" element={<HelpCenterPage />} />
                   <Route path="notifications" element={<ProtectedRoute screenKey="inbox"><NotificationsPage /></ProtectedRoute>} />
                   <Route path="admin/overview" element={<ProtectedRoute screenKey="admin_overview"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/governance" element={<ProtectedRoute screenKey="admin_governance" roles={['admin']}><AdminMonitoringPage /></ProtectedRoute>} />

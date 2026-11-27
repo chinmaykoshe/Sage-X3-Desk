@@ -326,7 +326,7 @@ export const listEmailMessages = asyncHandler(async (req, res) => {
     ];
   }
 
-  const [messages, countsAgg] = await Promise.all([
+  const [messages, countsAgg, integrations, unconvertedCount] = await Promise.all([
     EmailMessage.find(filter)
       .populate('mailboxId', 'provider mailboxAddress displayName')
       .populate('matchedClientId', 'clientId companyName')
@@ -336,6 +336,8 @@ export const listEmailMessages = asyncHandler(async (req, res) => {
       .limit(100)
       .lean(),
     EmailMessage.aggregate([{ $group: { _id: '$processingStatus', count: { $sum: 1 } } }]),
+    EmailIntegration.find({ isActive: true }).select('automationRules.autoCreateTickets').lean(),
+    EmailMessage.countDocuments({ relatedTicketId: null, processingStatus: { $ne: 'Ignored' } }),
   ]);
 
   const counts = countsAgg.reduce((acc, r) => {
@@ -343,7 +345,62 @@ export const listEmailMessages = asyncHandler(async (req, res) => {
     return acc;
   }, {});
 
-  return sendSuccess(res, { messages, counts }, 'Email messages retrieved');
+  const autoCreateTickets = integrations.some((i) => i.automationRules?.autoCreateTickets === true);
+
+  return sendSuccess(res, { messages, counts, autoCreateTickets, unconvertedCount }, 'Email messages retrieved');
+});
+
+export const toggleAutoCreateTickets = asyncHandler(async (req, res) => {
+  const { enabled, mode = 'next' } = req.body || {};
+  const nextEnabled = Boolean(enabled);
+
+  const integrations = await EmailIntegration.find({ isActive: true });
+  for (const integ of integrations) {
+    integ.automationRules = {
+      ...(integ.automationRules?.toObject?.() || integ.automationRules || {}),
+      autoCreateTickets: nextEnabled,
+    };
+    integ.markModified('automationRules');
+    integ.updatedBy = req.user._id;
+    await integ.save();
+  }
+
+  let createdCount = 0;
+  let skippedCount = 0;
+
+  if (nextEnabled && mode === 'existing') {
+    const pendingEmails = await EmailMessage.find({
+      relatedTicketId: null,
+      processingStatus: { $ne: 'Ignored' },
+    })
+      .sort({ receivedAt: 1 })
+      .limit(100);
+
+    const integById = new Map(integrations.map((i) => [String(i._id), i]));
+    const fallbackClient = await Client.findOne({ isDeleted: false, isActive: { $ne: false } }).lean();
+
+    for (const emailDoc of pendingEmails) {
+      let client = emailDoc.matchedClientId
+        ? await Client.findOne({ _id: emailDoc.matchedClientId, isDeleted: false }).lean()
+        : null;
+      if (!client) client = fallbackClient;
+      if (!client) {
+        skippedCount += 1;
+        continue;
+      }
+      const integ = integById.get(String(emailDoc.mailboxId)) || integrations[0];
+      await createPendingTicketFromEmailDoc(emailDoc, client, integ, [], req.user);
+      createdCount += 1;
+    }
+  }
+
+  const msg = nextEnabled
+    ? mode === 'existing'
+      ? `Auto ticket creation enabled (${createdCount} existing email(s) converted to tickets${skippedCount ? `, ${skippedCount} skipped` : ''}).`
+      : 'Auto ticket creation enabled starting from next incoming email.'
+    : 'Auto ticket creation disabled. Tickets will only be created when you click Create Ticket.';
+
+  return sendSuccess(res, { autoCreateTickets: nextEnabled, createdCount, skippedCount }, msg);
 });
 
 export const getEmailMessageDetail = asyncHandler(async (req, res) => {

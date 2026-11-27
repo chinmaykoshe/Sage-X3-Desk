@@ -70,6 +70,9 @@ export default function QuickCreateModals() {
         client: quickTicketModal.defaults?.client || '',
         title: '',
         description: '',
+        timeTaken: '',
+        logToTimesheet: true,
+        tsEntryStatus: 'IN PROGRESS',
       });
     }
   }, [quickTicketModal.open]);
@@ -101,12 +104,13 @@ export default function QuickCreateModals() {
   const onCreateTicket = async (values) => {
     setSubmitting(true);
     try {
+      const { timeTaken, logToTimesheet, tsEntryStatus, ...ticketValues } = values;
       const payload = {
-        ...values,
-        assignedDevelopers: Array.isArray(values.assignedDevelopers)
-          ? values.assignedDevelopers
-          : values.assignedDevelopers
-          ? [values.assignedDevelopers]
+        ...ticketValues,
+        assignedDevelopers: Array.isArray(ticketValues.assignedDevelopers)
+          ? ticketValues.assignedDevelopers
+          : ticketValues.assignedDevelopers
+          ? [ticketValues.assignedDevelopers]
           : [],
       };
       const { data } = await api.post('/tickets', payload);
@@ -120,10 +124,34 @@ export default function QuickCreateModals() {
         await api.post('/attachments', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       }
 
+      const hrs = Number(timeTaken || 0);
+      let loggedTs = false;
+      if (hrs > 0 && logToTimesheet !== false) {
+        const matchedProj = projects.find((p) => String(p._id) === String(ticketValues.project));
+        await api.post('/time-logs', {
+          date: ticketValues.dueDate || new Date().toISOString().slice(0, 10),
+          client: ticketValues.client || null,
+          project: ticketValues.project || null,
+          projectCode: matchedProj?.projectId || '',
+          ticket: created._id,
+          taskTitle: ticketValues.title,
+          workDescription: ticketValues.description,
+          taskType: String(ticketValues.category || 'SUPPORT').toUpperCase(),
+          entryStatus:
+            tsEntryStatus ||
+            (['Resolved', 'Closed'].includes(ticketValues.status) ? 'DONE' : 'IN PROGRESS'),
+          hoursSpent: Math.min(24, Math.max(0.1, hrs)),
+          billable: true,
+        });
+        loggedTs = true;
+      }
+
       addToast(
-        created.approvalStatus === 'APPROVED'
-          ? `Created & auto-approved ${created.ticketId}`
-          : `Submitted ${created.ticketId} for TL approval`
+        `${
+          created.approvalStatus === 'APPROVED'
+            ? `Created & auto-approved ${created.ticketId}`
+            : `Submitted ${created.ticketId} for TL approval`
+        }${loggedTs ? ` · Logged ${hrs}h to Timesheet` : ''}`
       );
       notifyLocalMutation('ticket');
       closeQuickTicket();
@@ -273,6 +301,38 @@ export default function QuickCreateModals() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="sm:col-span-2 rounded-lg border border-[#E8E8E5] bg-[#F4F4F2]/50 p-2.5 dark:border-[#2C2E33] dark:bg-white/[0.02]">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+                <div>
+                  <label className="block font-medium mb-1">Time Taken (Hours)</label>
+                  <input
+                    type="number"
+                    step="0.25"
+                    min="0"
+                    max="24"
+                    placeholder="e.g. 4"
+                    {...ticketForm.register('timeTaken')}
+                    className="w-full rounded-lg border border-[#E8E8E5] bg-white px-3 py-1.5 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-medium mb-1">Timesheet Status</label>
+                  <select
+                    {...ticketForm.register('tsEntryStatus')}
+                    className="w-full rounded-lg border border-[#E8E8E5] bg-white px-2.5 py-1.5 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
+                  >
+                    <option value="IN PROGRESS">IN PROGRESS</option>
+                    <option value="DONE">DONE</option>
+                    <option value="PENDING">PENDING</option>
+                  </select>
+                </div>
+                <label className="inline-flex items-center gap-2 py-1.5 cursor-pointer text-xs font-medium">
+                  <input type="checkbox" {...ticketForm.register('logToTimesheet')} />
+                  <span>Copy Title &amp; Desc to Timesheet</span>
+                </label>
+              </div>
             </div>
 
             {isManager && (

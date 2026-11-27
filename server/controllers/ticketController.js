@@ -394,3 +394,172 @@ export const deleteTicket = asyncHandler(async (req, res) => {
   emitBroadcast('ticket:changed', { action: 'deleted', ticketId: ticket._id, actorId: req.user._id });
   return sendSuccess(res, null, 'Ticket archived successfully');
 });
+
+export const mergeTickets = asyncHandler(async (req, res) => {
+  const { sourceTicketId, mergedTitle, mergedDescription } = req.body || {};
+  if (!sourceTicketId) {
+    throw new AppError('Select a ticket to merge into this ticket.', 400);
+  }
+  if (String(req.params.id) === String(sourceTicketId)) {
+    throw new AppError('Cannot merge a ticket into itself.', 400);
+  }
+
+  const [primary, source] = await Promise.all([
+    Ticket.findOne({ _id: req.params.id, isDeleted: false }),
+    Ticket.findOne({ _id: sourceTicketId, isDeleted: false }),
+  ]);
+
+  if (!primary || !source) {
+    throw new AppError('One or both tickets were not found.', 404);
+  }
+
+  const appendedSection = `\n\n--- Merged from ${source.ticketId}: ${source.title} ---\n${source.description || ''}`;
+  primary.description =
+    typeof mergedDescription === 'string' && mergedDescription.trim()
+      ? mergedDescription.trim()
+      : `${primary.description || ''}${appendedSection}`.trim();
+
+  if (typeof mergedTitle === 'string' && mergedTitle.trim()) {
+    primary.title = mergedTitle.trim();
+  }
+
+  // Merge assignees and attachments cleanly
+  const devSet = new Set([
+    ...(primary.assignedDevelopers || []).map(String),
+    ...(source.assignedDevelopers || []).map(String),
+  ]);
+  primary.assignedDevelopers = Array.from(devSet);
+
+  const attSet = new Set([
+    ...(primary.attachments || []).map(String),
+    ...(source.attachments || []).map(String),
+  ]);
+  primary.attachments = Array.from(attSet);
+
+  primary.mergedFromRefs = Array.from(new Set([...(primary.mergedFromRefs || []), source.ticketId]));
+  primary.statusHistory.push({
+    fromStatus: primary.status,
+    toStatus: primary.status,
+    changedBy: req.user._id,
+    note: `Merged ${source.ticketId} (${source.title}) into ${primary.ticketId}`,
+  });
+
+  await primary.save();
+
+  // Re-parent tasks, comments, attachments, deployments, and time logs from source -> primary
+  await Promise.all([
+    Task.updateMany({ ticket: source._id, isDeleted: false }, { ticket: primary._id }),
+    Comment.updateMany({ entityType: 'ticket', entityId: source._id }, { entityId: primary._id }),
+    Attachment.updateMany({ entityType: 'ticket', entityId: source._id }, { entityId: primary._id }),
+    Deployment.updateMany({ ticket: source._id, isDeleted: false }, { ticket: primary._id }),
+    TimeLog.updateMany({ ticket: source._id, isDeleted: false }, { ticket: primary._id }),
+  ]);
+
+  source.mergedInto = primary._id;
+  source.status = 'Closed';
+  source.isDeleted = true;
+  source.deletedAt = new Date();
+  source.statusHistory.push({
+    fromStatus: source.status,
+    toStatus: 'Closed',
+    changedBy: req.user._id,
+    note: `Merged into ${primary.ticketId}`,
+  });
+  await source.save();
+
+  const summary = `${req.user.fullName} merged ${source.ticketId} into ${primary.ticketId}`;
+  await Promise.all([
+    recordActivity({
+      actor: req.user._id,
+      action: 'TICKET_MERGED',
+      entityType: 'ticket',
+      entityId: primary._id,
+      entityRef: primary.ticketId,
+      client: primary.client,
+      ticket: primary._id,
+      summary,
+      metadata: { sourceTicketId: source._id, sourceTicketRef: source.ticketId },
+    }),
+    recordAudit({
+      actorId: req.user._id,
+      action: 'TICKET_MERGED',
+      recordType: 'Ticket',
+      recordId: primary._id,
+      recordRef: primary.ticketId,
+      newValue: { mergedFrom: source.ticketId, summary },
+      module: 'tickets',
+    }),
+  ]);
+
+  emitBroadcast('ticket:changed', { action: 'merged', ticketId: primary._id, removedTicketId: source._id });
+  const populated = await Ticket.findById(primary._id)
+    .populate('client', 'companyName clientFolderCode')
+    .populate('assignedDevelopers', 'fullName designation avatarColor');
+
+  return sendSuccess(res, populated, `Merged ${source.ticketId} into ${primary.ticketId}`);
+});
+
+export const carryForwardTicket = asyncHandler(async (req, res) => {
+  const { nextDate, hoursSpent = 0, workDescription, taskType, entryStatus, updateDueDate = true } = req.body || {};
+  const ticket = await Ticket.findOne({ _id: req.params.id, isDeleted: false }).populate('project', 'projectId name');
+  if (!ticket) throw new AppError('Ticket not found.', 404);
+
+  const targetDate = nextDate ? new Date(nextDate) : new Date(Date.now() + 24 * 3600 * 1000);
+  if (Number.isNaN(targetDate.getTime())) {
+    throw new AppError('Invalid target carry-forward date.', 400);
+  }
+
+  const hrs = Number(hoursSpent || 0);
+  const dateLabel = targetDate.toISOString().slice(0, 10);
+
+  if (updateDueDate !== false) {
+    ticket.dueDate = targetDate;
+  }
+  ticket.statusHistory.push({
+    fromStatus: ticket.status,
+    toStatus: ticket.status,
+    changedBy: req.user._id,
+    note: `Carried forward to ${dateLabel}${hrs > 0 ? ` (${hrs}h logged to Timesheet)` : ''}`,
+  });
+  await ticket.save();
+
+  let timeLog = null;
+  if (hrs > 0) {
+    const resolvedStatus =
+      entryStatus || (['Resolved', 'Closed'].includes(ticket.status) ? 'DONE' : 'IN PROGRESS');
+    timeLog = await TimeLog.create({
+      employee: req.user._id,
+      client: ticket.client || null,
+      project: ticket.project?._id || ticket.project || null,
+      projectCode: ticket.project?.projectId || '',
+      ticket: ticket._id,
+      taskTitle: ticket.title,
+      workDescription: String(workDescription || '').trim() || ticket.description || ticket.title,
+      taskType: String(taskType || '').trim() || String(ticket.category || 'SUPPORT').toUpperCase(),
+      entryStatus: ['DONE', 'IN PROGRESS', 'PENDING', 'BLOCKED'].includes(resolvedStatus) ? resolvedStatus : 'IN PROGRESS',
+      date: targetDate,
+      hoursSpent: Math.min(24, Math.max(0.1, hrs)),
+      billable: true,
+    });
+  }
+
+  await recordActivity({
+    actor: req.user._id,
+    action: 'TICKET_CARRIED_FORWARD',
+    entityType: 'ticket',
+    entityId: ticket._id,
+    entityRef: ticket.ticketId,
+    client: ticket.client,
+    ticket: ticket._id,
+    summary: `${req.user.fullName} carried ${ticket.ticketId} forward to ${dateLabel}${hrs > 0 ? ` and logged ${hrs}h to Timesheet` : ''}`,
+  });
+
+  emitBroadcast('ticket:changed', { action: 'carried_forward', ticketId: ticket._id, actorId: req.user._id });
+  return sendSuccess(
+    res,
+    { ticket, timeLog },
+    hrs > 0
+      ? `Carried ${ticket.ticketId} forward to ${dateLabel} & updated Timesheet (+${hrs}h)`
+      : `Carried ${ticket.ticketId} forward to ${dateLabel}`
+  );
+});

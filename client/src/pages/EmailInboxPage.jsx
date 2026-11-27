@@ -9,6 +9,7 @@ import {
   Ban,
   ExternalLink,
   Paperclip,
+  Zap,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import api, { getApiError } from '../services/api';
@@ -39,6 +40,10 @@ export default function EmailInboxPage() {
   const [createClientId, setCreateClientId] = useState('');
   const [acting, setActing] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [autoCreateEnabled, setAutoCreateEnabled] = useState(false);
+  const [unconvertedCount, setUnconvertedCount] = useState(0);
+  const [autoDialogOpen, setAutoDialogOpen] = useState(false);
+  const [togglingAuto, setTogglingAuto] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -56,6 +61,8 @@ export default function EmailInboxPage() {
         });
         setMessages(data.data.messages || []);
         setCounts(data.data.counts || {});
+        setAutoCreateEnabled(Boolean(data.data.autoCreateTickets));
+        setUnconvertedCount(Number(data.data.unconvertedCount || 0));
       }
     } catch (err) {
       addToast(getApiError(err, 'Failed to load email inbox'), 'error');
@@ -186,13 +193,43 @@ export default function EmailInboxPage() {
     }
   };
 
+  const handleToggleAutoCreate = async (enabled, mode = 'next') => {
+    setTogglingAuto(true);
+    try {
+      const { data } = await api.post('/email/auto-create-toggle', { enabled, mode });
+      setAutoCreateEnabled(Boolean(data.data?.autoCreateTickets));
+      addToast(data.message || 'Auto ticket creation updated', 'success');
+      setAutoDialogOpen(false);
+      loadData();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to update auto ticket creation'), 'error');
+    } finally {
+      setTogglingAuto(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Email Intake & Review Workspace"
-        subtitle="Monitor Outlook & Gmail incoming emails, resolve ambiguous matches, and route pending tickets for Admin/TL approval"
+        subtitle="Manual-first email intake: click Create Ticket on any email, or enable Auto Ticket Creation"
         actions={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant={autoCreateEnabled ? 'primary' : 'secondary'}
+              disabled={togglingAuto}
+              onClick={() => {
+                if (autoCreateEnabled) {
+                  handleToggleAutoCreate(false);
+                } else {
+                  setAutoDialogOpen(true);
+                }
+              }}
+            >
+              <Zap className={`h-3.5 w-3.5 ${autoCreateEnabled ? 'text-[#C6F36B]' : 'text-amber-500'}`} />
+              {autoCreateEnabled ? 'Auto Ticket Creation: ON' : 'Enable Auto Ticket Creation'}
+            </Button>
             <Link to="/approvals">
               <Button variant="secondary" size="sm">
                 TL &amp; Admin Approvals <ExternalLink className="h-3.5 w-3.5" />
@@ -433,6 +470,55 @@ export default function EmailInboxPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Enable Auto Ticket Creation Choice Dialog */}
+      <Modal
+        open={autoDialogOpen}
+        onClose={() => setAutoDialogOpen(false)}
+        title="Enable Auto Ticket Creation"
+        subtitle="Choose how you want automatic ticket creation to begin"
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4 text-xs">
+          <p className="text-[#555555] dark:text-slate-300 leading-relaxed">
+            Currently there {unconvertedCount === 1 ? 'is' : 'are'} <strong>{unconvertedCount}</strong> synced email(s) in the inbox that have not been converted into tickets yet.
+          </p>
+
+          <div className="space-y-2">
+            <button
+              type="button"
+              disabled={togglingAuto}
+              onClick={() => handleToggleAutoCreate(true, 'next')}
+              className="w-full rounded-xl border border-[#E8E8E5] bg-white p-3 text-left hover:border-[#171717] dark:border-[#2C2E33] dark:bg-[#1E2025] transition-colors"
+            >
+              <div className="font-semibold text-[#171717] dark:text-white">Start from Next Incoming Email Only</div>
+              <div className="mt-0.5 text-[11px] text-[#777777]">
+                Keep existing inbox emails manual and auto-create tickets only for newly synced emails going forward.
+              </div>
+            </button>
+
+            <button
+              type="button"
+              disabled={togglingAuto}
+              onClick={() => handleToggleAutoCreate(true, 'existing')}
+              className="w-full rounded-xl border border-[#35B8A6]/40 bg-[#35B8A6]/10 p-3 text-left hover:border-[#35B8A6] transition-colors"
+            >
+              <div className="font-semibold text-[#171717] dark:text-white">
+                Create Tickets for Existing Unconverted Emails Too ({unconvertedCount})
+              </div>
+              <div className="mt-0.5 text-[11px] text-[#555555] dark:text-slate-300">
+                Convert existing unconverted inbox emails into tickets now and enable auto-creation for future emails.
+              </div>
+            </button>
+          </div>
+
+          <div className="flex justify-end pt-1">
+            <Button type="button" size="sm" variant="secondary" onClick={() => setAutoDialogOpen(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

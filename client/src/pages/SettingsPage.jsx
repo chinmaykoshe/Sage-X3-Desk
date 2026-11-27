@@ -61,7 +61,7 @@ export default function SettingsPage({ section }) {
   const activeTab = resolvedTab;
 
   return (
-    <div className="space-y-5 max-w-6xl">
+    <div className="w-full space-y-5">
       <PageHeader title="Application Settings & Access Control" subtitle="Configure SLA defaults, integrations, and dynamic user screen & action permissions" />
 
       <div className="flex flex-wrap items-center gap-2">
@@ -85,7 +85,7 @@ export default function SettingsPage({ section }) {
       ) : activeTab === 'integrations' ? (
         <EmailIntegrationPanel />
       ) : (
-        <div className="space-y-5 max-w-4xl">
+        <div className="w-full space-y-5">
       <form onSubmit={handleSave} className="space-y-5">
         <Card>
           <h3 className="text-sm font-semibold mb-3">Organization & Governance</h3>

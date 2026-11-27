@@ -23,6 +23,7 @@ const LABELS = {
   reports: 'Reports',
   'activity-logs': 'Activity Logs',
   'knowledge-base': 'Knowledge Base',
+  'help-center': 'Help Center',
   settings: 'Settings',
   general: 'General Settings',
   'access-control': 'Access Control',
