@@ -10,7 +10,6 @@ import TicketDraft from '../../models/TicketDraft.js';
 import ApprovalHistory from '../../models/ApprovalHistory.js';
 import { getNextSequence } from '../../models/Counter.js';
 import { uploadRoot } from '../../middleware/upload.js';
-import { resolveSupabaseCreds, uploadFileToSupabase } from '../backupSyncService.js';
 import {
   TICKET_CATEGORIES,
   PRIORITIES,
@@ -25,7 +24,7 @@ import { checkOllamaStatus, chatWithOllama, extractJsonFromText } from './ollama
 import { buildTicketExtractionPrompt } from './aiPromptService.js';
 import { matchClientDeterministic } from './aiContextService.js';
 import { recordActivity } from '../activityService.js';
-import { notifyUsers, emitBroadcast } from '../notificationService.js';
+import { notifyTicketStakeholders, notifyUsers, emitBroadcast } from '../notificationService.js';
 import { recordAudit, recordAIActivity } from '../auditService.js';
 
 const aiDraftOutputSchema = z.object({
@@ -270,16 +269,7 @@ export async function generateTicketDraftService({
   const attachmentDocs = [];
 
   for (const f of files) {
-    let fileUrl = `/uploads/${f.filename}`;
-    if (resolveSupabaseCreds().configured) {
-      try {
-        const buf = fs.readFileSync(f.path);
-        const supa = await uploadFileToSupabase(buf, f.originalname, f.mimetype);
-        if (supa?.url) fileUrl = supa.url;
-      } catch (err) {
-        if (err.statusCode === 413) throw err;
-      }
-    }
+    const fileUrl = `/uploads/${f.filename}`;
 
     const att = await Attachment.create({
       entityType: 'ticket',
@@ -313,15 +303,7 @@ export async function generateTicketDraftService({
     const srcBuf = Buffer.from(sanitizedInput, 'utf8');
     fs.writeFileSync(srcPath, srcBuf);
 
-    let srcUrl = `/uploads/${srcFilename}`;
-    if (resolveSupabaseCreds().configured) {
-      try {
-        const supa = await uploadFileToSupabase(srcBuf, 'ticket-source.txt', 'text/plain');
-        if (supa?.url) srcUrl = supa.url;
-      } catch (err) {
-        if (err.statusCode === 413) throw err;
-      }
-    }
+    const srcUrl = `/uploads/${srcFilename}`;
 
     const srcAtt = await Attachment.create({
       entityType: 'ticket',
@@ -597,6 +579,16 @@ export async function generateTicketDraftService({
       module: 'ai',
     });
 
+    await notifyTicketStakeholders({
+      ticket: autoTicket,
+      actorId: actor._id,
+      type: 'ticket_updated',
+      title: `Ticket Created: ${autoTicket.ticketId}`,
+      message: `${actor.fullName} created "${autoTicket.title}" via Smart Intake (no approval required).`,
+      link: `/tickets/${autoTicket._id}`,
+      includeActor: true,
+    });
+
     emitBroadcast('ticket:changed', { action: 'created', ticketId: autoTicket._id });
   } else {
     // Update attachment entityId to draft._id
@@ -627,15 +619,14 @@ export async function generateTicketDraftService({
       .select('_id')
       .lean();
 
-    await notifyUsers({
-      recipientIds: leads.map((l) => l._id),
+    await notifyTicketStakeholders({
+      ticket: { _id: draft._id, ticketId: draft.draftId, createdBy: actor._id, assignedDevelopers: [], assignedTeamLead: null },
       actorId: actor._id,
       type: 'ticket_updated',
       title: `Approval Needed: ${draft.draftId}`,
       message: `${actor.fullName} submitted AI ticket draft "${draft.generatedFields.title}" for TL approval.`,
-      link: '/approvals',
-      entityType: 'ticket',
-      entityId: draft._id,
+      link: `/approvals/drafts?draft=${draft._id}`,
+      includeActor: false,
     });
 
     emitBroadcast('draft:changed', { action: 'submitted', draftId: draft._id });
@@ -817,15 +808,14 @@ export async function approveTicketDraftService({ draftId, edits, selectedTaskId
     summary: `Approved draft ${draft.draftId} and published ${ticket.ticketId} (${tasksToCreate.length} task(s))`,
   });
 
-  await notifyUsers({
-    recipientIds: [draft.submittedBy],
+  await notifyTicketStakeholders({
+    ticket,
     actorId: actor._id,
     type: 'ticket_assigned',
-    title: `Draft Approved → ${ticket.ticketId}`,
+    title: `Ticket Approved: ${ticket.ticketId}`,
     message: `${actor.fullName} approved ${draft.draftId} and created ${ticket.ticketId}: "${ticket.title}".`,
     link: `/tickets/${ticket._id}`,
-    entityType: 'ticket',
-    entityId: ticket._id,
+    includeActor: false,
   });
 
   emitBroadcast('ticket:changed', { action: 'created', ticketId: ticket._id });
@@ -870,7 +860,7 @@ export async function rejectTicketDraftService({ draftId, reason, actor }) {
     type: 'ticket_updated',
     title: `Draft ${draft.draftId} Rejected`,
     message: `${actor.fullName} rejected your submission: ${reason.trim()}`,
-    link: '/approvals',
+    link: `/approvals/drafts?draft=${draft._id}&status=All`,
     entityType: 'ticket',
     entityId: draft._id,
   });
@@ -913,7 +903,7 @@ export async function requestDraftChangesService({ draftId, comments, actor }) {
     type: 'ticket_updated',
     title: `Changes Requested on ${draft.draftId}`,
     message: `${actor.fullName}: ${comments.trim()}`,
-    link: '/approvals',
+    link: `/approvals/drafts?draft=${draft._id}&status=All`,
     entityType: 'ticket',
     entityId: draft._id,
   });

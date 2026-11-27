@@ -25,7 +25,13 @@ SUPPORTED INTENTS:
 - "CREATE_USER_REQUEST": entities { name, email, role, designation }
 - "CREATE_CLIENT_REQUEST": entities { name, email }
 - "CREATE_PROJECT_REQUEST": entities { name, client }
-- "GENERAL_ANSWER": entities {} (for answering questions from provided context, like who is working on what, recent deployments, or asking for clarification)
+- "QUERY_DATABASE": entities { "queryType": "users|new_users|clients|tickets|pending_tickets|completed_tickets|duplicate_tickets|tasks|projects|deployments|emails|drafts|knowledge_base|logs|stats|global_search", "search": "" }
+- "GENERAL_ANSWER": entities {} (for answering questions ONLY from context above; NEVER invent, guess, or disclose passwords, secrets, tokens, or nonexistent records)
+
+STRICT SECURITY & FACTUALITY RULES:
+1. NEVER reveal, guess, or fabricate passwords, passcodes, tokens, API keys, hashes, or credentials. Refuse cleanly.
+2. NEVER invent client names, user names, ticket IDs, or counts not explicitly in CURRENT CONTEXT.
+3. For "new users", "list clients", "duplicate tickets", "emails", "logs", or counts/stats, emit "QUERY_DATABASE".
 
 CURRENT CONTEXT (relevant records only):
 ${JSON.stringify(contextPayload)}

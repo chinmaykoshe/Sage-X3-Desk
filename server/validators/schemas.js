@@ -269,14 +269,38 @@ export const savedViewSchema = z.object({
     .default({}),
 });
 
-export const timeLogCreateSchema = z.object({
-  task: objectId,
+export const timeLogCreateSchema = z
+  .object({
+    task: optionalObjectId,
+    ticket: optionalObjectId,
+    client: optionalObjectId,
+    project: optionalObjectId,
+    projectCode: z.string().trim().max(80).optional().default(''),
+    taskTitle: z.string().trim().max(200).optional().default(''),
+    taskType: z.string().trim().max(120).optional().default(''),
+    entryStatus: z.enum(['DONE', 'IN PROGRESS', 'PENDING', 'BLOCKED']).optional().default('DONE'),
+    date: z.string().optional().nullable(),
+    hoursSpent: z.coerce.number().min(0.1, 'Minimum 0.1 hours').max(24, 'Cannot exceed 24 hours per entry'),
+    workDescription: z.string().min(2, 'Work description is required'),
+    billable: z.boolean().optional().default(true),
+  })
+  .refine((d) => Boolean(d.task || d.taskTitle || d.workDescription), {
+    message: 'Task or task title is required',
+  });
+
+export const timeLogUpdateSchema = z.object({
+  task: optionalObjectId,
   ticket: optionalObjectId,
   client: optionalObjectId,
+  project: optionalObjectId,
+  projectCode: z.string().trim().max(80).optional(),
+  taskTitle: z.string().trim().max(200).optional(),
+  taskType: z.string().trim().max(120).optional(),
+  entryStatus: z.enum(['DONE', 'IN PROGRESS', 'PENDING', 'BLOCKED']).optional(),
   date: z.string().optional().nullable(),
-  hoursSpent: z.coerce.number().min(0.1, 'Minimum 0.1 hours').max(24, 'Cannot exceed 24 hours per entry'),
-  workDescription: z.string().min(2, 'Work description is required'),
-  billable: z.boolean().optional().default(true),
+  hoursSpent: z.coerce.number().min(0.1, 'Minimum 0.1 hours').max(24, 'Cannot exceed 24 hours per entry').optional(),
+  workDescription: z.string().min(2, 'Work description is required').optional(),
+  billable: z.boolean().optional(),
 });
 
 export const knowledgeBaseSchema = z.object({

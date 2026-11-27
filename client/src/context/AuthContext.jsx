@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
-import api from '../services/api';
+import api, { clearStoredToken, getStoredToken, setStoredToken } from '../services/api';
 import { useToast } from './ToastContext';
 
 const AuthContext = createContext();
@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loadUser = useCallback(async () => {
-    const token = localStorage.getItem('sagex3_token');
+    const token = getStoredToken();
     if (!token) {
       setLoading(false);
       return;
@@ -34,7 +34,7 @@ export function AuthProvider({ children }) {
       setUser(data.data);
       fetchNotifications();
     } catch {
-      localStorage.removeItem('sagex3_token');
+      clearStoredToken();
       setUser(null);
     } finally {
       setLoading(false);
@@ -47,7 +47,7 @@ export function AuthProvider({ children }) {
 
   // Connect Socket.IO when authenticated
   useEffect(() => {
-    const token = localStorage.getItem('sagex3_token');
+    const token = getStoredToken();
     if (!user || !token) {
       if (socket) {
         socket.disconnect();
@@ -77,9 +77,9 @@ export function AuthProvider({ children }) {
     };
   }, [user?._id]);
 
-  const login = async (email, password) => {
+  const login = async (email, password, rememberMe = true) => {
     const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('sagex3_token', data.data.token);
+    setStoredToken(data.data.token, rememberMe);
     setUser(data.data.user);
     await fetchNotifications();
     return data.data.user;
@@ -87,7 +87,7 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     const { data } = await api.post('/auth/register', payload);
-    localStorage.setItem('sagex3_token', data.data.token);
+    setStoredToken(data.data.token, true);
     setUser(data.data.user);
     return data.data.user;
   };
@@ -98,7 +98,7 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore
     }
-    localStorage.removeItem('sagex3_token');
+    clearStoredToken();
     setUser(null);
     setNotifications([]);
     setUnreadCount(0);

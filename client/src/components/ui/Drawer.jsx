@@ -18,7 +18,7 @@ export function Drawer({ open, onClose, title, headerLeft, headerRight, children
       <aside
         className={`relative z-10 flex h-full w-full ${width} flex-col border-l border-[#E8E8E5] bg-white shadow-2xl dark:border-[#26282D] dark:bg-[#17181B] animate-in slide-in-from-right duration-150`}
       >
-        <div className="flex items-center justify-between gap-3 border-b border-[#E8E8E5] dark:border-[#26282D] px-5 py-3.5 shrink-0">
+        <div className="flex items-center justify-between gap-2 sm:gap-3 border-b border-[#E8E8E5] dark:border-[#26282D] px-3.5 py-3 sm:px-5 sm:py-3.5 shrink-0">
           <div className="flex items-center gap-2 min-w-0 flex-1">{headerLeft || <span className="font-semibold text-sm">{title}</span>}</div>
           <div className="flex items-center gap-1.5 shrink-0">
             {headerRight}

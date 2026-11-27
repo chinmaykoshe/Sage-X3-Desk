@@ -36,6 +36,12 @@ import {
   ShieldAlert,
   Clock,
   BrainCircuit,
+  ChevronDown,
+  ChevronRight,
+  DatabaseZap,
+  Sliders,
+  Shield,
+  FileSpreadsheet,
 } from 'lucide-react';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -46,6 +52,7 @@ import { useWorkspace } from '../../context/WorkspaceContext';
 import { ROLE_LABELS } from '../../utils/constants';
 import Avatar from '../ui/Avatar';
 import Badge from '../ui/Badge';
+import Breadcrumbs from '../ui/Breadcrumbs';
 import CommandPalette from '../workspace/CommandPalette';
 import QuickCreateModals from '../workspace/QuickCreateModals';
 import TaskDrawer from '../workspace/TaskDrawer';
@@ -59,6 +66,7 @@ const SIDEBAR_GROUPS = [
     items: [
       { to: '/', label: 'Overview', icon: LayoutDashboard, end: true, screenKey: 'dashboard' },
       { to: '/my-tasks', label: 'My Work', icon: CheckSquare, screenKey: 'my_tasks' },
+      { to: '/timesheet', label: 'Timesheet', icon: FileSpreadsheet },
       { to: '/notifications', label: 'Inbox', icon: Inbox, badge: true, screenKey: 'inbox' },
       { to: '/smart-intake', label: 'Smart Intake (AI)', icon: Sparkles, screenKey: 'smart_intake' },
       { to: '/email-inbox', label: 'Email Inbox', icon: Mail, screenKey: 'email_inbox', roles: ['admin', 'team_lead'] },
@@ -88,8 +96,10 @@ const SIDEBAR_GROUPS = [
   },
   {
     label: 'ADMINISTRATION',
+    collapsible: true,
     items: [
       { to: '/admin/overview', label: 'System Overview', icon: Activity, screenKey: 'admin_overview' },
+      { to: '/admin/governance', label: 'Data & Duplicate Control', icon: DatabaseZap, screenKey: 'admin_governance', roles: ['admin'] },
       { to: '/admin/user-activity', label: 'User Activity', icon: Users, screenKey: 'admin_user_activity' },
       { to: '/admin/dev-logs', label: 'Development Logs', icon: Wrench, screenKey: 'admin_dev_logs' },
       { to: '/admin/system-logs', label: 'System Logs', icon: AlertTriangle, screenKey: 'admin_system_logs' },
@@ -102,7 +112,11 @@ const SIDEBAR_GROUPS = [
   },
   {
     label: 'SYSTEM',
-    items: [{ to: '/settings', label: 'Settings & Access', icon: Settings, screenKey: 'settings' }],
+    items: [
+      { to: '/settings/general', label: 'General Settings', icon: Sliders, screenKey: 'settings' },
+      { to: '/settings/access-control', label: 'Access Control', icon: Shield, screenKey: 'settings' },
+      { to: '/settings/email-integrations', label: 'Email Integrations', icon: Mail, screenKey: 'settings' },
+    ],
   },
 ];
 
@@ -119,6 +133,7 @@ export default function AppLayout() {
   } = useWorkspace();
 
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem('sagex3_sidebar_collapsed') === 'true');
+  const [adminMenuOpen, setAdminMenuOpen] = useState(() => window.location.pathname.startsWith('/admin'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
@@ -231,7 +246,7 @@ export default function AppLayout() {
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <div
-            className={`flex shrink-0 items-center justify-center rounded-lg bg-[#171717] text-[#C6F36B] dark:bg-[#C6F36B] dark:text-[#171717] font-bold tracking-tight shadow-sm ${
+            className={`flex shrink-0 items-center justify-center rounded-lg bg-[#171717] text-[#C6F36B] ring-1 ring-[#C6F36B]/30 font-extrabold tracking-tight shadow-sm ${
               collapsed && !isMobile ? 'h-7 w-7 text-[11px]' : 'h-8 w-8 text-xs'
             }`}
           >
@@ -269,42 +284,57 @@ export default function AppLayout() {
           );
           if (visibleItems.length === 0) return null;
 
+          const isGroupExpanded = !group.collapsible || adminMenuOpen;
+
           return (
             <div key={group.label}>
               {(!collapsed || isMobile) && (
-                <div className="px-2.5 mb-1.5 text-[10px] font-semibold tracking-wider text-[#777777]">
-                  {group.label}
+                group.collapsible ? (
+                  <button
+                    type="button"
+                    onClick={() => setAdminMenuOpen((v) => !v)}
+                    className="w-full flex items-center justify-between px-2.5 mb-1.5 text-[10px] font-semibold tracking-wider text-[#777777] hover:text-[#171717] dark:hover:text-white"
+                  >
+                    <span>{group.label}</span>
+                    {isGroupExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  </button>
+                ) : (
+                  <div className="px-2.5 mb-1.5 text-[10px] font-semibold tracking-wider text-[#777777]">
+                    {group.label}
+                  </div>
+                )
+              )}
+              {isGroupExpanded && (
+                <div className="space-y-0.5">
+                  {visibleItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        onClick={() => isMobile && setMobileOpen(false)}
+                        title={collapsed && !isMobile ? item.label : undefined}
+                        className={({ isActive }) =>
+                          `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150 ${
+                            isActive
+                              ? 'bg-[#C6F36B] text-[#171717] font-semibold shadow-sm'
+                              : 'text-[#555555] hover:bg-[#F4F4F2] hover:text-[#171717] hover:translate-x-0.5 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-100'
+                          } ${collapsed && !isMobile ? 'justify-center' : ''}`
+                        }
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        {(!collapsed || isMobile) && <span className="flex-1 truncate">{item.label}</span>}
+                        {item.badge && unreadCount > 0 && (!collapsed || isMobile) && (
+                          <span className="rounded-full bg-[#171717] text-[#C6F36B] px-1.5 py-0.5 text-[10px] font-bold">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </NavLink>
+                    );
+                  })}
                 </div>
               )}
-              <div className="space-y-0.5">
-                {visibleItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      end={item.end}
-                      onClick={() => isMobile && setMobileOpen(false)}
-                      title={collapsed && !isMobile ? item.label : undefined}
-                      className={({ isActive }) =>
-                        `group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-all duration-150 ${
-                          isActive
-                            ? 'bg-[#C6F36B] text-[#171717] font-semibold shadow-sm'
-                            : 'text-[#555555] hover:bg-[#F4F4F2] hover:text-[#171717] hover:translate-x-0.5 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-slate-100'
-                        } ${collapsed && !isMobile ? 'justify-center' : ''}`
-                      }
-                    >
-                      <Icon className="h-4 w-4 shrink-0" />
-                      {(!collapsed || isMobile) && <span className="flex-1 truncate">{item.label}</span>}
-                      {item.badge && unreadCount > 0 && (!collapsed || isMobile) && (
-                        <span className="rounded-full bg-[#171717] text-[#C6F36B] px-1.5 py-0.5 text-[10px] font-bold">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </NavLink>
-                  );
-                })}
-              </div>
             </div>
           );
         })}
@@ -358,7 +388,7 @@ export default function AppLayout() {
       searchResults.employees?.length);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F4F4F2] dark:bg-[#101113]">
+    <div className="flex h-screen supports-[height:100dvh]:h-dvh overflow-hidden bg-[#F4F4F2] dark:bg-[#101113]">
       <div className="hidden lg:block h-full">{renderSidebar(false)}</div>
 
       {mobileOpen && (
@@ -370,16 +400,17 @@ export default function AppLayout() {
 
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-[#E8E8E5] bg-white dark:border-[#26282D] dark:bg-[#141518] px-4 sm:px-6">
-          <div className="flex items-center gap-3 flex-1 max-w-xl relative">
+        <header className="flex h-14 shrink-0 items-center justify-between gap-2 sm:gap-3 border-b border-[#E8E8E5] bg-white dark:border-[#26282D] dark:bg-[#141518] px-3 sm:px-6">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0 max-w-xl relative">
             <button
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden rounded-lg p-1.5 text-[#555555] hover:bg-[#F4F4F2] dark:hover:bg-white/10"
+              aria-label="Open navigation menu"
+              className="lg:hidden shrink-0 rounded-lg p-1.5 text-[#555555] hover:bg-[#F4F4F2] dark:text-slate-300 dark:hover:bg-white/10"
             >
               <Menu className="h-5 w-5" />
             </button>
 
-            <div className="relative flex-1">
+            <div className="relative flex-1 min-w-0">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#777777]" />
               <input
                 ref={searchInputRef}
@@ -387,8 +418,8 @@ export default function AppLayout() {
                 value={searchQuery}
                 onFocus={() => searchResults && setSearchOpen(true)}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tickets, tasks, clients, projects, employees... (press /)"
-                className="w-full rounded-lg border border-[#E8E8E5] bg-[#F4F4F2]/70 py-1.5 pl-8 pr-16 text-xs text-[#171717] placeholder-[#777777] focus:border-[#171717] focus:bg-white focus:outline-none dark:border-[#2C2E33] dark:bg-[#1C1D21] dark:text-slate-100"
+                placeholder="Search tickets, clients, tasks... (/)"
+                className="w-full min-w-0 rounded-lg border border-[#E8E8E5] bg-[#F4F4F2]/70 py-1.5 pl-8 pr-3 sm:pr-14 text-xs text-[#171717] placeholder-[#777777] focus:border-[#171717] focus:bg-white focus:outline-none dark:border-[#2C2E33] dark:bg-[#1C1D21] dark:text-slate-100"
               />
               <button
                 type="button"
@@ -402,7 +433,7 @@ export default function AppLayout() {
               {searchOpen && searchQuery.trim() && (
                 <>
                   <div className="fixed inset-0 z-30" onClick={() => setSearchOpen(false)} />
-                  <div className="absolute left-0 right-0 top-10 z-40 rounded-xl border border-[#E8E8E5] bg-white p-2 shadow-2xl dark:border-[#2C2E33] dark:bg-[#1C1D21] max-h-96 overflow-y-auto text-xs space-y-2.5">
+                  <div className="fixed inset-x-3 top-14 sm:inset-x-auto sm:absolute sm:left-0 sm:right-0 sm:top-10 z-40 rounded-xl border border-[#E8E8E5] bg-white p-2 shadow-2xl dark:border-[#2C2E33] dark:bg-[#1C1D21] max-h-[70dvh] sm:max-h-96 overflow-y-auto text-xs space-y-2.5">
                     {!hasSearchItems ? (
                       <div className="py-6 text-center text-[#777777]">No matches for "{searchQuery}"</div>
                     ) : (
@@ -511,7 +542,7 @@ export default function AppLayout() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               onClick={() => navigate('/smart-intake')}
               title="Smart Add Ticket with X3 AI & OCR"
@@ -522,15 +553,16 @@ export default function AppLayout() {
             <button
               onClick={() => openQuickTicket()}
               title="Quick Create Ticket (Shortcut: C)"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#171717] px-3 py-1.5 text-xs font-semibold text-[#C6F36B] hover:bg-[#2a2a2a] dark:bg-[#C6F36B] dark:text-[#171717] shadow-sm transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg bg-[#171717] px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-[#C6F36B] hover:bg-[#2a2a2a] dark:bg-[#C6F36B] dark:text-[#171717] shadow-sm transition-colors"
             >
-              <Plus className="h-3.5 w-3.5" /> Create
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline sm:inline">Create</span>
             </button>
 
             <button
               onClick={toggleTheme}
               title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-              className="rounded-lg p-2 text-[#555555] hover:bg-[#F4F4F2] dark:text-slate-400 dark:hover:bg-white/10"
+              className="rounded-lg p-1.5 sm:p-2 text-[#555555] hover:bg-[#F4F4F2] dark:text-slate-400 dark:hover:bg-white/10"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </button>
@@ -538,11 +570,11 @@ export default function AppLayout() {
             <NavLink
               to="/notifications"
               title="Inbox & Notifications"
-              className="relative rounded-lg p-2 text-[#555555] hover:bg-[#F4F4F2] dark:text-slate-400 dark:hover:bg-white/10"
+              className="relative rounded-lg p-1.5 sm:p-2 text-[#555555] hover:bg-[#F4F4F2] dark:text-slate-400 dark:hover:bg-white/10"
             >
               <Inbox className="h-4 w-4" />
               {unreadCount > 0 && (
-                <span className="absolute right-1 top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#F16D64] px-1 text-[10px] font-bold text-white">
+                <span className="absolute right-0.5 top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#F16D64] px-1 text-[10px] font-bold text-white">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -551,7 +583,8 @@ export default function AppLayout() {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-3 pb-20 sm:p-6">
+          <Breadcrumbs />
           <Outlet />
         </main>
       </div>

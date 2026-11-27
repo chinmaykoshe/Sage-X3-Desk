@@ -1,11 +1,9 @@
-import fs from 'fs';
 import Attachment from '../models/Attachment.js';
 import Ticket from '../models/Ticket.js';
 import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess } from '../utils/response.js';
 import { recordActivity } from '../services/activityService.js';
-import { resolveSupabaseCreds, uploadFileToSupabase } from '../services/backupSyncService.js';
 import { recordAudit } from '../services/auditService.js';
 
 export const uploadAttachment = asyncHandler(async (req, res) => {
@@ -17,16 +15,7 @@ export const uploadAttachment = asyncHandler(async (req, res) => {
     throw new AppError('entityId is required for file attachment.', 400);
   }
 
-  let fileUrl = `/uploads/${req.file.filename}`;
-  if (resolveSupabaseCreds().configured) {
-    try {
-      const buf = fs.readFileSync(req.file.path);
-      const supa = await uploadFileToSupabase(buf, req.file.originalname, req.file.mimetype);
-      if (supa?.url) fileUrl = supa.url;
-    } catch (err) {
-      if (err.statusCode === 413) throw err;
-    }
-  }
+  const fileUrl = `/uploads/${req.file.filename}`;
 
   const attachment = await Attachment.create({
     entityType,

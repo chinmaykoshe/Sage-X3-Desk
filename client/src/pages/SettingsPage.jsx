@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import api, { getApiError } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import PageHeader from '../components/ui/PageHeader';
@@ -9,13 +9,26 @@ import Loader from '../components/ui/Loader';
 import AccessControlPanel from '../components/settings/AccessControlPanel';
 import EmailIntegrationPanel from '../components/settings/EmailIntegrationPanel';
 
-export default function SettingsPage() {
+const SETTINGS_SECTIONS = [
+  { id: 'general', to: '/settings/general', label: 'General Settings' },
+  { id: 'access', to: '/settings/access-control', label: 'User & Access Management — Screen Permissions' },
+  { id: 'integrations', to: '/settings/email-integrations', label: 'Integrations → Email Integration' },
+];
+
+export default function SettingsPage({ section }) {
   const { addToast } = useToast();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'general');
+  const resolvedTab =
+    section ||
+    (location.pathname.includes('access-control')
+      ? 'access'
+      : location.pathname.includes('email-integrations')
+        ? 'integrations'
+        : searchParams.get('tab') || 'general');
+
   const [settings, setSettings] = useState(null);
   const [teams, setTeams] = useState([]);
-  const [backupStatus, setBackupStatus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -25,20 +38,10 @@ export default function SettingsPage() {
       .then((res) => {
         setSettings(res.data.data.settings);
         setTeams(res.data.data.teams || []);
-        setBackupStatus(res.data.data.backupStatus || null);
       })
       .catch((err) => addToast(getApiError(err), 'error'))
       .finally(() => setLoading(false));
   }, []);
-
-  const handleSyncBackup = async () => {
-    try {
-      const { data } = await api.post('/settings/backup-sync');
-      addToast(data.message);
-    } catch (err) {
-      addToast(getApiError(err, 'Backup sync is not available for now. Please try again after a while.'), 'error');
-    }
-  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -55,44 +58,26 @@ export default function SettingsPage() {
 
   if (loading || !settings) return <Loader label="Loading settings..." />;
 
+  const activeTab = resolvedTab;
+
   return (
     <div className="space-y-5 max-w-6xl">
-      <PageHeader title="Application Settings & Access Control" subtitle="Configure SLA defaults, Supabase sync, and dynamic user screen & action permissions" />
+      <PageHeader title="Application Settings & Access Control" subtitle="Configure SLA defaults, integrations, and dynamic user screen & action permissions" />
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setActiveTab('general')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-            activeTab === 'general'
-              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
-              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
-          }`}
-        >
-          General &amp; Supabase Sync
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('access')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-            activeTab === 'access'
-              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
-              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
-          }`}
-        >
-          User &amp; Access Management — Screen Permissions
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('integrations')}
-          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-            activeTab === 'integrations'
-              ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
-              : 'bg-white border border-[#E8E8E5] text-[#555555] dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
-          }`}
-        >
-          Integrations → Email Integration
-        </button>
+      <div className="flex flex-wrap items-center gap-2">
+        {SETTINGS_SECTIONS.map((sec) => (
+          <Link
+            key={sec.id}
+            to={sec.to}
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
+              activeTab === sec.id
+                ? 'bg-[#171717] text-white dark:bg-[#C6F36B] dark:text-[#171717]'
+                : 'bg-white border border-[#E8E8E5] text-[#555555] hover:border-[#171717]/40 dark:bg-[#17181B] dark:border-[#2C2E33] dark:text-slate-300'
+            }`}
+          >
+            {sec.label}
+          </Link>
+        ))}
       </div>
 
       {activeTab === 'access' ? (
@@ -163,23 +148,6 @@ export default function SettingsPage() {
           </div>
         </Card>
       </form>
-
-      <Card>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <div>
-            <h3 className="text-sm font-semibold">Database & Dual-Backup Sync (MongoDB ↔ Supabase)</h3>
-            <p className="text-xs text-[#777777]">
-              Primary: {backupStatus?.primaryDatabase || 'MongoDB (Connected)'}
-            </p>
-          </div>
-          <Button type="button" variant="secondary" size="sm" onClick={handleSyncBackup}>
-            Sync Dual-Backup
-          </Button>
-        </div>
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
-          {backupStatus?.message || 'Supabase dual-backup sync is not available for now. Please try again after a while.'}
-        </div>
-      </Card>
 
       <Card>
         <h3 className="text-sm font-semibold mb-3">Practice Teams ({teams.length})</h3>

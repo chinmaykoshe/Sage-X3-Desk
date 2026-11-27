@@ -1,6 +1,12 @@
+import fs from 'fs';
+import path from 'path';
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Ticket from '../models/Ticket.js';
 import Task from '../models/Task.js';
+import Client from '../models/Client.js';
+import TicketDraft from '../models/TicketDraft.js';
+import Attachment from '../models/Attachment.js';
 import Deployment from '../models/Deployment.js';
 import TimeLog from '../models/TimeLog.js';
 import Comment from '../models/Comment.js';
@@ -9,11 +15,44 @@ import DevelopmentActivity from '../models/DevelopmentActivity.js';
 import SystemLog from '../models/SystemLog.js';
 import AIActivityLog from '../models/AIActivityLog.js';
 import AuditLog from '../models/AuditLog.js';
+import EmailMessage from '../models/EmailMessage.js';
+import EmailProcessingLog from '../models/EmailProcessingLog.js';
+import { uploadRoot } from '../middleware/upload.js';
+import { emitBroadcast } from '../services/notificationService.js';
 import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess, buildPagination, buildPaginationMeta } from '../utils/response.js';
 import { recordActivity } from '../services/activityService.js';
 import { recordAudit } from '../services/auditService.js';
+
+function getDirBytes(dirPath) {
+  let total = 0;
+  let files = 0;
+  try {
+    for (const entry of fs.readdirSync(dirPath, { withFileTypes: true })) {
+      const full = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        const sub = getDirBytes(full);
+        total += sub.bytes;
+        files += sub.files;
+      } else {
+        total += fs.statSync(full).size;
+        files += 1;
+      }
+    }
+  } catch {
+    // ignore missing dir
+  }
+  return { bytes: total, files };
+}
+
+function normalizeTicketTitleKey(title = '') {
+  return String(title)
+    .toLowerCase()
+    .replace(/\s*\(copy\)\s*$/i, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
 
 export const getMonitoringOverview = asyncHandler(async (req, res) => {
   const since24h = new Date(Date.now() - 24 * 3600 * 1000);
@@ -28,6 +67,13 @@ export const getMonitoringOverview = asyncHandler(async (req, res) => {
     deploymentsCount,
     recentAudit,
     recentSystemErrors,
+    recentActivityLogs,
+    recentEmailLogs,
+    recentDevLogs,
+    recentAiLogs,
+    attAgg,
+    dbStats,
+    countsList,
   ] = await Promise.all([
     User.countDocuments({ isDeleted: false, status: 'Active' }),
     Ticket.countDocuments({ isDeleted: false, approvalStatus: 'PENDING_APPROVAL' }),
@@ -37,9 +83,29 @@ export const getMonitoringOverview = asyncHandler(async (req, res) => {
     AuditLog.countDocuments({}),
     AIActivityLog.countDocuments({ timestamp: { $gte: since24h } }),
     Deployment.countDocuments({ isDeleted: false }),
-    AuditLog.find({}).populate('actorId', 'fullName email role').sort({ timestamp: -1 }).limit(12).lean(),
-    SystemLog.find({}).populate('employeeId', 'fullName email').sort({ timestamp: -1 }).limit(12).lean(),
+    AuditLog.find({}).populate('actorId', 'fullName email role').sort({ timestamp: -1 }).limit(15).lean(),
+    SystemLog.find({}).populate('employeeId', 'fullName email').sort({ timestamp: -1 }).limit(15).lean(),
+    ActivityLog.find({}).populate('actor', 'fullName role').sort({ createdAt: -1 }).limit(15).lean(),
+    EmailProcessingLog.find({}).populate('mailboxId', 'mailboxAddress provider').sort({ timestamp: -1 }).limit(15).lean(),
+    DevelopmentActivity.find({}).populate('employeeId', 'fullName').populate('ticketId', 'ticketId').sort({ timestamp: -1 }).limit(10).lean(),
+    AIActivityLog.find({}).populate('userId', 'fullName').sort({ timestamp: -1 }).limit(10).lean(),
+    Attachment.aggregate([{ $match: { isDeleted: false } }, { $group: { _id: null, bytes: { $sum: '$size' }, count: { $sum: 1 } } }]),
+    mongoose.connection.db.stats().catch(() => ({})),
+    Promise.all([
+      Ticket.countDocuments({ isDeleted: false }),
+      TicketDraft.countDocuments({ isDeleted: false }),
+      Task.countDocuments({ isDeleted: false }),
+      Client.countDocuments({ isDeleted: false }),
+      EmailMessage.countDocuments({}),
+      ActivityLog.countDocuments({}),
+    ]),
   ]);
+
+  const disk = getDirBytes(uploadRoot);
+  const dbDataBytes = Number(dbStats?.dataSize || 0);
+  const dbStorageBytes = Number(dbStats?.storageSize || 0);
+  const dbIndexBytes = Number(dbStats?.indexSize || 0);
+  const totalBytes = dbStorageBytes + dbIndexBytes + disk.bytes;
 
   return sendSuccess(res, {
     kpis: {
@@ -52,9 +118,176 @@ export const getMonitoringOverview = asyncHandler(async (req, res) => {
       aiCalls24h,
       deploymentsCount,
     },
+    spaceConsumed: {
+      dbName: mongoose.connection.name,
+      collections: Number(dbStats?.collections || 0),
+      objects: Number(dbStats?.objects || 0),
+      dbDataBytes,
+      dbStorageBytes,
+      dbIndexBytes,
+      uploadsDiskBytes: disk.bytes,
+      uploadsFileCount: disk.files,
+      attachmentDbBytes: Number(attAgg?.[0]?.bytes || 0),
+      attachmentCount: Number(attAgg?.[0]?.count || 0),
+      totalBytes,
+      breakdown: {
+        tickets: countsList[0],
+        ticketDrafts: countsList[1],
+        tasks: countsList[2],
+        clients: countsList[3],
+        emails: countsList[4],
+        activityLogs: countsList[5],
+      },
+    },
     recentAudit,
     recentSystemErrors,
+    recentActivityLogs,
+    recentEmailLogs,
+    recentDevLogs,
+    recentAiLogs,
   });
+});
+
+export const getGovernanceData = asyncHandler(async (req, res) => {
+  const { search = '' } = req.query;
+  const [users, tickets, deletionLogs] = await Promise.all([
+    User.find({ isDeleted: false })
+      .select('employeeId fullName email role designation status createdAt')
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .lean(),
+    Ticket.find({ isDeleted: false })
+      .populate('client', 'clientId companyName')
+      .populate('createdBy', 'fullName email role')
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean(),
+    AuditLog.find({
+      action: { $in: ['TICKET_DELETED_BY_ADMIN', 'TICKET_ARCHIVED', 'USER_DELETED_BY_ADMIN'] },
+    })
+      .populate('actorId', 'fullName email role')
+      .sort({ timestamp: -1 })
+      .limit(40)
+      .lean(),
+  ]);
+
+  // Group duplicate / identical-title tickets
+  const groupsMap = new Map();
+  for (const t of tickets) {
+    const key = normalizeTicketTitleKey(t.title);
+    if (!key) continue;
+    if (!groupsMap.has(key)) groupsMap.set(key, []);
+    groupsMap.get(key).push(t);
+  }
+
+  const duplicateGroups = Array.from(groupsMap.entries())
+    .filter(([, list]) => list.length > 1)
+    .map(([key, list]) => ({
+      key,
+      title: list[0].title,
+      count: list.length,
+      tickets: list.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
+    }));
+
+  const q = String(search).trim().toLowerCase();
+  const filteredTickets = q
+    ? tickets.filter((t) =>
+        `${t.ticketId} ${t.title} ${t.client?.companyName || ''} ${t.createdBy?.fullName || ''}`.toLowerCase().includes(q)
+      )
+    : tickets;
+  const filteredUsers = q
+    ? users.filter((u) => `${u.employeeId} ${u.fullName} ${u.email} ${u.role}`.toLowerCase().includes(q))
+    : users;
+
+  return sendSuccess(res, {
+    newUsers: filteredUsers,
+    newTickets: filteredTickets,
+    duplicateGroups,
+    deletionLogs,
+    counts: {
+      totalUsers: users.length,
+      totalTickets: tickets.length,
+      duplicateGroups: duplicateGroups.length,
+      duplicateTicketsExtra: duplicateGroups.reduce((acc, g) => acc + (g.count - 1), 0),
+    },
+  });
+});
+
+export const adminDeleteTicket = asyncHandler(async (req, res) => {
+  const reason = String(req.body?.reason || req.query?.reason || 'Removed via Admin Data Governance').trim();
+  const ticket = await Ticket.findOneAndUpdate(
+    { _id: req.params.id, isDeleted: false },
+    { isDeleted: true, deletedAt: new Date() },
+    { new: true }
+  );
+  if (!ticket) throw new AppError('Ticket not found or already deleted.', 404);
+
+  const summary = `Admin ${req.user.fullName} deleted ticket ${ticket.ticketId} (${ticket.title}) — ${reason}`;
+
+  await Promise.all([
+    recordActivity({
+      actor: req.user._id,
+      action: 'TICKET_DELETED_BY_ADMIN',
+      entityType: 'ticket',
+      entityId: ticket._id,
+      entityRef: ticket.ticketId,
+      client: ticket.client,
+      ticket: ticket._id,
+      summary,
+      metadata: { reason },
+    }),
+    recordAudit({
+      actorId: req.user._id,
+      action: 'TICKET_DELETED_BY_ADMIN',
+      recordType: 'Ticket',
+      recordId: ticket._id,
+      recordRef: ticket.ticketId,
+      previousValue: { title: ticket.title, status: ticket.status, approvalStatus: ticket.approvalStatus },
+      newValue: { isDeleted: true, reason, summary },
+      module: 'admin_governance',
+    }),
+  ]);
+
+  emitBroadcast('ticket:changed', { action: 'deleted', ticketId: ticket._id, actorId: req.user._id });
+  return sendSuccess(res, { ticketId: ticket.ticketId, summary }, summary);
+});
+
+export const adminDeleteUser = asyncHandler(async (req, res) => {
+  if (String(req.user._id) === String(req.params.id)) {
+    throw new AppError('You cannot delete your own active administrator account.', 400);
+  }
+  const reason = String(req.body?.reason || req.query?.reason || 'Removed via Admin Data Governance').trim();
+  const user = await User.findOneAndUpdate(
+    { _id: req.params.id, isDeleted: false },
+    { isDeleted: true, deletedAt: new Date(), status: 'Inactive' },
+    { new: true }
+  );
+  if (!user) throw new AppError('User not found or already deleted.', 404);
+
+  const summary = `Admin ${req.user.fullName} deleted user ${user.employeeId || user.email} (${user.fullName}) — ${reason}`;
+  await Promise.all([
+    recordActivity({
+      actor: req.user._id,
+      action: 'USER_DELETED_BY_ADMIN',
+      entityType: 'user',
+      entityId: user._id,
+      entityRef: user.employeeId || user.email,
+      summary,
+      metadata: { reason },
+    }),
+    recordAudit({
+      actorId: req.user._id,
+      action: 'USER_DELETED_BY_ADMIN',
+      recordType: 'User',
+      recordId: user._id,
+      recordRef: user.employeeId || user.email,
+      previousValue: { fullName: user.fullName, email: user.email, role: user.role },
+      newValue: { isDeleted: true, status: 'Inactive', reason, summary },
+      module: 'admin_governance',
+    }),
+  ]);
+
+  return sendSuccess(res, { userId: user._id, summary }, summary);
 });
 
 export const getDevelopmentActivities = asyncHandler(async (req, res) => {

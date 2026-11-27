@@ -3,7 +3,6 @@ import Team from '../models/Team.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess } from '../utils/response.js';
 import { recordActivity } from '../services/activityService.js';
-import { getSupabaseBackupStatus, triggerDualBackupSync } from '../services/backupSyncService.js';
 
 export const getSettings = asyncHandler(async (req, res) => {
   let settings = await Settings.findOne({ key: 'global' }).lean();
@@ -14,17 +13,7 @@ export const getSettings = asyncHandler(async (req, res) => {
     .populate('lead', 'fullName')
     .populate('members', 'fullName designation')
     .lean();
-  const backupStatus = getSupabaseBackupStatus();
-  return sendSuccess(res, { settings, teams, backupStatus }, 'Settings retrieved');
-});
-
-export const getBackupStatus = asyncHandler(async (req, res) => {
-  return sendSuccess(res, getSupabaseBackupStatus(), 'Backup status retrieved');
-});
-
-export const syncDualBackup = asyncHandler(async (req, res) => {
-  const result = await triggerDualBackupSync();
-  return sendSuccess(res, result, result.message);
+  return sendSuccess(res, { settings, teams }, 'Settings retrieved');
 });
 
 export const updateSettings = asyncHandler(async (req, res) => {

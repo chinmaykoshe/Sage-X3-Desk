@@ -133,7 +133,8 @@ export default class GmailProvider extends BaseEmailProvider {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data.error?.message || `Gmail API error (HTTP ${res.status})`;
-      throw new AppError(msg, res.status >= 400 && res.status < 500 ? res.status : 502);
+      const mappedStatus = res.status === 401 || res.status === 403 ? 400 : res.status >= 400 && res.status < 500 ? res.status : 502;
+      throw new AppError(msg, mappedStatus);
     }
     return data;
   }

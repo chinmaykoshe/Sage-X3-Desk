@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import {
   getMonitoringOverview,
+  getGovernanceData,
+  adminDeleteTicket,
+  adminDeleteUser,
   getDevelopmentActivities,
   createDevelopmentActivity,
   getEmployeeUnifiedActivity,
@@ -12,7 +15,8 @@ import {
   getAuditLogs,
   blockAuditMutation,
 } from '../controllers/monitoringController.js';
-import { protect, requireScreenAccess } from '../middleware/auth.js';
+import { protect, authorizeRoles, requireScreenAccess } from '../middleware/auth.js';
+import { ROLES } from '../config/constants.js';
 
 const router = Router();
 router.use(protect);
@@ -23,6 +27,9 @@ router.route('/dev-activities')
   .post(createDevelopmentActivity);
 
 router.get('/overview', requireScreenAccess('admin_overview'), getMonitoringOverview);
+router.get('/governance', authorizeRoles(ROLES.ADMIN), getGovernanceData);
+router.delete('/governance/tickets/:id', authorizeRoles(ROLES.ADMIN), adminDeleteTicket);
+router.delete('/governance/users/:id', authorizeRoles(ROLES.ADMIN), adminDeleteUser);
 router.get('/employee-activity/:employeeId', requireScreenAccess('admin_user_activity'), getEmployeeUnifiedActivity);
 router.get('/system-logs', requireScreenAccess('admin_system_logs'), getSystemLogs);
 router.get('/api-stats', requireScreenAccess('admin_api_monitoring'), getApiMonitoringStats);

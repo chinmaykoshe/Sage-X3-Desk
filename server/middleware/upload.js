@@ -2,13 +2,10 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { assertStorageWithinLimit } from '../services/backupSyncService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const uploadRoot = process.env.VERCEL
-  ? path.join('/tmp', 'uploads')
-  : path.resolve(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
+const uploadRoot = path.resolve(__dirname, '..', process.env.UPLOAD_DIR || 'uploads');
 
 if (!fs.existsSync(uploadRoot)) {
   fs.mkdirSync(uploadRoot, { recursive: true });
@@ -42,19 +39,5 @@ export const upload = multer({
   fileFilter,
   limits: { fileSize: 15 * 1024 * 1024 },
 });
-
-/**
- * Middleware to enforce the 40 MB total Supabase/attachment storage cap
- * before accepting new file uploads.
- */
-export const enforceStorageLimit = async (req, res, next) => {
-  try {
-    const contentLength = Number(req.headers['content-length'] || 0);
-    await assertStorageWithinLimit(contentLength);
-    next();
-  } catch (err) {
-    next(err);
-  }
-};
 
 export { uploadRoot };

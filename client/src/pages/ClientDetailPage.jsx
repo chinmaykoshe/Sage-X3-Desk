@@ -272,79 +272,83 @@ export default function ClientDetailPage() {
 
       {activeTab === 'tickets' && (
         <Card padding={false} className="overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-              <tr>
-                <th className="px-4 py-2.5">Ticket</th>
-                <th className="px-4 py-2.5">Category</th>
-                <th className="px-4 py-2.5">Priority</th>
-                <th className="px-4 py-2.5">Status</th>
-                <th className="px-4 py-2.5">Folder</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {(client.tickets || []).map((t) => (
-                <tr key={t._id}>
-                  <td className="px-4 py-2.5">
-                    <Link to={`/tickets/${t._id}`} className="font-mono text-blue-600 hover:underline mr-2">
-                      {t.ticketId}
-                    </Link>
-                    <Link to={`/tickets/${t._id}`} className="font-medium hover:underline">
-                      {t.title}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2.5">{t.category}</td>
-                  <td className="px-4 py-2.5">
-                    <Badge variant="priority" value={t.priority}>
-                      {t.priority}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <Badge value={t.status}>{t.status}</Badge>
-                  </td>
-                  <td className="px-4 py-2.5 font-mono">{t.folderCode}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-4 py-2.5">Ticket</th>
+                  <th className="px-4 py-2.5">Category</th>
+                  <th className="px-4 py-2.5">Priority</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Folder</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {(client.tickets || []).map((t) => (
+                  <tr key={t._id}>
+                    <td className="px-4 py-2.5">
+                      <Link to={`/tickets/${t._id}`} className="font-mono text-blue-600 hover:underline mr-2">
+                        {t.ticketId}
+                      </Link>
+                      <Link to={`/tickets/${t._id}`} className="font-medium hover:underline">
+                        {t.title}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-2.5">{t.category}</td>
+                    <td className="px-4 py-2.5">
+                      <Badge variant="priority" value={t.priority}>
+                        {t.priority}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge value={t.status}>{t.status}</Badge>
+                    </td>
+                    <td className="px-4 py-2.5 font-mono">{t.folderCode}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
       {activeTab === 'tasks' && (
         <Card padding={false} className="overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-              <tr>
-                <th className="px-4 py-2.5">Task</th>
-                <th className="px-4 py-2.5">Parent Ticket</th>
-                <th className="px-4 py-2.5">Status</th>
-                <th className="px-4 py-2.5">Hours</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {(client.tasks || []).map((t) => (
-                <tr key={t._id}>
-                  <td className="px-4 py-2.5">
-                    <span className="font-mono text-slate-500 mr-2">{t.taskId}</span>
-                    <span className="font-medium">{t.title}</span>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    {t.ticket && (
-                      <Link to={`/tickets/${t.ticket._id}`} className="text-blue-600 hover:underline">
-                        {t.ticket.ticketId}
-                      </Link>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <Badge value={t.status}>{t.status}</Badge>
-                  </td>
-                  <td className="px-4 py-2.5 font-mono">
-                    {t.actualHours || 0}h / {t.estimatedHours || 0}h
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-4 py-2.5">Task</th>
+                  <th className="px-4 py-2.5">Parent Ticket</th>
+                  <th className="px-4 py-2.5">Status</th>
+                  <th className="px-4 py-2.5">Hours</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {(client.tasks || []).map((t) => (
+                  <tr key={t._id}>
+                    <td className="px-4 py-2.5">
+                      <span className="font-mono text-slate-500 mr-2">{t.taskId}</span>
+                      <span className="font-medium">{t.title}</span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {t.ticket && (
+                        <Link to={`/tickets/${t.ticket._id}`} className="text-blue-600 hover:underline">
+                          {t.ticket.ticketId}
+                        </Link>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge value={t.status}>{t.status}</Badge>
+                    </td>
+                    <td className="px-4 py-2.5 font-mono">
+                      {t.actualHours || 0}h / {t.estimatedHours || 0}h
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
@@ -370,24 +374,25 @@ export default function ClientDetailPage() {
 
       {activeTab === 'deployments' && (
         <Card padding={false} className="overflow-hidden">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-              <tr>
-                <th className="px-4 py-2.5">Deployment</th>
-                <th className="px-4 py-2.5">Folder / Env</th>
-                <th className="px-4 py-2.5">Stage</th>
-                <th className="px-4 py-2.5">Approval</th>
-                <th className="px-4 py-2.5">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {(client.deployments || []).map((d) => (
-                <tr key={d._id}>
-                  <td className="px-4 py-2.5">
-                    <span className="font-mono font-semibold">{d.deploymentId}</span> · {d.versionReference}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <span className="font-mono mr-1.5">{d.sageX3Folder}</span>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                <tr>
+                  <th className="px-4 py-2.5">Deployment</th>
+                  <th className="px-4 py-2.5">Folder / Env</th>
+                  <th className="px-4 py-2.5">Stage</th>
+                  <th className="px-4 py-2.5">Approval</th>
+                  <th className="px-4 py-2.5">Date</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {(client.deployments || []).map((d) => (
+                  <tr key={d._id}>
+                    <td className="px-4 py-2.5">
+                      <span className="font-mono font-semibold">{d.deploymentId}</span> · {d.versionReference}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className="font-mono mr-1.5">{d.sageX3Folder}</span>
                     <Badge value={d.environment}>{d.environment}</Badge>
                   </td>
                   <td className="px-4 py-2.5">{d.workflowStage}</td>
@@ -397,8 +402,9 @@ export default function ClientDetailPage() {
                   <td className="px-4 py-2.5">{dayjs(d.deploymentDate).format('DD MMM YYYY')}</td>
                 </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
         </Card>
       )}
 
@@ -461,7 +467,7 @@ export default function ClientDetailPage() {
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block font-medium mb-1">Type</label>
               <select
@@ -492,7 +498,7 @@ export default function ClientDetailPage() {
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800"
             />
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
               <label className="block font-medium mb-1">Database Name</label>
               <input

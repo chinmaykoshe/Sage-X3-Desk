@@ -40,10 +40,10 @@ async function drainQueue() {
 }
 
 /**
- * Periodic reconciliation & subscription renewal (runs only in persistent server mode, never on Vercel).
+ * Periodic reconciliation & subscription renewal.
  */
 export function startEmailBackgroundScheduler() {
-  if (process.env.VERCEL || schedulerHandle) return;
+  if (schedulerHandle) return;
   schedulerHandle = setInterval(async () => {
     try {
       const active = await EmailIntegration.find({ isActive: true, connectionStatus: 'Connected' }).select(

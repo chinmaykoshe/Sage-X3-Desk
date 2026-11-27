@@ -13,8 +13,6 @@ const SENSITIVE_KEYS = new Set([
   'apikey',
   'api_key',
   'mongo_uri',
-  'supabase_secret_key',
-  'supabase_service_role_key',
   'privatekey',
 ]);
 
@@ -23,7 +21,6 @@ export function sanitizeForLog(value, depth = 0) {
   if (typeof value === 'string') {
     return value
       .replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [REDACTED]')
-      .replace(/sb_secret_[A-Za-z0-9_-]+/g, '[REDACTED]')
       .replace(/mongodb(\+srv)?:\/\/[^\s"']+/gi, '[REDACTED_MONGO_URI]');
   }
   if (Array.isArray(value)) {

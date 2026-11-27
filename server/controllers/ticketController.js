@@ -22,8 +22,9 @@ import {
   rejectPendingTicketService,
   requestPendingTicketChangesService,
 } from '../services/ticketService.js';
-import { emitBroadcast } from '../services/notificationService.js';
+import { emitBroadcast, notifyTicketStakeholders } from '../services/notificationService.js';
 import { recordActivity } from '../services/activityService.js';
+import { recordAudit } from '../services/auditService.js';
 
 export const getTickets = asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
@@ -306,6 +307,16 @@ export const updateTicket = asyncHandler(async (req, res) => {
     summary: `Updated ticket ${ticket.ticketId} details`,
   });
 
+  await notifyTicketStakeholders({
+    ticket,
+    actorId: req.user._id,
+    type: 'ticket_updated',
+    title: `Ticket Updated: ${ticket.ticketId}`,
+    message: `${req.user.fullName} updated details for "${ticket.title}".`,
+    link: `/tickets/${ticket._id}`,
+    includeActor: true,
+  });
+
   emitBroadcast('ticket:changed', { action: 'updated', ticketId: ticket._id, actorId: req.user._id });
   return sendSuccess(res, ticket, 'Ticket updated successfully');
 });
@@ -354,16 +365,32 @@ export const deleteTicket = asyncHandler(async (req, res) => {
   );
   if (!ticket) throw new AppError('Ticket not found.', 404);
 
-  await recordActivity({
-    actor: req.user._id,
-    action: 'TICKET_ARCHIVED',
-    entityType: 'ticket',
-    entityId: ticket._id,
-    entityRef: ticket.ticketId,
-    client: ticket.client,
-    ticket: ticket._id,
-    summary: `Soft-deleted ticket ${ticket.ticketId}`,
-  });
+  const actorLabel = req.user.role === ROLES.ADMIN ? `Admin ${req.user.fullName}` : req.user.fullName;
+  const deletionSummary = `${actorLabel} deleted ticket ${ticket.ticketId} (${ticket.title})`;
 
+  await Promise.all([
+    recordActivity({
+      actor: req.user._id,
+      action: req.user.role === ROLES.ADMIN ? 'TICKET_DELETED_BY_ADMIN' : 'TICKET_ARCHIVED',
+      entityType: 'ticket',
+      entityId: ticket._id,
+      entityRef: ticket.ticketId,
+      client: ticket.client,
+      ticket: ticket._id,
+      summary: deletionSummary,
+    }),
+    recordAudit({
+      actorId: req.user._id,
+      action: req.user.role === ROLES.ADMIN ? 'TICKET_DELETED_BY_ADMIN' : 'TICKET_ARCHIVED',
+      recordType: 'Ticket',
+      recordId: ticket._id,
+      recordRef: ticket.ticketId,
+      previousValue: { title: ticket.title, status: ticket.status, approvalStatus: ticket.approvalStatus },
+      newValue: { isDeleted: true, summary: deletionSummary },
+      module: 'tickets',
+    }),
+  ]);
+
+  emitBroadcast('ticket:changed', { action: 'deleted', ticketId: ticket._id, actorId: req.user._id });
   return sendSuccess(res, null, 'Ticket archived successfully');
 });

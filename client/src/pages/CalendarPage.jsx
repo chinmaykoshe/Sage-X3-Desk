@@ -250,28 +250,32 @@ export default function CalendarPage() {
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           {viewType === 'month' && (
             <Card padding={false} className="overflow-hidden">
-              <div className="grid grid-cols-7 border-b border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/70 dark:bg-white/[0.02] text-center text-[11px] font-semibold text-[#777777] py-2">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-                  <div key={d}>{d}</div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 divide-x divide-y divide-[#E8E8E5] dark:divide-[#26282D]">
-                {monthCells.map((day, idx) =>
-                  day ? (
-                    <DroppableDayCell
-                      key={day.format('YYYY-MM-DD')}
-                      dateKey={day.format('YYYY-MM-DD')}
-                      day={day}
-                      isToday={day.isSame(dayjs(), 'day')}
-                      dayEvents={events.filter((e) => e.date === day.format('YYYY-MM-DD'))}
-                      onOpenEvent={openEvent}
-                      onQuickAdd={(date) => openQuickTicket({ dueDate: date })}
-                      compact
-                    />
-                  ) : (
-                    <div key={`empty-${idx}`} className="min-h-[110px] bg-[#F4F4F2]/40 dark:bg-[#121316]" />
-                  )
-                )}
+              <div className="overflow-x-auto">
+                <div className="min-w-[680px]">
+                  <div className="grid grid-cols-7 border-b border-[#E8E8E5] dark:border-[#26282D] bg-[#F4F4F2]/70 dark:bg-white/[0.02] text-center text-[11px] font-semibold text-[#777777] py-2">
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+                      <div key={d}>{d}</div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 divide-x divide-y divide-[#E8E8E5] dark:divide-[#26282D]">
+                    {monthCells.map((day, idx) =>
+                      day ? (
+                        <DroppableDayCell
+                          key={day.format('YYYY-MM-DD')}
+                          dateKey={day.format('YYYY-MM-DD')}
+                          day={day}
+                          isToday={day.isSame(dayjs(), 'day')}
+                          dayEvents={events.filter((e) => e.date === day.format('YYYY-MM-DD'))}
+                          onOpenEvent={openEvent}
+                          onQuickAdd={(date) => openQuickTicket({ dueDate: date })}
+                          compact
+                        />
+                      ) : (
+                        <div key={`empty-${idx}`} className="min-h-[110px] bg-[#F4F4F2]/40 dark:bg-[#121316]" />
+                      )
+                    )}
+                  </div>
+                </div>
               </div>
             </Card>
           )}

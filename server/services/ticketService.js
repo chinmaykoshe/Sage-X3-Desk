@@ -7,7 +7,7 @@ import { getNextSequence } from '../models/Counter.js';
 import { ROLES, SLA_HOURS_BY_PRIORITY } from '../config/constants.js';
 import AppError from '../utils/AppError.js';
 import { recordActivity } from './activityService.js';
-import { notifyUsers, emitBroadcast } from './notificationService.js';
+import { notifyTicketStakeholders, emitBroadcast } from './notificationService.js';
 import { recordAudit } from './auditService.js';
 
 export async function createTicketService(payload, actor) {
@@ -105,22 +105,25 @@ export async function createTicketService(payload, actor) {
   });
 
   if (isAutoApprover) {
+    await notifyTicketStakeholders({
+      ticket,
+      actorId: actor._id,
+      type: 'ticket_updated',
+      title: `Ticket Created: ${ticket.ticketId}`,
+      message: `${actor.fullName} created "${ticket.title}" (auto-approved).`,
+      link: `/tickets/${ticket._id}`,
+      includeActor: true,
+    });
     emitBroadcast('ticket:changed', { action: 'created', ticketId: ticket._id });
   } else {
-    const leads = await User.find({
-      role: { $in: [ROLES.ADMIN, ROLES.TEAM_LEAD] },
-      isDeleted: false,
-      status: 'Active',
-    }).select('_id');
-    await notifyUsers({
-      recipientIds: leads.map((l) => l._id),
+    await notifyTicketStakeholders({
+      ticket,
       actorId: actor._id,
       type: 'ticket_updated',
       title: `Pending TL Approval: ${ticket.ticketId}`,
       message: `${actor.fullName} submitted "${ticket.title}" for approval.`,
-      link: `/approvals?ticket=${ticket._id}`,
-      entityType: 'ticket',
-      entityId: ticket._id,
+      link: `/tickets/${ticket._id}`,
+      includeActor: true,
     });
     emitBroadcast('ticket:changed', { action: 'pending_approval', ticketId: ticket._id });
   }
@@ -200,20 +203,15 @@ export async function changeTicketStatusService(ticketIdOrObjId, { status, note,
     metadata: { fromStatus: prevStatus, toStatus: status, note },
   });
 
-  const recipients = [
-    ...(ticket.assignedDevelopers || []),
-    ...(ticket.assignedTeamLead ? [ticket.assignedTeamLead] : []),
-    ticket.createdBy,
-  ];
-  await notifyUsers({
-    recipientIds: recipients,
+  const isCompleted = status === 'Resolved' || status === 'Closed';
+  await notifyTicketStakeholders({
+    ticket,
     actorId: actor._id,
     type: 'ticket_updated',
-    title: `${ticket.ticketId} moved to ${status}`,
-    message: `${actor.fullName} updated "${ticket.title}" from ${prevStatus} to ${status}.`,
+    title: isCompleted ? `Ticket Completed (${status}): ${ticket.ticketId}` : `Ticket Updated: ${ticket.ticketId} → ${status}`,
+    message: `${actor.fullName} changed "${ticket.title}" from ${prevStatus} to ${status}.`,
     link: `/tickets/${ticket._id}`,
-    entityType: 'ticket',
-    entityId: ticket._id,
+    includeActor: true,
   });
 
   emitBroadcast('ticket:changed', { action: 'status', ticketId: ticket._id });
@@ -295,20 +293,14 @@ export async function assignTicketService(id, { assignedDevelopers, assignedTeam
     module: 'tickets',
   });
 
-  const recipients = [
-    ...(ticket.assignedDevelopers || []),
-    ...(ticket.assignedTeamLead ? [ticket.assignedTeamLead] : []),
-  ];
-  await notifyUsers({
-    recipientIds: recipients,
+  await notifyTicketStakeholders({
+    ticket,
     actorId: actor._id,
     type: 'ticket_assigned',
-    title: `Assigned to ${ticket.ticketId}`,
-    message: `${actor.fullName} assigned you to "${ticket.title}".`,
+    title: `Assignment Updated: ${ticket.ticketId}`,
+    message: `${actor.fullName} updated assignment on "${ticket.title}".`,
     link: `/tickets/${ticket._id}`,
-    entityType: 'ticket',
-    entityId: ticket._id,
-    sendEmail: true,
+    includeActor: false,
   });
 
   emitBroadcast('ticket:changed', { action: 'assigned', ticketId: ticket._id });
@@ -501,15 +493,14 @@ export async function approvePendingTicketService(id, { edits = {}, comments = '
     module: 'tickets',
   });
 
-  await notifyUsers({
-    recipientIds: [updated.createdBy],
+  await notifyTicketStakeholders({
+    ticket: updated,
     actorId: actor._id,
     type: 'ticket_updated',
     title: `Ticket Approved: ${updated.ticketId}`,
-    message: `${actor.fullName} approved your ticket "${updated.title}" into the main queue.`,
+    message: `${actor.fullName} approved "${updated.title}" into the main queue.`,
     link: `/tickets/${updated._id}`,
-    entityType: 'ticket',
-    entityId: updated._id,
+    includeActor: false,
   });
 
   emitBroadcast('ticket:changed', { action: 'approved', ticketId: updated._id });
@@ -546,6 +537,16 @@ export async function rejectPendingTicketService(id, { reason = '' }, actor) {
     module: 'tickets',
   });
 
+  await notifyTicketStakeholders({
+    ticket: updated,
+    actorId: actor._id,
+    type: 'ticket_updated',
+    title: `Ticket Rejected: ${updated.ticketId}`,
+    message: `${actor.fullName} rejected "${updated.title}"${reason ? `: ${reason}` : '.'}`,
+    link: `/approvals/tickets`,
+    includeActor: false,
+  });
+
   emitBroadcast('ticket:changed', { action: 'rejected', ticketId: updated._id });
   return updated;
 }
@@ -578,6 +579,16 @@ export async function requestPendingTicketChangesService(id, { comments = '' }, 
     recordRef: updated.ticketId,
     newValue: { approvalStatus: 'CHANGES_REQUESTED', comments },
     module: 'tickets',
+  });
+
+  await notifyTicketStakeholders({
+    ticket: updated,
+    actorId: actor._id,
+    type: 'ticket_updated',
+    title: `Changes Requested: ${updated.ticketId}`,
+    message: `${actor.fullName} requested changes on "${updated.title}": ${comments || 'Please review.'}`,
+    link: `/approvals/tickets`,
+    includeActor: false,
   });
 
   emitBroadcast('ticket:changed', { action: 'changes_requested', ticketId: updated._id });

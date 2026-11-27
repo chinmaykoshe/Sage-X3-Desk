@@ -215,13 +215,13 @@ export default function WorkloadPage() {
         onDragStart={({ active }) => setActiveTask(tasks.find((t) => t._id === active.id) || null)}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
-          {/* Unassigned Queue */}
-          <Card className="xl:col-span-1 h-fit">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start">
+          {/* Unassigned Queue — Independent Vertical Scroll */}
+          <Card className="xl:col-span-1 flex flex-col xl:h-[calc(100vh-12.5rem)]">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3 shrink-0">
               Unassigned Queue ({unassignedTasks.length})
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-2 flex-1 overflow-y-auto pr-1">
               {unassignedTasks.length === 0 ? (
                 <p className="text-xs text-[#777777] py-4 text-center">All active tasks are assigned.</p>
               ) : (
@@ -232,8 +232,8 @@ export default function WorkloadPage() {
             </div>
           </Card>
 
-          {/* Employee Capacity Rows */}
-          <div className="xl:col-span-3 space-y-3.5">
+          {/* Employee Capacity Rows — Independent Vertical Scroll */}
+          <div className="xl:col-span-3 space-y-3.5 xl:h-[calc(100vh-12.5rem)] xl:overflow-y-auto pr-1">
             {employees.map((emp) => (
               <EmployeeDropZone
                 key={emp._id}

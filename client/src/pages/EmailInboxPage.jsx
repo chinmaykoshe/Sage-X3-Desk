@@ -421,13 +421,13 @@ export default function EmailInboxPage() {
             <div className="flex justify-end gap-2 border-t border-[#E8E8E5] dark:border-[#26282D] pt-3">
               {selected.relatedTicketId && (
                 <Link to={`/tickets/${selected.relatedTicketId._id || selected.relatedTicketId}`}>
-                  <Button size="sm" variant="primary">Open Ticket <ExternalLink className="h-3.5 w-3.5 ml-1" /></Button>
+                  <Button type="button" size="sm" variant="primary">Open Ticket <ExternalLink className="h-3.5 w-3.5 ml-1" /></Button>
                 </Link>
               )}
-              <Button size="sm" variant="secondary" disabled={acting} onClick={() => handleAction(selected._id, 'retry', 'Email reprocessed')}>
+              <Button type="button" size="sm" variant="secondary" disabled={acting} onClick={() => handleAction(selected._id, 'retry', 'Email reprocessed')}>
                 <RefreshCw className="h-3.5 w-3.5 mr-1" /> Retry
               </Button>
-              <Button size="sm" variant="danger" disabled={acting} onClick={() => handleAction(selected._id, 'ignore', 'Email ignored')}>
+              <Button type="button" size="sm" variant="danger" disabled={acting} onClick={() => handleAction(selected._id, 'ignore', 'Email ignored')}>
                 <Ban className="h-3.5 w-3.5 mr-1" /> Ignore
               </Button>
             </div>

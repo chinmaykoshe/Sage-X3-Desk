@@ -27,6 +27,16 @@ export const DEFAULT_SCREENS = [
     availableActions: ['view', 'create', 'edit', 'change_status', 'track_time', 'add_dev_note'],
   },
   {
+    screenKey: 'timesheet',
+    label: 'Timesheet',
+    route: '/timesheet',
+    navigationGroup: 'WORKSPACE',
+    description: 'Individual daily/monthly timesheet entry across clients and projects',
+    sortOrder: 25,
+    defaultRoleAccess: { admin: true, team_lead: true, developer: true },
+    availableActions: ['view', 'create', 'edit', 'delete', 'export'],
+  },
+  {
     screenKey: 'inbox',
     label: 'Inbox',
     route: '/notifications',
@@ -276,6 +286,16 @@ export const DEFAULT_SCREENS = [
     sortOrder: 250,
     defaultRoleAccess: { admin: true, team_lead: false, developer: false },
     availableActions: ['view'],
+  },
+  {
+    screenKey: 'admin_governance',
+    label: 'Data & Duplicate Control',
+    route: '/admin/governance',
+    navigationGroup: 'ADMINISTRATION',
+    description: 'Manage new users, newly created tickets, duplicate tickets, and deletion audit logs',
+    sortOrder: 260,
+    defaultRoleAccess: { admin: true, team_lead: false, developer: false },
+    availableActions: ['view', 'delete'],
   },
 
   // SYSTEM

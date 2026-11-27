@@ -4,9 +4,8 @@ import { fileURLToPath } from 'url';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
-import connectDB, { isMongoConnected, markMongoUnavailable, shouldSkipMongoRetry } from './config/db.js';
-import app from './app.js';
-import { getSupabaseBackupStatus, syncMongoToSupabase } from './services/backupSyncService.js';
+import connectDB from './config/db.js';
+import app, { corsOptions } from './app.js';
 import { startEmailBackgroundScheduler } from './services/email/emailScheduler.js';
 import {
   setSocketIO,
@@ -25,10 +24,7 @@ async function startServer() {
 
   const server = http.createServer(app);
   const io = new SocketIOServer(server, {
-    cors: {
-      origin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : ['http://localhost:5173', 'http://127.0.0.1:5173'],
-      credentials: true,
-    },
+    cors: corsOptions,
   });
 
   io.use((socket, next) => {
@@ -61,51 +57,10 @@ async function startServer() {
   server.listen(PORT, () => {
     console.log(`Sage X3 Desk server listening on http://localhost:${PORT}`);
     startEmailBackgroundScheduler();
-    syncMongoToSupabase()
-      .then((res) => {
-        if (res) console.log(`Synced local MongoDB -> Supabase (${res.supabaseUrl})`);
-      })
-      .catch((err) => console.warn('Initial Supabase sync warning:', err.message));
   });
 }
 
-let dbReadyPromise = null;
-function ensureDbConnected() {
-  if (isMongoConnected()) return Promise.resolve();
-  if (shouldSkipMongoRetry()) {
-    return Promise.reject(new Error('MongoDB unreachable (cached cooldown)'));
-  }
-  if (!dbReadyPromise) {
-    dbReadyPromise = connectDB().catch((err) => {
-      dbReadyPromise = null;
-      markMongoUnavailable(60000);
-      throw err;
-    });
-  }
-  return dbReadyPromise;
-}
-
-if (!process.env.VERCEL) {
-  startServer().catch((err) => {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  });
-}
-
-export default async function handler(req, res) {
-  try {
-    await ensureDbConnected();
-    return app(req, res);
-  } catch (err) {
-    const supa = getSupabaseBackupStatus();
-    if (supa.supabaseConfigured) {
-      console.warn('MongoDB unavailable on Vercel, falling back to Supabase-only mode:', err.message);
-      return app(req, res);
-    }
-    console.error('Serverless invocation error:', err);
-    return res.status(503).json({
-      success: false,
-      message: `Database/server initialization failed: ${err.message}`,
-    });
-  }
-}
+startServer().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
+});

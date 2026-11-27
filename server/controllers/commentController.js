@@ -5,7 +5,7 @@ import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess } from '../utils/response.js';
 import { recordActivity } from '../services/activityService.js';
-import { notifyUsers, emitBroadcast } from '../services/notificationService.js';
+import { notifyTicketStakeholders, notifyUsers, emitBroadcast } from '../services/notificationService.js';
 import { ROLES } from '../config/constants.js';
 
 export const getComments = asyncHandler(async (req, res) => {
@@ -38,12 +38,14 @@ export const createComment = asyncHandler(async (req, res) => {
 
   let client = null;
   let ticket = null;
+  let ticketObj = null;
   let entityRef = '';
   let notifyIds = [...mentions];
 
   if (entityType === 'ticket') {
-    const t = await Ticket.findById(entityId).select('ticketId client assignedDevelopers assignedTeamLead createdBy');
+    const t = await Ticket.findById(entityId).select('ticketId title client assignedDevelopers assignedTeamLead createdBy');
     if (t) {
+      ticketObj = t;
       client = t.client;
       ticket = t._id;
       entityRef = t.ticketId;
@@ -70,16 +72,28 @@ export const createComment = asyncHandler(async (req, res) => {
     summary: `Added ${isInternal ? 'internal note' : 'client-visible comment'} on ${entityRef || entityType}`,
   });
 
-  await notifyUsers({
-    recipientIds: notifyIds,
-    actorId: req.user._id,
-    type: mentions.length > 0 ? 'mention' : 'comment_added',
-    title: `New comment on ${entityRef || entityType}`,
-    message: `${req.user.fullName}: "${body.slice(0, 100)}${body.length > 100 ? '...' : ''}"`,
-    link: entityType === 'ticket' ? `/tickets/${entityId}` : entityType === 'task' ? `/tasks` : '/',
-    entityType,
-    entityId,
-  });
+  if (ticketObj) {
+    await notifyTicketStakeholders({
+      ticket: ticketObj,
+      actorId: req.user._id,
+      type: mentions.length > 0 ? 'mention' : 'comment_added',
+      title: `Comment on ${ticketObj.ticketId}`,
+      message: `${req.user.fullName} commented on "${ticketObj.title}": "${body.slice(0, 100)}${body.length > 100 ? '...' : ''}"`,
+      link: `/tickets/${ticketObj._id}`,
+      includeActor: false,
+    });
+  } else {
+    await notifyUsers({
+      recipientIds: notifyIds,
+      actorId: req.user._id,
+      type: mentions.length > 0 ? 'mention' : 'comment_added',
+      title: `New comment on ${entityRef || entityType}`,
+      message: `${req.user.fullName}: "${body.slice(0, 100)}${body.length > 100 ? '...' : ''}"`,
+      link: entityType === 'task' ? '/my-tasks' : '/',
+      entityType,
+      entityId,
+    });
+  }
 
   const populated = await Comment.findById(comment._id)
     .populate('author', 'fullName designation role avatarColor')

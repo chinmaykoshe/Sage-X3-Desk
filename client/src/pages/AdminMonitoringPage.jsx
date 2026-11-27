@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Activity,
   AlertTriangle,
   BrainCircuit,
   Clock,
+  Database,
+  DatabaseZap,
   Download,
+  HardDrive,
   History,
   Rocket,
   Server,
   ShieldAlert,
-  Terminal,
+  Trash2,
   Wrench,
 } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -23,36 +26,36 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Loader from '../components/ui/Loader';
 
-const ROUTE_TO_TAB = {
-  '/admin/overview': 'overview',
-  '/admin/user-activity': 'user-activity',
-  '/admin/dev-logs': 'dev-logs',
-  '/admin/system-logs': 'system-logs',
-  '/admin/api-monitoring': 'api-monitoring',
-  '/admin/deployments': 'deployments',
-  '/admin/time-tracking': 'time-tracking',
-  '/admin/ai-activity': 'ai-activity',
-  '/admin/audit-logs': 'audit-logs',
-};
-
 const TABS = [
-  { id: 'overview', label: 'System Overview', icon: Activity },
-  { id: 'user-activity', label: 'User Activity', icon: History },
-  { id: 'dev-logs', label: 'Development Logs', icon: Wrench },
-  { id: 'system-logs', label: 'System Logs', icon: AlertTriangle },
-  { id: 'api-monitoring', label: 'API Monitoring', icon: Server },
-  { id: 'deployments', label: 'Deployment History', icon: Rocket },
-  { id: 'time-tracking', label: 'Time Tracking', icon: Clock },
-  { id: 'ai-activity', label: 'AI Activity', icon: BrainCircuit },
-  { id: 'audit-logs', label: 'Security & Audit', icon: ShieldAlert },
+  { id: 'overview', route: '/admin/overview', label: 'System Overview & Space', icon: Activity },
+  { id: 'governance', route: '/admin/governance', label: 'Data & Duplicate Control', icon: DatabaseZap },
+  { id: 'user-activity', route: '/admin/user-activity', label: 'User Activity', icon: History },
+  { id: 'dev-logs', route: '/admin/dev-logs', label: 'Development Logs', icon: Wrench },
+  { id: 'system-logs', route: '/admin/system-logs', label: 'System Logs', icon: AlertTriangle },
+  { id: 'api-monitoring', route: '/admin/api-monitoring', label: 'API Monitoring', icon: Server },
+  { id: 'deployments', route: '/admin/deployments', label: 'Deployment History', icon: Rocket },
+  { id: 'time-tracking', route: '/admin/time-tracking', label: 'Time Tracking', icon: Clock },
+  { id: 'ai-activity', route: '/admin/ai-activity', label: 'AI Activity', icon: BrainCircuit },
+  { id: 'audit-logs', route: '/admin/audit-logs', label: 'Security & Audit', icon: ShieldAlert },
 ];
 
+const ROUTE_TO_TAB = Object.fromEntries(TABS.map((t) => [t.route, t.id]));
+
+function formatBytes(bytes = 0) {
+  const n = Number(bytes || 0);
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(n / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
 export default function AdminMonitoringPage() {
-  const { users, clients } = useWorkspace();
+  const { users } = useWorkspace();
   const { addToast } = useToast();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const [tab, setTab] = useState(ROUTE_TO_TAB[location.pathname] || 'overview');
+  const tab = ROUTE_TO_TAB[location.pathname] || 'overview';
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
@@ -60,6 +63,9 @@ export default function AdminMonitoringPage() {
   const [empTimelineCategory, setEmpTimelineCategory] = useState('all');
 
   const [overview, setOverview] = useState(null);
+  const [governance, setGovernance] = useState(null);
+  const [governanceSubTab, setGovernanceSubTab] = useState('duplicates');
+  const [deleteReason, setDeleteReason] = useState('Duplicate / test cleanup by Admin');
   const [employeeReport, setEmployeeReport] = useState(null);
   const [devLogs, setDevLogs] = useState([]);
   const [systemLogs, setSystemLogs] = useState([]);
@@ -68,11 +74,6 @@ export default function AdminMonitoringPage() {
   const [timeLogs, setTimeLogs] = useState([]);
   const [aiLogs, setAiLogs] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
-
-  useEffect(() => {
-    const mapped = ROUTE_TO_TAB[location.pathname];
-    if (mapped) setTab(mapped);
-  }, [location.pathname]);
 
   useEffect(() => {
     if (!selectedEmployeeId && users.length > 0) {
@@ -86,6 +87,9 @@ export default function AdminMonitoringPage() {
       if (tab === 'overview') {
         const { data } = await api.get('/monitoring/overview');
         setOverview(data.data);
+      } else if (tab === 'governance') {
+        const { data } = await api.get('/monitoring/governance', { params: { search: search || undefined } });
+        setGovernance(data.data);
       } else if (tab === 'user-activity' && selectedEmployeeId) {
         const { data } = await api.get(`/monitoring/employee-activity/${selectedEmployeeId}`, {
           params: { category: empTimelineCategory, search: search || undefined },
@@ -132,6 +136,30 @@ export default function AdminMonitoringPage() {
     loadTabData();
   }, [loadTabData]);
 
+  const handleAdminDeleteTicket = async (ticket) => {
+    try {
+      const { data } = await api.delete(`/monitoring/governance/tickets/${ticket._id}`, {
+        data: { reason: deleteReason },
+      });
+      addToast(data.message || `Admin deleted ${ticket.ticketId}`, 'success');
+      loadTabData();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to delete ticket'), 'error');
+    }
+  };
+
+  const handleAdminDeleteUser = async (u) => {
+    try {
+      const { data } = await api.delete(`/monitoring/governance/users/${u._id}`, {
+        data: { reason: deleteReason },
+      });
+      addToast(data.message || `Admin deleted user ${u.fullName}`, 'success');
+      loadTabData();
+    } catch (err) {
+      addToast(getApiError(err, 'Failed to delete user'), 'error');
+    }
+  };
+
   const exportTimelineCsv = () => {
     if (!employeeReport?.timeline?.length) return;
     const rows = [
@@ -153,32 +181,30 @@ export default function AdminMonitoringPage() {
     URL.revokeObjectURL(url);
   };
 
+  const activeTool = TABS.find((t) => t.id === tab) || TABS[0];
+
   return (
     <div className="space-y-4">
       <PageHeader
         title="Administration Monitoring & Audit"
-        subtitle="Centralized operational visibility, development history, AI execution logs, and immutable security audit trail"
-      />
-
-      <div className="flex flex-wrap gap-1.5">
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                tab === t.id
-                  ? 'border-[#171717] bg-[#C6F36B] text-[#171717] font-semibold'
-                  : 'border-[#E8E8E5] bg-white text-[#555555] dark:border-[#2C2E33] dark:bg-[#17181B] dark:text-slate-300'
-              }`}
+        subtitle="Centralized operational visibility, storage metrics, duplicate governance, and complete logs across every module"
+        actions={
+          <div className="flex items-center gap-2">
+            <label className="text-[11px] font-semibold uppercase tracking-wider text-[#777777]">Admin Tool:</label>
+            <select
+              value={activeTool.route}
+              onChange={(e) => navigate(e.target.value)}
+              className="rounded-lg border border-[#171717]/20 bg-white px-3 py-1.5 text-xs font-semibold text-[#171717] shadow-sm dark:border-[#2C2E33] dark:bg-[#1E2025] dark:text-white"
             >
-              <Icon className="h-3.5 w-3.5" />
-              {t.label}
-            </button>
-          );
-        })}
-      </div>
+              {TABS.map((t) => (
+                <option key={t.id} value={t.route}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        }
+      />
 
       {loading ? (
         <Loader label="Loading monitoring view..." />
@@ -201,24 +227,67 @@ export default function AdminMonitoringPage() {
               </Card>
             ))}
           </div>
+
+          {overview.spaceConsumed && (
+            <Card>
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] flex items-center gap-1.5">
+                  <HardDrive className="h-3.5 w-3.5 text-[#35B8A6]" /> Space Consumed &amp; Storage Footprint ({overview.spaceConsumed.dbName})
+                </h3>
+                <span className="rounded-full bg-[#C6F36B] px-2.5 py-0.5 text-[11px] font-bold text-[#171717]">
+                  Total Footprint: {formatBytes(overview.spaceConsumed.totalBytes)}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-xs">
+                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
+                  <div className="text-[11px] text-[#777777] flex items-center gap-1"><Database className="h-3 w-3" /> Mongo Data</div>
+                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.dbDataBytes)}</div>
+                  <div className="text-[10px] text-[#777777]">{overview.spaceConsumed.objects} objects · {overview.spaceConsumed.collections} collections</div>
+                </div>
+                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
+                  <div className="text-[11px] text-[#777777]">DB Storage + Indexes</div>
+                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.dbStorageBytes + overview.spaceConsumed.dbIndexBytes)}</div>
+                  <div className="text-[10px] text-[#777777]">Index: {formatBytes(overview.spaceConsumed.dbIndexBytes)}</div>
+                </div>
+                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
+                  <div className="text-[11px] text-[#777777]">Local Uploads Disk</div>
+                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.uploadsDiskBytes)}</div>
+                  <div className="text-[10px] text-[#777777]">{overview.spaceConsumed.uploadsFileCount} files on disk</div>
+                </div>
+                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
+                  <div className="text-[11px] text-[#777777]">Ticket Attachments</div>
+                  <div className="mt-1 font-bold">{formatBytes(overview.spaceConsumed.attachmentDbBytes)}</div>
+                  <div className="text-[10px] text-[#777777]">{overview.spaceConsumed.attachmentCount} active records</div>
+                </div>
+                <div className="rounded-lg border border-[#E8E8E5] dark:border-[#26282D] p-2.5">
+                  <div className="text-[11px] text-[#777777]">Records Breakdown</div>
+                  <div className="mt-1 text-[11px] font-medium space-y-0.5">
+                    <div>{overview.spaceConsumed.breakdown.tickets} tickets · {overview.spaceConsumed.breakdown.ticketDrafts} drafts</div>
+                    <div>{overview.spaceConsumed.breakdown.tasks} tasks · {overview.spaceConsumed.breakdown.emails} emails</div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Card>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Latest Security & Audit Events</h3>
-              <div className="space-y-2 text-xs">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Latest Security &amp; Audit Events</h3>
+              <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
                 {(overview.recentAudit || []).map((a) => (
                   <div key={a._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5">
                     <div>
                       <span className="font-semibold">{a.action}</span> · <span className="text-[#777777]">{a.recordRef || a.recordType}</span>
-                      <div className="text-[10px] text-[#777777]">{a.actorId?.fullName || 'System'} · {a.module}</div>
+                      <div className="text-[10px] text-[#777777]">{a.actorId?.fullName || 'System'} · {a.module} · {dayjs(a.timestamp).format('DD MMM HH:mm')}</div>
                     </div>
-                    <Badge variant={a.result === 'DENIED' ? 'danger' : 'success'}>{a.result}</Badge>
+                    <Badge variant={a.result === 'DENIED' || a.result === 'FAILED' ? 'danger' : 'success'}>{a.result}</Badge>
                   </div>
                 ))}
               </div>
             </Card>
             <Card>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent System & API Logs</h3>
-              <div className="space-y-2 text-xs">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent System &amp; API Logs</h3>
+              <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
                 {(overview.recentSystemErrors || []).length === 0 ? (
                   <p className="text-[#777777]">No recent errors recorded.</p>
                 ) : (
@@ -234,7 +303,218 @@ export default function AdminMonitoringPage() {
                 )}
               </div>
             </Card>
+            <Card>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent Operational Activity Logs</h3>
+              <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
+                {(overview.recentActivityLogs || []).map((l) => (
+                  <div key={l._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5 gap-2">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate">{l.summary || l.action}</div>
+                      <div className="text-[10px] text-[#777777]">{l.actor?.fullName || 'System'} · {l.action}</div>
+                    </div>
+                    <span className="text-[10px] text-[#777777] shrink-0">{dayjs(l.createdAt).format('DD MMM HH:mm')}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+            <Card>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">Recent Email &amp; AI Processing Logs</h3>
+              <div className="space-y-2 text-xs max-h-72 overflow-y-auto pr-1">
+                {(overview.recentEmailLogs || []).map((l) => (
+                  <div key={l._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5 gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">
+                        <span className="font-mono text-[#638BEF] mr-1.5">{l.processingStage}</span>
+                        {l.message || l.error}
+                      </div>
+                      <div className="text-[10px] text-[#777777]">{l.mailboxId?.mailboxAddress || 'Mailbox'} · {dayjs(l.timestamp).format('DD MMM HH:mm')}</div>
+                    </div>
+                    <Badge variant={l.result === 'failed' ? 'danger' : 'success'}>{l.result}</Badge>
+                  </div>
+                ))}
+                {(overview.recentAiLogs || []).map((a) => (
+                  <div key={a._id} className="flex items-center justify-between border-b border-[#E8E8E5] dark:border-[#26282D] pb-1.5 gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">AI {a.detectedIntent} → {a.executedAction}</div>
+                      <div className="text-[10px] text-[#777777]">{a.userId?.fullName || 'User'} · {a.modelName}</div>
+                    </div>
+                    <Badge variant={a.executionResult === 'failed' ? 'danger' : 'info'}>{a.executionResult}</Badge>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
+        </div>
+      ) : tab === 'governance' && governance ? (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <Card className="p-3.5">
+              <div className="text-[11px] text-[#777777]">Active Users</div>
+              <div className="mt-1 text-2xl font-bold">{governance.counts.totalUsers}</div>
+            </Card>
+            <Card className="p-3.5">
+              <div className="text-[11px] text-[#777777]">Active Tickets</div>
+              <div className="mt-1 text-2xl font-bold text-[#638BEF]">{governance.counts.totalTickets}</div>
+            </Card>
+            <Card className="p-3.5">
+              <div className="text-[11px] text-[#777777]">Duplicate Title Groups</div>
+              <div className="mt-1 text-2xl font-bold text-[#F16D64]">{governance.counts.duplicateGroups}</div>
+            </Card>
+            <Card className="p-3.5">
+              <div className="text-[11px] text-[#777777]">Extra Duplicate Tickets</div>
+              <div className="mt-1 text-2xl font-bold text-[#F16D64]">{governance.counts.duplicateTicketsExtra}</div>
+            </Card>
+          </div>
+
+          <Card className="p-3">
+            <div className="flex flex-wrap items-center gap-2.5 text-xs">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search tickets, users, or clients..."
+                className="flex-1 min-w-[200px] rounded-lg border border-[#E8E8E5] px-3 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+              />
+              <input
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                placeholder="Deletion audit reason..."
+                className="flex-1 min-w-[200px] rounded-lg border border-[#E8E8E5] px-3 py-1.5 dark:border-[#2C2E33] dark:bg-[#1E2025]"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  ['duplicates', `Duplicate Tickets (${governance.duplicateGroups.length})`],
+                  ['tickets', `All / New Tickets (${governance.newTickets.length})`],
+                  ['users', `Users (${governance.newUsers.length})`],
+                  ['logs', `Deletion Logs (${governance.deletionLogs.length})`],
+                ].map(([k, lbl]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setGovernanceSubTab(k)}
+                    className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold ${
+                      governanceSubTab === k
+                        ? 'border-[#171717] bg-[#C6F36B] text-[#171717]'
+                        : 'border-[#E8E8E5] bg-white text-[#555555] dark:border-[#2C2E33] dark:bg-[#17181B] dark:text-slate-300'
+                    }`}
+                  >
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {governanceSubTab === 'duplicates' ? (
+            <div className="space-y-3">
+              {governance.duplicateGroups.length === 0 ? (
+                <Card className="py-10 text-center text-xs text-[#777777]">No duplicate ticket titles detected.</Card>
+              ) : (
+                governance.duplicateGroups.map((g) => (
+                  <Card key={g.key} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-semibold">
+                        Duplicate Group: &quot;{g.title}&quot; <Badge variant="danger">{g.count} copies</Badge>
+                      </div>
+                    </div>
+                    <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs">
+                      {g.tickets.map((t, idx) => (
+                        <div key={t._id} className="py-2 flex flex-wrap items-center justify-between gap-2">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <Link to={`/tickets/${t._id}`} className="font-mono font-bold text-[#638BEF] hover:underline">
+                                {t.ticketId}
+                              </Link>
+                              {idx === 0 && <Badge variant="success">Oldest / Primary</Badge>}
+                              <Badge>{t.approvalStatus || t.status}</Badge>
+                              <span className="font-medium">{t.title}</span>
+                            </div>
+                            <div className="text-[11px] text-[#777777]">
+                              Client: {t.client?.companyName || 'None'} · Created by {t.createdBy?.fullName || 'System'} · {dayjs(t.createdAt).format('DD MMM YYYY HH:mm')}
+                            </div>
+                          </div>
+                          <Button type="button" size="xs" variant="danger" onClick={() => handleAdminDeleteTicket(t)}>
+                            <Trash2 className="h-3 w-3 mr-1" /> Delete Ticket
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                ))
+              )}
+            </div>
+          ) : governanceSubTab === 'tickets' ? (
+            <Card>
+              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs max-h-[65vh] overflow-y-auto pr-1">
+                {governance.newTickets.map((t) => (
+                  <div key={t._id} className="py-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link to={`/tickets/${t._id}`} className="font-mono font-bold text-[#638BEF] hover:underline">
+                          {t.ticketId}
+                        </Link>
+                        <Badge>{t.approvalStatus}</Badge>
+                        <Badge value={t.status}>{t.status}</Badge>
+                        <span className="font-medium truncate">{t.title}</span>
+                      </div>
+                      <div className="text-[11px] text-[#777777]">
+                        Client: {t.client?.companyName || 'None'} · By {t.createdBy?.fullName || 'System'} · {dayjs(t.createdAt).format('DD MMM YYYY HH:mm')}
+                      </div>
+                    </div>
+                    <Button type="button" size="xs" variant="danger" onClick={() => handleAdminDeleteTicket(t)}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete Ticket
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : governanceSubTab === 'users' ? (
+            <Card>
+              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs max-h-[65vh] overflow-y-auto pr-1">
+                {governance.newUsers.map((u) => (
+                  <div key={u._id} className="py-2.5 flex flex-wrap items-center justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-[#638BEF]">{u.employeeId}</span>
+                        <Link to={`/team/${u._id}`} className="font-semibold hover:underline">{u.fullName}</Link>
+                        <Badge>{u.role}</Badge>
+                      </div>
+                      <div className="text-[11px] text-[#777777]">
+                        {u.email} · {u.designation} · Created {dayjs(u.createdAt).format('DD MMM YYYY HH:mm')}
+                      </div>
+                    </div>
+                    <Button type="button" size="xs" variant="danger" onClick={() => handleAdminDeleteUser(u)}>
+                      <Trash2 className="h-3 w-3 mr-1" /> Delete User
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ) : (
+            <Card>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-[#777777] mb-3">
+                Admin Deletion Audit Log
+              </h3>
+              <div className="divide-y divide-[#E8E8E5] dark:divide-[#26282D] text-xs">
+                {governance.deletionLogs.length === 0 ? (
+                  <p className="text-[#777777] py-4">No deletions logged yet.</p>
+                ) : (
+                  governance.deletionLogs.map((l) => (
+                    <div key={l._id} className="py-2 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="font-semibold">
+                          {l.newValue?.summary || `${l.actorId?.fullName || 'Admin'} deleted ${l.recordType} ${l.recordRef}`}
+                        </div>
+                        <div className="text-[11px] text-[#777777]">
+                          Action: {l.action} · Ref: {l.recordRef} · Actor: {l.actorId?.fullName || 'Admin'}
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-[#777777]">{dayjs(l.timestamp).format('DD MMM YYYY HH:mm:ss')}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </Card>
+          )}
         </div>
       ) : tab === 'user-activity' ? (
         <div className="space-y-4">

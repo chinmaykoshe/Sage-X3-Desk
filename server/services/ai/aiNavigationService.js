@@ -11,6 +11,12 @@ import { getNextSequence } from '../../models/Counter.js';
 import AppError from '../../utils/AppError.js';
 import { matchClientDeterministic, matchEmployeeDeterministic } from './aiContextService.js';
 import { userHasScreen } from '../rbacService.js';
+import {
+  isSensitiveCredentialQuery,
+  containsCredentialHallucination,
+  SENSITIVE_REFUSAL_RESPONSE,
+  querySafeDatabase,
+} from './aiDbQueryService.js';
 
 const DEST_TO_SCREEN = {
   overview: 'dashboard',
@@ -632,6 +638,30 @@ export async function executeIntent({ parsed, message, user, conversation, effec
     }
   }
 
+  if (intent === 'BLOCK_SENSITIVE' || isSensitiveCredentialQuery(message)) {
+    return {
+      statusType: 'warning',
+      response: SENSITIVE_REFUSAL_RESPONSE,
+      action: null,
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'QUERY_DATABASE') {
+    const dbRes = await querySafeDatabase({
+      queryType: entities.queryType || 'auto',
+      search: entities.search || '',
+      message,
+      user,
+    });
+    return {
+      statusType: dbRes.statusType || 'search',
+      response: dbRes.response,
+      action: dbRes.action || null,
+      contextUpdates: { ...contextUpdates, ...(dbRes.contextUpdates || {}) },
+    };
+  }
+
   if (intent === 'CREATE_TICKET_DRAFT') {
     return {
       statusType: 'navigation',
@@ -642,9 +672,30 @@ export async function executeIntent({ parsed, message, user, conversation, effec
     };
   }
 
+  const rawResponse = parsed.needsClarification ? parsed.clarificationQuestion || parsed.response : parsed.response;
+  if (containsCredentialHallucination(rawResponse) || parsed.needsClarification || parsed.parsedBy === 'text-fallback') {
+    const fallbackDb = await querySafeDatabase({ queryType: 'auto', search: message, message, user });
+    if (fallbackDb?.action || (fallbackDb?.response && !fallbackDb.response.startsWith('No database records matched'))) {
+      return {
+        statusType: fallbackDb.statusType || 'search',
+        response: fallbackDb.response,
+        action: fallbackDb.action || null,
+        contextUpdates: { ...contextUpdates, ...(fallbackDb.contextUpdates || {}) },
+      };
+    }
+    if (containsCredentialHallucination(rawResponse)) {
+      return {
+        statusType: 'warning',
+        response: SENSITIVE_REFUSAL_RESPONSE,
+        action: null,
+        contextUpdates,
+      };
+    }
+  }
+
   return {
     statusType: parsed.needsClarification ? 'warning' : 'response',
-    response: parsed.needsClarification ? parsed.clarificationQuestion || parsed.response : parsed.response,
+    response: rawResponse,
     action: null,
     contextUpdates,
   };

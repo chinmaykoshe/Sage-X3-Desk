@@ -12,7 +12,6 @@ import Comment from '../../models/Comment.js';
 import Attachment from '../../models/Attachment.js';
 import { getNextSequence } from '../../models/Counter.js';
 import { uploadRoot } from '../../middleware/upload.js';
-import { assertStorageWithinLimit, resolveSupabaseCreds, uploadFileToSupabase } from '../backupSyncService.js';
 import {
   PRIORITIES,
   ROLES,
@@ -24,7 +23,7 @@ import { checkOllamaStatus, chatWithOllama, extractJsonFromText } from '../ai/ol
 import { matchClientDeterministic } from '../ai/aiContextService.js';
 import { sanitizeExtractedText } from '../ai/ocrService.js';
 import { recordActivity } from '../activityService.js';
-import { notifyUsers } from '../notificationService.js';
+import { notifyTicketStakeholders, notifyUsers } from '../notificationService.js';
 import { getEmailProvider } from './providerFactory.js';
 
 const SAFE_ATTACHMENT_EXT = new Set([
@@ -59,20 +58,11 @@ async function storeNormalizedAttachments(normalizedAtts = [], entityId, uploade
       const hash = crypto.createHash('sha256').update(buf).digest('hex');
       if (savedHashes.includes(hash)) continue;
 
-      await assertStorageWithinLimit(buf.length);
       const safeBase = path.basename(att.filename || 'attachment').replace(/[^a-zA-Z0-9._-]/g, '_');
       const filename = `${Date.now()}-${Math.round(Math.random() * 1e6)}-${safeBase}`;
       fs.writeFileSync(path.join(uploadRoot, filename), buf);
 
-      let fileUrl = `/uploads/${filename}`;
-      if (resolveSupabaseCreds().configured) {
-        try {
-          const supa = await uploadFileToSupabase(buf, safeBase, att.mimeType || 'application/octet-stream');
-          if (supa?.url) fileUrl = supa.url;
-        } catch {
-          // keep local URL
-        }
-      }
+      const fileUrl = `/uploads/${filename}`;
 
       const doc = await Attachment.create({
         entityType: 'ticket',
@@ -402,18 +392,13 @@ export async function processNormalizedEmail(integration, normalized) {
         emailDoc.matchRationale = match.rationale;
         await emailDoc.save();
 
-        const notifyIds = [...(ticket.assignedDevelopers || []), ticket.assignedTeamLead].filter(Boolean);
-        if (notifyIds.length > 0) {
-          await notifyUsers({
-            recipients: notifyIds,
-            type: 'ticket_updated',
-            title: `Email Reply on ${ticket.ticketId}`,
-            message: `${normalized.sender?.email} replied: "${normalized.subject}"`,
-            link: `/tickets/${ticket._id}`,
-            entityType: 'ticket',
-            entityId: ticket._id,
-          });
-        }
+        await notifyTicketStakeholders({
+          ticket,
+          type: 'ticket_updated',
+          title: `Email Reply on ${ticket.ticketId}`,
+          message: `${normalized.sender?.email} replied: "${normalized.subject}"`,
+          link: `/tickets/${ticket._id}`,
+        });
         await logStage(integration._id, emailDoc._id, 'ticket_updated', 'success', `Updated ${ticket.ticketId}`, '', startedAt);
         return emailDoc;
       }
@@ -482,6 +467,7 @@ export async function createPendingTicketFromEmailDoc(emailDoc, client, integrat
   const slaHours = SLA_HOURS_BY_PRIORITY[priority] || 16;
   const ticketId = await getNextSequence('ticket', 'TKT-2026', 101);
   const creatorId = actorUser?._id || integration.createdBy;
+  const isAutoApprover = Boolean(actorUser && [ROLES.ADMIN, ROLES.TEAM_LEAD].includes(actorUser.role));
 
   const rawAiTitle = String(ai.title || '').trim();
   const isGenericTitle =
@@ -502,15 +488,26 @@ export async function createPendingTicketFromEmailDoc(emailDoc, client, integrat
     priority,
     severity,
     status: 'New',
-    approvalStatus: 'PENDING_APPROVAL',
-    approvalType: null,
+    approvalStatus: isAutoApprover ? 'APPROVED' : 'PENDING_APPROVAL',
+    approvalType: isAutoApprover ? 'AUTO_APPROVED' : null,
+    approvedBy: isAutoApprover ? actorUser._id : null,
+    approvedAt: isAutoApprover ? new Date() : null,
     assignedDevelopers: [],
     assignedTeamLead: null,
     sageX3Environment: ai.environment || 'Pilot',
     folderCode: ai.folderCode || client.pilotFolderCode || client.clientFolderCode || '',
     slaDueAt: new Date(Date.now() + slaHours * 3600 * 1000),
     createdBy: creatorId,
-    statusHistory: [{ fromStatus: null, toStatus: 'New', changedBy: creatorId, note: `Auto-ingested from ${emailDoc.provider} (${emailDoc.sender?.email}) — pending Admin/TL approval` }],
+    statusHistory: [
+      {
+        fromStatus: null,
+        toStatus: 'New',
+        changedBy: creatorId,
+        note: isAutoApprover
+          ? `Converted from ${emailDoc.provider} (${emailDoc.sender?.email}) & auto-approved by ${actorUser.fullName}`
+          : `Auto-ingested from ${emailDoc.provider} (${emailDoc.sender?.email}) — pending Admin/TL approval`,
+      },
+    ],
   });
 
   if (rawAttachments.length > 0 && integration?.automationRules?.enableAttachmentProcessing !== false) {
@@ -536,7 +533,9 @@ export async function createPendingTicketFromEmailDoc(emailDoc, client, integrat
   emailDoc.relatedTicketId = ticket._id;
   emailDoc.matchedClientId = client._id;
   emailDoc.matchMethod = 'email_intake';
-  emailDoc.matchRationale = `Created pending ticket ${ticket.ticketId} for Admin/TL approval.`;
+  emailDoc.matchRationale = isAutoApprover
+    ? `Created approved ticket ${ticket.ticketId} (no approval required).`
+    : `Created pending ticket ${ticket.ticketId} for Admin/TL approval.`;
   await emailDoc.save();
 
   await recordActivity({
@@ -544,24 +543,26 @@ export async function createPendingTicketFromEmailDoc(emailDoc, client, integrat
     action: 'EMAIL_TICKET_CREATED',
     entityType: 'ticket',
     entityId: ticket._id,
+    entityRef: ticket.ticketId,
     client: client._id,
-    summary: `Created pending ticket ${ticket.ticketId} from ${emailDoc.provider} email (${emailDoc.sender?.email})`,
+    ticket: ticket._id,
+    summary: isAutoApprover
+      ? `Created approved ticket ${ticket.ticketId} from ${emailDoc.provider} email (${emailDoc.sender?.email})`
+      : `Created pending ticket ${ticket.ticketId} from ${emailDoc.provider} email (${emailDoc.sender?.email})`,
   });
 
-  // Notify BOTH Administrators and Team Leads so either can approve
-  const approvers = await User.find({
-    role: { $in: [ROLES.ADMIN, ROLES.TEAM_LEAD] },
-    isDeleted: false,
-    status: 'Active',
-  }).select('_id');
-  await notifyUsers({
-    recipients: approvers.map((u) => u._id),
+  await notifyTicketStakeholders({
+    ticket,
+    actorId: creatorId,
     type: 'ticket_updated',
-    title: `Email Ticket Approval Needed: ${ticket.ticketId}`,
-    message: `New ${emailDoc.provider} ticket from ${emailDoc.sender?.email} for ${client.companyName}: "${ticket.title}"`,
-    link: '/approvals',
-    entityType: 'ticket',
-    entityId: ticket._id,
+    title: isAutoApprover
+      ? `Ticket Created from Email: ${ticket.ticketId}`
+      : `Email Ticket Approval Needed: ${ticket.ticketId}`,
+    message: isAutoApprover
+      ? `${actorUser.fullName} converted email from ${emailDoc.sender?.email} for ${client.companyName}: "${ticket.title}"`
+      : `New ${emailDoc.provider} ticket from ${emailDoc.sender?.email} for ${client.companyName}: "${ticket.title}"`,
+    link: isAutoApprover ? `/tickets/${ticket._id}` : `/tickets/${ticket._id}`,
+    includeActor: true,
   });
 
   return ticket;

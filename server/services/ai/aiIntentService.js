@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import { chatWithOllama, extractJsonFromText } from './ollamaService.js';
 import { buildIntentSystemPrompt } from './aiPromptService.js';
+import { isSensitiveCredentialQuery, SENSITIVE_REFUSAL_RESPONSE } from './aiDbQueryService.js';
 
 export const ALLOWED_INTENTS = [
+  'BLOCK_SENSITIVE',
+  'QUERY_DATABASE',
   'NAVIGATE',
   'FILTER_TICKETS',
   'FILTER_TASKS',
@@ -137,6 +140,15 @@ function parseBulkItems(rawText, entityType, expectedCount = 0) {
 
 function deterministicFallbackIntent(message, context) {
   const lower = message.toLowerCase().trim();
+
+  if (isSensitiveCredentialQuery(message)) {
+    return {
+      intent: 'BLOCK_SENSITIVE',
+      entities: {},
+      response: SENSITIVE_REFUSAL_RESPONSE,
+    };
+  }
+
   const ticketIdMatch = message.match(/\b(TKT-\d+)\b/i);
   const taskIdMatch = message.match(/\b(TSK-\d+)\b/i);
 
@@ -356,6 +368,98 @@ function deterministicFallbackIntent(message, context) {
     };
   }
 
+  // Deterministic read-only database queries (run BEFORE generic routePhrases so "show recent/new users/clients" lists live DB rows)
+  if (/duplicate\s*tickets?|duplicates?/i.test(lower)) {
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'duplicate_tickets', search: '' },
+      response: 'Checking database for duplicate tickets.',
+    };
+  }
+
+  if (
+    /^(?:list|show|get|find|who\s+are|recent|latest|new|all)?\s*(?:the\s+)?(?:new|latest|recent|all)?\s*(?:users?|team\s*members?|employees?|developers?)(?:\s+in\s+(?:db|database))?$/i.test(
+      lower
+    ) ||
+    /\b(new\s+users?|list\s+(?:all\s+|new\s+|recent\s+)?(?:users?|team\s*members?|employees?)|show\s+(?:all\s+|new\s+|recent\s+)?(?:users?|team\s*members?|employees?)|users?\s+in\s+(?:db|database))\b/i.test(
+      lower
+    )
+  ) {
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'new_users', search: '' },
+      response: 'Fetching users from the database.',
+    };
+  }
+
+  if (
+    /\b(list|show|get|find)\s+(?:all\s+|new\s+|recent\s+|latest\s+)?clients?\b/i.test(lower) ||
+    /\b(new|latest|recent)\s+clients?\b/i.test(lower) ||
+    /\bclients?\s+in\s+(?:db|database)\b/i.test(lower)
+  ) {
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'clients', search: '' },
+      response: 'Fetching clients from the database.',
+    };
+  }
+
+  if (/\b(?:recent|latest|list|show|check)\s+(?:all\s+|recent\s+)?emails?\b/i.test(lower)) {
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'emails', search: '' },
+      response: 'Fetching synced email messages.',
+    };
+  }
+
+  if (/\b(?:recent|latest|list|show|check)\s+(?:all\s+|recent\s+)?(?:tickets?)\b/i.test(lower) && !context.matchedClient && !context.matchedEmployee) {
+    const qType = /pending|open/i.test(lower)
+      ? 'pending_tickets'
+      : /completed|closed|resolved/i.test(lower)
+        ? 'completed_tickets'
+        : 'tickets';
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: qType, search: '' },
+      response: 'Fetching tickets from the database.',
+    };
+  }
+
+  if (/\b(space\s+consumed|db\s+stats?|database\s+stats?|counts?|how\s+many\s+(?:users?|clients?|tickets?|tasks?|projects?|emails?|records?))\b/i.test(lower)) {
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'stats', search: '' },
+      response: 'Fetching live database statistics.',
+    };
+  }
+
+  if (/\b(?:show|list|recent|check)\s+(?:audit|activity|deletion|deleted)\s*logs?\b/i.test(lower) || /\badmin\s+deleted\b/i.test(lower)) {
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'logs', search: /deleted/i.test(lower) ? 'deleted' : '' },
+      response: 'Fetching activity and audit logs.',
+    };
+  }
+
+  if (/\b(?:knowledge\s*base|kb)\b/i.test(lower) && /\b(search|find|list|show|articles?|about)\b/i.test(lower)) {
+    const term = message.replace(/.*\b(?:search|find|list|show|about)\b/i, '').replace(/\b(in\s+)?(knowledge\s*base|kb|articles?)\b/gi, '').trim();
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'knowledge_base', search: term },
+      response: 'Searching Knowledge Base articles.',
+    };
+  }
+
+  // Phrases like "<something> client" when no existing client matched deterministically
+  if (/\bclient\b/i.test(lower) && !context.matchedClient && !/(create|add|onboard|format|template|go\s+to|open|navigate)/i.test(lower)) {
+    const cleaned = lower.replace(/\b(find|search|show|open|get|client|clients|for|named)\b/gi, ' ').replace(/\s+/g, ' ').trim();
+    return {
+      intent: 'QUERY_DATABASE',
+      entities: { queryType: 'clients', search: cleaned || message },
+      response: 'Checking clients in the database.',
+    };
+  }
+
   // Direct route navigation without invoking Ollama unnecessarily
   const routePhrases = [
     { re: /\b(overview|dashboard|home)\b/i, dest: 'overview', label: 'Overview Dashboard' },
@@ -413,6 +517,8 @@ export async function parseUserIntent({ message, history = [], context, ollamaAv
   if (
     directMatch &&
     [
+      'BLOCK_SENSITIVE',
+      'QUERY_DATABASE',
       'NAVIGATE',
       'OPEN_TICKET',
       'OPEN_TASK',

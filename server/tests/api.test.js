@@ -558,15 +558,6 @@ async function runTests() {
     assert.equal(navChat.json.data.assistantMessage.action.type, 'NAVIGATE');
     assert.equal(navChat.json.data.assistantMessage.action.route, '/clients');
 
-    // Supabase Dual-Backup validation ("not available for now")
-    const backupStatus = await req('/settings/backup-status', { token: adminToken });
-    assert.equal(backupStatus.status, 200);
-    assert.equal(backupStatus.json.data.status, 'unavailable');
-
-    const backupSync = await req('/settings/backup-sync', { method: 'POST', token: adminToken });
-    assert.equal(backupSync.status, 503);
-    assert.match(backupSync.json.message, /not available for now/i);
-
     await req(`/ai/conversations/${convId}`, { method: 'DELETE', token: leadToken });
     await req(`/tickets/${publishedTicketId}`, { method: 'DELETE', token: adminToken });
 

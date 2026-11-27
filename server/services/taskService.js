@@ -77,7 +77,6 @@ export async function createTaskService(payload, actor) {
     link: ticketDoc ? `/tickets/${ticketDoc._id}` : '/my-tasks',
     entityType: 'task',
     entityId: task._id,
-    sendEmail: true,
   });
 
   if (task.parentTask) await recalculateParentTaskProgress(task.parentTask);
@@ -192,10 +191,9 @@ export async function assignTaskService(id, { assignedEmployees, note }, actor) 
     type: 'task_assigned',
     title: `Assigned to ${task.taskId}`,
     message: `${actor.fullName} assigned task "${task.title}" to you.`,
-    link: '/my-tasks',
+    link: task.ticket ? `/tickets/${task.ticket}` : '/my-tasks',
     entityType: 'task',
     entityId: task._id,
-    sendEmail: true,
   });
 
   emitBroadcast('task:changed', { action: 'assigned', taskId: task._id, actorId: actor._id });

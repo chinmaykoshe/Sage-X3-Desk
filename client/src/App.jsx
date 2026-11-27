@@ -32,6 +32,7 @@ import SmartIntakePage from './pages/SmartIntakePage';
 import ApprovalInboxPage from './pages/ApprovalInboxPage';
 import AdminMonitoringPage from './pages/AdminMonitoringPage';
 import EmailInboxPage from './pages/EmailInboxPage';
+import TimesheetPage from './pages/TimesheetPage';
 
 function AccessDeniedView({ screenKey }) {
   return (
@@ -91,15 +92,24 @@ function GmailOAuthHandler() {
       })
       .then(() => {
         addToast('Gmail OAuth authorized and connected!');
-        navigate('/settings?tab=integrations', { replace: true });
+        navigate('/settings/email-integrations', { replace: true });
       })
       .catch((err) => {
         addToast(getApiError(err, 'Gmail OAuth failed'), 'error');
-        navigate('/settings?tab=integrations', { replace: true });
+        navigate('/settings/email-integrations', { replace: true });
       });
   }, [user, location.pathname, location.search]);
 
   return null;
+}
+
+function LegacySettingsRedirect() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  if (tab === 'access') return <Navigate to="/settings/access-control" replace />;
+  if (tab === 'integrations') return <Navigate to="/settings/email-integrations" replace />;
+  return <Navigate to="/settings/general" replace />;
 }
 
 export default function App() {
@@ -129,13 +139,17 @@ export default function App() {
                 >
                   <Route index element={<DashboardPage />} />
                   <Route path="my-tasks" element={<ProtectedRoute screenKey="my_tasks"><TasksPage defaultTab="my" /></ProtectedRoute>} />
+                  <Route path="timesheet" element={<TimesheetPage />} />
                   <Route path="tasks" element={<ProtectedRoute screenKey="task_board"><TasksPage defaultTab="all" /></ProtectedRoute>} />
                   <Route path="task-board" element={<ProtectedRoute screenKey="task_board"><TasksPage defaultTab="board" /></ProtectedRoute>} />
                   <Route path="tickets" element={<ProtectedRoute screenKey="tickets"><TicketsPage /></ProtectedRoute>} />
                   <Route path="tickets/:id" element={<ProtectedRoute screenKey="tickets"><TicketDetailPage /></ProtectedRoute>} />
                   <Route path="smart-intake" element={<ProtectedRoute screenKey="smart_intake"><SmartIntakePage /></ProtectedRoute>} />
                   <Route path="email-inbox" element={<ProtectedRoute screenKey="email_inbox"><EmailInboxPage /></ProtectedRoute>} />
-                  <Route path="approvals" element={<ProtectedRoute screenKey="approval_inbox"><ApprovalInboxPage /></ProtectedRoute>} />
+                  <Route path="approvals" element={<ProtectedRoute screenKey="approval_inbox"><ApprovalInboxPage queue="all" /></ProtectedRoute>} />
+                  <Route path="approvals/drafts" element={<ProtectedRoute screenKey="approval_inbox"><ApprovalInboxPage queue="drafts" /></ProtectedRoute>} />
+                  <Route path="approvals/tickets" element={<ProtectedRoute screenKey="approval_inbox"><ApprovalInboxPage queue="manual" /></ProtectedRoute>} />
+                  <Route path="approvals/requests" element={<ProtectedRoute screenKey="approval_inbox"><ApprovalInboxPage queue="actions" /></ProtectedRoute>} />
                   <Route path="calendar" element={<ProtectedRoute screenKey="calendar"><CalendarPage /></ProtectedRoute>} />
                   <Route path="clients" element={<ProtectedRoute screenKey="clients"><ClientsPage /></ProtectedRoute>} />
                   <Route path="clients/:id" element={<ProtectedRoute screenKey="clients"><ClientDetailPage /></ProtectedRoute>} />
@@ -150,6 +164,7 @@ export default function App() {
                   <Route path="knowledge-base" element={<ProtectedRoute screenKey="knowledge_base"><KnowledgeBasePage /></ProtectedRoute>} />
                   <Route path="notifications" element={<ProtectedRoute screenKey="inbox"><NotificationsPage /></ProtectedRoute>} />
                   <Route path="admin/overview" element={<ProtectedRoute screenKey="admin_overview"><AdminMonitoringPage /></ProtectedRoute>} />
+                  <Route path="admin/governance" element={<ProtectedRoute screenKey="admin_governance" roles={['admin']}><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/user-activity" element={<ProtectedRoute screenKey="admin_user_activity"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/dev-logs" element={<ProtectedRoute screenKey="admin_dev_logs"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/system-logs" element={<ProtectedRoute screenKey="admin_system_logs"><AdminMonitoringPage /></ProtectedRoute>} />
@@ -158,7 +173,10 @@ export default function App() {
                   <Route path="admin/time-tracking" element={<ProtectedRoute screenKey="admin_time_tracking"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/ai-activity" element={<ProtectedRoute screenKey="admin_ai_activity"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/audit-logs" element={<ProtectedRoute screenKey="admin_audit_logs"><AdminMonitoringPage /></ProtectedRoute>} />
-                  <Route path="settings" element={<ProtectedRoute screenKey="settings"><SettingsPage /></ProtectedRoute>} />
+                  <Route path="settings" element={<ProtectedRoute screenKey="settings"><LegacySettingsRedirect /></ProtectedRoute>} />
+                  <Route path="settings/general" element={<ProtectedRoute screenKey="settings"><SettingsPage section="general" /></ProtectedRoute>} />
+                  <Route path="settings/access-control" element={<ProtectedRoute screenKey="settings"><SettingsPage section="access" /></ProtectedRoute>} />
+                  <Route path="settings/email-integrations" element={<ProtectedRoute screenKey="settings"><SettingsPage section="integrations" /></ProtectedRoute>} />
                   <Route path="profile" element={<ProfilePage />} />
                 </Route>
                 <Route path="*" element={<Navigate to="/" replace />} />

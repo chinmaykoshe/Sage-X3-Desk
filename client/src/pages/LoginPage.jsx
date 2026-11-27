@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getApiError } from '../services/api';
@@ -9,6 +9,8 @@ import Button from '../components/ui/Button';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('login');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('sagex3_remember') !== 'false');
   const [submitting, setSubmitting] = useState(false);
   const { login, register: registerUser } = useAuth();
   const { addToast } = useToast();
@@ -19,14 +21,25 @@ export default function LoginPage() {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    defaultValues: { email: '', password: '', fullName: '', designation: 'Sage X3 Developer' },
+    defaultValues: {
+      email: localStorage.getItem('sagex3_remembered_email') || '',
+      password: '',
+      fullName: '',
+      designation: 'Sage X3 Developer',
+    },
   });
 
   const onSubmit = async (values) => {
     setSubmitting(true);
     try {
       if (mode === 'login') {
-        await login(values.email, values.password);
+        localStorage.setItem('sagex3_remember', String(rememberMe));
+        if (rememberMe) {
+          localStorage.setItem('sagex3_remembered_email', values.email);
+        } else {
+          localStorage.removeItem('sagex3_remembered_email');
+        }
+        await login(values.email, values.password, rememberMe);
         addToast('Welcome back to Sage X3 Desk');
       } else {
         await registerUser(values);
@@ -44,7 +57,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4">
       <div className="w-full max-w-md space-y-5">
         <div className="text-center">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white font-bold text-base shadow-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#171717] text-[#C6F36B] font-extrabold text-lg tracking-tight shadow-sm">
             X3
           </div>
           <h1 className="mt-3 text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
@@ -134,14 +147,39 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   {...register('password', { required: 'Password is required', minLength: { value: 6, message: 'Min 6 characters' } })}
                   placeholder="••••••••"
-                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+                  className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-10 text-sm dark:border-slate-700 dark:bg-slate-800"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
               {errors.password && <p className="mt-1 text-xs text-rose-500">{errors.password.message}</p>}
             </div>
+
+            {mode === 'login' && (
+              <div className="flex items-center justify-between text-xs">
+                <label className="inline-flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-300 select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>Remember me</span>
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  {rememberMe ? 'Stays signed in' : 'Session only'}
+                </span>
+              </div>
+            )}
 
             <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? 'Authenticating...' : mode === 'login' ? 'Sign In to Workspace' : 'Create Account'}

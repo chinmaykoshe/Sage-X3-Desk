@@ -38,7 +38,7 @@ export default function FloatingX3AI() {
   const [input, setInput] = useState('');
   const [files, setFiles] = useState([]);
   const [sending, setSending] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 640 : true));
 
   const chatEndRef = useRef(null);
 
@@ -213,7 +213,7 @@ export default function FloatingX3AI() {
           onClick={() => setOpen(true)}
           title="Ask X3 AI"
           aria-label="Ask X3 AI"
-          className="fixed bottom-5 right-5 z-40 group flex h-13 w-13 items-center justify-center rounded-full bg-[#171717] p-3.5 text-[#C6F36B] shadow-[0_8px_28px_rgba(23,23,23,0.35)] ring-2 ring-[#C6F36B]/50 hover:ring-[#C6F36B] hover:scale-105 transition-all duration-200"
+          className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-40 group flex h-12 w-12 sm:h-13 sm:w-13 items-center justify-center rounded-full bg-[#171717] p-3 sm:p-3.5 text-[#C6F36B] shadow-[0_8px_28px_rgba(23,23,23,0.35)] ring-2 ring-[#C6F36B]/50 hover:ring-[#C6F36B] hover:scale-105 transition-all duration-200"
         >
           <Sparkles className="h-5 w-5" />
           <span
@@ -228,7 +228,7 @@ export default function FloatingX3AI() {
       {/* Expanded Floating AI Workspace */}
       {open && (
         <div
-          className={`fixed z-50 flex flex-col border border-[#E8E8E5] bg-white shadow-2xl dark:border-[#2C2E33] dark:bg-[#17181B] transition-all duration-200 inset-x-2 bottom-2 top-16 sm:inset-auto sm:bottom-5 sm:right-5 rounded-2xl overflow-hidden ${
+          className={`fixed z-50 flex flex-col border border-[#E8E8E5] bg-white shadow-2xl dark:border-[#2C2E33] dark:bg-[#17181B] transition-all duration-200 inset-x-2 bottom-2 top-14 sm:inset-auto sm:bottom-5 sm:right-5 rounded-2xl overflow-hidden ${
             expandedSize ? 'sm:w-[540px] sm:h-[680px]' : 'sm:w-[410px] sm:h-[560px]'
           }`}
         >

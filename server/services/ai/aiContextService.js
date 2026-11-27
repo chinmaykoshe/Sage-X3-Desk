@@ -6,6 +6,7 @@ import User from '../../models/User.js';
 import Deployment from '../../models/Deployment.js';
 import TicketDraft from '../../models/TicketDraft.js';
 import { ROLES } from '../../config/constants.js';
+import { getGroundedDbSummary } from './aiDbQueryService.js';
 
 const GENERIC_CLIENT_WORDS = new Set([
   'pvt', 'ltd', 'limited', 'private', 'inc', 'corp', 'llp', 'llc',
@@ -145,7 +146,7 @@ export async function retrieveRelevantContext({ message, user, conversation }) {
     ticketFilter.client = activeClientId;
   }
 
-  const [tickets, tasks, projects, deployments, pendingDraftsCount] = await Promise.all([
+  const [tickets, tasks, projects, deployments, pendingDraftsCount, dbSummary] = await Promise.all([
     Ticket.find(ticketFilter)
       .populate('client', 'companyName clientFolderCode')
       .populate('assignedDevelopers', 'fullName')
@@ -172,10 +173,12 @@ export async function retrieveRelevantContext({ message, user, conversation }) {
       .limit(6)
       .lean(),
     TicketDraft.countDocuments({ isDeleted: false, approvalStatus: 'Pending TL Approval' }),
+    getGroundedDbSummary(user),
   ]);
 
   return {
     currentUser: { id: String(user._id), name: user.fullName, role: user.role },
+    dbSummary,
     conversationContext: conversation?.contextState || {},
     matchedClient: clientMatch.bestMatch
       ? { id: String(clientMatch.bestMatch._id), name: clientMatch.bestMatch.companyName }

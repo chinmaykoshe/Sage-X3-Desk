@@ -280,7 +280,7 @@ export default function EmailIntegrationPanel() {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 rounded-lg bg-[#F4F4F2]/70 dark:bg-white/5 p-2.5 text-[11px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-lg bg-[#F4F4F2]/70 dark:bg-white/5 p-2.5 text-[11px]">
                 <div>
                   <span className="text-[#777777]">Secret / OAuth:</span>{' '}
                   <strong>{item.hasClientSecret ? 'Encrypted' : 'Missing'}</strong>

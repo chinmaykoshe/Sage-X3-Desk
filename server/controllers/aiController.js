@@ -14,6 +14,7 @@ import { checkOllamaStatus } from '../services/ai/ollamaService.js';
 import { retrieveRelevantContext } from '../services/ai/aiContextService.js';
 import { parseUserIntent } from '../services/ai/aiIntentService.js';
 import { executeIntent, createEntityFromActionPayload } from '../services/ai/aiNavigationService.js';
+import { isSensitiveCredentialQuery, SENSITIVE_REFUSAL_RESPONSE } from '../services/ai/aiDbQueryService.js';
 import {
   generateTicketDraftService,
   approveTicketDraftService,
@@ -138,6 +139,38 @@ export const aiChat = asyncHandler(async (req, res) => {
   }
 
   const startedAt = Date.now();
+  if (isSensitiveCredentialQuery(message)) {
+    const userMsg = { role: 'user', content: message };
+    const assistantMsg = {
+      role: 'assistant',
+      content: SENSITIVE_REFUSAL_RESPONSE,
+      intent: 'BLOCK_SENSITIVE',
+      action: null,
+      clarificationOptions: [],
+      statusType: 'warning',
+    };
+    conversation.messages.push(userMsg, assistantMsg);
+    await conversation.save();
+
+    await recordAIActivity({
+      userId: req.user._id,
+      conversationId: conversation._id,
+      detectedIntent: 'BLOCK_SENSITIVE',
+      executedAction: 'BLOCK_SENSITIVE_QUERY',
+      executionResult: 'denied',
+      ollamaStatus: 'skipped',
+      modelName: 'policy-guard',
+      processingDurationMs: Date.now() - startedAt,
+    });
+
+    return sendSuccess(res, {
+      conversationId: conversation._id,
+      userMessage: userMsg,
+      assistantMessage: assistantMsg,
+      ollamaStatus: await checkOllamaStatus(),
+    });
+  }
+
   const [ollamaStatus, context] = await Promise.all([
     checkOllamaStatus(),
     retrieveRelevantContext({ message, user: req.user, conversation }),
@@ -429,11 +462,64 @@ export const getActionRequests = asyncHandler(async (req, res) => {
   });
 });
 
+export const updateActionRequest = asyncHandler(async (req, res) => {
+  const actionReq = await AIActionRequest.findById(req.params.id);
+  if (!actionReq) throw new AppError('Action request not found', 404);
+  const isManager = [ROLES.ADMIN, ROLES.TEAM_LEAD].includes(req.user.role);
+  const isOwner = String(actionReq.requestedBy) === String(req.user._id);
+  if (!isManager && !isOwner) {
+    throw new AppError('You do not have permission to edit this request.', 403);
+  }
+  if (actionReq.status !== 'Pending TL Approval') {
+    throw new AppError(`Only pending requests can be edited (currently ${actionReq.status}).`, 400);
+  }
+
+  const { title, summary, payload } = req.body;
+  if (payload && typeof payload === 'object') {
+    actionReq.payload = { ...(actionReq.payload || {}), ...payload };
+    actionReq.markModified('payload');
+  }
+  if (typeof title === 'string' && title.trim()) {
+    actionReq.title = title.trim();
+  } else if (actionReq.payload?.name) {
+    const prefix =
+      actionReq.actionType === 'CREATE_USER'
+        ? 'Add User'
+        : actionReq.actionType === 'CREATE_CLIENT'
+          ? 'Add Client'
+          : 'Add Project';
+    actionReq.title = `${prefix}: ${actionReq.payload.name}`;
+  }
+  if (typeof summary === 'string') {
+    actionReq.summary = summary.trim();
+  }
+
+  await actionReq.save();
+  const populated = await AIActionRequest.findById(actionReq._id)
+    .populate('requestedBy', 'fullName email role')
+    .populate('reviewedBy', 'fullName email');
+  return sendSuccess(res, populated, 'Request fields updated');
+});
+
 export const approveActionRequest = asyncHandler(async (req, res) => {
   const actionReq = await AIActionRequest.findById(req.params.id);
   if (!actionReq) throw new AppError('Action request not found', 404);
   if (actionReq.status !== 'Pending TL Approval') {
     throw new AppError(`Action request is already ${actionReq.status}`, 400);
+  }
+
+  if (req.body?.payload && typeof req.body.payload === 'object') {
+    actionReq.payload = { ...(actionReq.payload || {}), ...req.body.payload };
+    actionReq.markModified('payload');
+    if (actionReq.payload?.name) {
+      const prefix =
+        actionReq.actionType === 'CREATE_USER'
+          ? 'Add User'
+          : actionReq.actionType === 'CREATE_CLIENT'
+            ? 'Add Client'
+            : 'Add Project';
+      actionReq.title = `${prefix}: ${actionReq.payload.name}`;
+    }
   }
 
   const { createdRecord, recordType } = await createEntityFromActionPayload(

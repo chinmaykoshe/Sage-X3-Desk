@@ -1,6 +1,6 @@
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
-import { sendEmailNotification } from '../utils/email.js';
+import { ROLES } from '../config/constants.js';
 
 let ioInstance = null;
 const userSockets = new Map();
@@ -37,7 +37,8 @@ export function emitBroadcast(event, payload) {
 }
 
 /**
- * Creates persistent notifications for one or more recipients and emits via Socket.IO.
+ * Creates persistent in-app Inbox notifications for one or more recipients and emits via Socket.IO.
+ * Mailer notifications are intentionally disabled; all updates flow to the in-app Inbox Updates feed.
  */
 export async function notifyUsers({
   recipientIds = [],
@@ -48,10 +49,10 @@ export async function notifyUsers({
   link = '',
   entityType = '',
   entityId = null,
-  sendEmail = false,
+  includeActor = false,
 }) {
   const uniqueIds = [...new Set(recipientIds.filter(Boolean).map(String))].filter(
-    (id) => !actorId || id !== String(actorId)
+    (id) => includeActor || !actorId || id !== String(actorId)
   );
   if (uniqueIds.length === 0) return [];
 
@@ -72,18 +73,47 @@ export async function notifyUsers({
     emitToUser(doc.recipient, 'notification:new', doc);
   }
 
-  if (sendEmail) {
-    const users = await User.find({ _id: { $in: uniqueIds }, 'preferences.emailNotifications': true })
-      .select('email fullName')
-      .lean();
-    for (const u of users) {
-      await sendEmailNotification({
-        to: u.email,
-        subject: `[Sage X3 Desk] ${title}`,
-        text: `${message}\n\nOpen in Sage X3 Desk.`,
-      });
-    }
-  }
-
   return docs;
+}
+
+/**
+ * Notifies the ticket creator, assigned developers, assigned Team Lead, and all active TLs & Admins
+ * via the in-app Inbox Updates section with a direct redirect link.
+ */
+export async function notifyTicketStakeholders({
+  ticket,
+  actorId = null,
+  type = 'ticket_updated',
+  title,
+  message,
+  link = '',
+  includeActor = true,
+}) {
+  if (!ticket) return [];
+  const managers = await User.find({
+    role: { $in: [ROLES.ADMIN, ROLES.TEAM_LEAD] },
+    isDeleted: false,
+    status: 'Active',
+  })
+    .select('_id')
+    .lean();
+
+  const recipientIds = [
+    ticket.createdBy,
+    ...(ticket.assignedDevelopers || []),
+    ticket.assignedTeamLead,
+    ...managers.map((m) => m._id),
+  ];
+
+  return notifyUsers({
+    recipientIds,
+    actorId,
+    type,
+    title,
+    message,
+    link: link || `/tickets/${ticket._id}`,
+    entityType: 'ticket',
+    entityId: ticket._id,
+    includeActor,
+  });
 }

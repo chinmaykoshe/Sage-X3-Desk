@@ -4,7 +4,7 @@ import Button from './Button';
 export function Pagination({ meta, onPageChange }) {
   if (!meta || meta.totalPages <= 1) return null;
   return (
-    <div className="mt-4 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+    <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 dark:text-slate-400">
       <span>
         Page {meta.page} of {meta.totalPages} ({meta.total} total)
       </span>

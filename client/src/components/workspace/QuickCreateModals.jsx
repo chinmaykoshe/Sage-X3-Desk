@@ -207,7 +207,7 @@ export default function QuickCreateModals() {
 
             <div>
               <label className="block font-medium mb-1">Priority & Severity</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <select
                   {...ticketForm.register('priority')}
                   className="rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
@@ -233,7 +233,7 @@ export default function QuickCreateModals() {
 
             <div>
               <label className="block font-medium mb-1">Sage X3 Environment & Folder</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <select
                   {...ticketForm.register('sageX3Environment')}
                   className="rounded-lg border border-[#E8E8E5] px-2.5 py-2 text-sm dark:border-[#2C2E33] dark:bg-[#1E2025]"
@@ -415,7 +415,7 @@ export default function QuickCreateModals() {
               </select>
             </div>
           )}
-          <div className="grid grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             <div>
               <label className="block font-medium mb-1">Status</label>
               <select

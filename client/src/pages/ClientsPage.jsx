@@ -200,7 +200,7 @@ export default function ClientsPage() {
                 className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm uppercase font-mono dark:border-slate-700 dark:bg-slate-800"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div>
                 <label className="block font-medium mb-1">Pilot Folder</label>
                 <input

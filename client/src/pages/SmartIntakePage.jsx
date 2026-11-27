@@ -193,7 +193,7 @@ export default function SmartIntakePage() {
               </div>
 
               {previews.length > 0 && (
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {previews.map((p, i) => (
                     <div key={i} className="relative rounded-lg border border-[#E8E8E5] dark:border-[#2C2E33] overflow-hidden">
                       <img src={p.url} alt={p.name} className="h-28 w-full object-cover" />
@@ -252,7 +252,7 @@ export default function SmartIntakePage() {
 
               <div>
                 <label className="block font-medium mb-1">Description Output Length</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {[
                     { id: 'short', label: 'Short', hint: '1–2 lines' },
                     { id: 'medium', label: 'Medium', hint: '1 paragraph' },
@@ -383,7 +383,7 @@ export default function SmartIntakePage() {
                   </select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
                     <label className="block font-medium mb-1">Priority</label>
                     <select
