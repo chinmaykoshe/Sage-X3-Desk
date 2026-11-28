@@ -1,0 +1,31 @@
+[
+  {
+    "_id": "6b070cfab30fdb5e7bdb8aa3",
+    "key": "global",
+    "companyName": "Sage X3 Desk Operations",
+    "defaultSlaHours": {
+      "Critical": 4,
+      "High": 24,
+      "Medium": 72,
+      "Low": 120
+    },
+    "requireApprovalForProductionDeployment": true,
+    "allowManagerCloseTicketWaiver": true,
+    "emailNotificationsEnabled": false,
+    "workingHoursPerDay": 8,
+    "updatedBy": "6b0877cbacc5e2c0cf77886e",
+    "createdAt": "2026-11-25T16:29:46.329Z",
+    "updatedAt": "2026-11-28T07:04:50.588Z",
+    "__v": 0,
+    "mailerConfig": {
+      "enabled": true,
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "secure": false,
+      "user": "sagex3desk@gmail.com",
+      "from": "sagex3desk@gmail.com",
+      "encryptedPass": "58c4b1ab2e49adf2aac57131:f48ef4e2f7b58f09db0159bd1e59dda3:126534a7caeb2f163e4eec2914fb89d0da163a6a74539c299a27fb66b34a0c598ef1",
+      "hasPassword": true
+    }
+  }
+]

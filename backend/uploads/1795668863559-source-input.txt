@@ -1,0 +1,245 @@
+FW: USD Transaction setup
+Usman Ishaq<uishaq@basecampconsulting.co>
+
+Chinmay Koshe (Greytrix)
+You don't often get email from uishaq@basecampconsulting.co. Learn why this is important
+CAUTION: This email originated from outside the organization. Do not click links or open attachments unless you recognize the sender and know the content is safe. Otherwise, contact your IT Department.
+
+ 
+
+ 
+
+From: Usman Ishaq
+Sent: Friday, November 20, 2026 3:21 PM
+To: Hemal Damani <hdamani@hightideinc.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Greytrix - Sage X3 Team <x3@greytrix.com>; 'ragini@greytrix.com' <ragini@greytrix.com>
+Cc: Shahrukh Kazmi <skazmi@basecampconsulting.co>; Mubasher Ali <mubasher@basecampconsulting.co>; Maleeha Malik <mmalik@hightideinc.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>
+Subject: RE: USD Transaction setup
+
+ 
+
+Hi Chinmay @Deepak Gotmukale (Greytrix),
+
+We need to create the rules for these two BMOs.
+
+ 
+
+SMOK Sage Bank Code > 10116
+
+1. Debit Side of the Bank
+
+2nd Day of the Month / 1st Working day if 1 & 2 date is weekend: (it could be the first working day or the 2nd working day)
+Debit transactions for M Merchant with Customer Ref: 554630119998048 (HT BP Reference “MAVERICKM”) will be posted to the Merchant Fee GL 70201.
+Rest of the month Debit transactions for M Merchant with Customer Ref: 554630119998048 (HT BP Reference “MAVERICKM”) will be posted to the Chargeback GL 70240.
+. Credit Side of the Bank
+
+For the entire month, M Merchant with Customer Ref: 554630119998048 will be posted to GL 12105 with the BP Reference “MAVERICKM”.
+ 
+
+SJGC Sage Bank Code   > 10549
+
+ 
+
+1. Debit Side of the Bank
+
+2nd Day of the Month / 1st Working day if 1 & 2 date is weekend: (it could be the first working day or the 2nd working day)
+Debit transactions for M Merchant with Customer Ref: 554630119998097 (HT BP Reference “MAVERICKM”) will be posted to the Merchant Fee GL 70201.
+Rest of the month Debit transactions for M Merchant with Customer Ref: 554630119998097 (HT BP Reference “MAVERICKM”) will be posted to the Chargeback GL 70240.
+. Credit Side of the Bank
+
+For the entire month, M Merchant with Customer Ref: 554630119998097 will be posted to GL 12105 with the BP Reference “MAVERICKM”.
+
+Additional rule in all these four banks listed below.
+Bank Debit side Rule (Payment deduction) in any day of the month.
+
+ 
+
+Bank Description
+
+WEST TOWN PYMTS
+
+ 
+
+HTBP Code
+
+BPS-0000569
+
+ 
+GL Code
+70201
+
+Bank Site Code where this rule need to be applied
+
+SMOKL 10116
+
+DNTHO 10541
+
+SJGHO 10549
+
+DHBHO 10154
+
+Thank you,
+Usman
+
+From: Usman Ishaq <uishaq@basecampconsulting.co>
+Sent: Friday, July 10, 2026 9:29 PM
+To: Hemal Damani <hdamani@hightideinc.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Greytrix - Sage X3 Team <x3@greytrix.com>
+Cc: Shahrukh Kazmi <skazmi@basecampconsulting.co>; Mubasher Ali <mubasher@basecampconsulting.co>; Maleeha Malik <mmalik@hightideinc.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Muthu Raman (Greytrix) <raman@greytrix.com>; Sanket Karnik (Greytrix) <sanket@greytrix.com>
+Subject: Re: USD Transaction setup
+
+ 
+
+Hi @Hemal Damani @Deepak Gotmukale (Greytrix)@Greytrix - Sage X3 Team,
+
+ 
+
+As we have M Merchant receipts and payments are live now on the SJGC & SMOK BMO bank.
+
+ 
+
+We need to create the rules for these two BMOs.
+
+ 
+
+SMOK Sage Bank Code > 10116
+
+1. Debit Side of the Bank
+
+2nd Day of the Month / 1st Working day if 1 & 2 date is weekend: (it could be the first working day or the 2nd working day)
+Debit transactions for M Merchant with Customer Ref: 554630119998048 (HT BP Reference “MAVERICKM”) will be posted to the Merchant Fee GL 70201.
+Rest of the month Debit transactions for M Merchant with Customer Ref: 554630119998048 (HT BP Reference “MAVERICKM”) will be posted to the Chargeback GL 70240.
+. Credit Side of the Bank
+
+For the entire month, M Merchant with Customer Ref: 554630119998048 will be posted to GL 12105 with the BP Reference “MAVERICKM”.
+ 
+
+SJGC Sage Bank Code   > 10549
+
+ 
+
+1. Debit Side of the Bank
+
+2nd Day of the Month / 1st Working day if 1 & 2 date is weekend: (it could be the first working day or the 2nd working day)
+Debit transactions for M Merchant with Customer Ref: 554630119998097 (HT BP Reference “MAVERICKM”) will be posted to the Merchant Fee GL 70201.
+Rest of the month Debit transactions for M Merchant with Customer Ref: 554630119998097 (HT BP Reference “MAVERICKM”) will be posted to the Chargeback GL 70240.
+. Credit Side of the Bank
+
+For the entire month, M Merchant with Customer Ref: 554630119998097 will be posted to GL 12105 with the BP Reference “MAVERICKM”.
+ 
+
+@Hemal Damani Please approve these rules for Smok cartel and grasscity.
+
+ 
+
+Thank you,
+
+Usman
+
+From: Usman Ishaq <uishaq@basecampconsulting.co>
+Sent: Friday, June 5, 2026 9:16 PM
+To: Hemal Damani <hdamani@hightideinc.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>
+Cc: Shahrukh Kazmi <skazmi@basecampconsulting.co>; Greytrix - Sage X3 Team <x3@greytrix.com>; Mubasher Ali <mubasher@basecampconsulting.co>; Maleeha Malik <mmalik@hightideinc.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Muthu Raman (Greytrix) <raman@greytrix.com>; Sanket Karnik (Greytrix) <sanket@greytrix.com>
+Subject: Re: USD Transaction setup
+
+ 
+
+Hi @Deepak Gotmukale (Greytrix),
+
+ 
+
+All these entries are correct, but I want to make sure if this rule applied correctly,
+
+ 
+
+ 
+
+1. Debit Side of the Bank
+
+2nd Day of the Month: (it could be the first working day or the 2nd working day)
+Debit transactions for M Merchant with Customer Ref: 554630119986209 (HT BP Reference “MAVERICKM”) will be posted to the Merchant Fee GL 70201.
+Rest of the month Debit transactions for M Merchant with Customer Ref: 554630119986209 (HT BP Reference “MAVERICKM”) will be posted to the Chargeback GL 70240.
+ 
+
+Because the first entry you shared was for the first day of the month and I asked for the second day of the month which could be first working day, or second working day depends upon the weekend.
+
+ 
+
+1/5/2026
+
+BNKDHBHO26000039
+
+BKSJE2605DHBHO337
+
+ 
+
+ 
+
+Please confirm.
+
+ 
+
+Thank you,
+
+Usman
+
+ 
+
+From: Hemal Damani <hdamani@hightideinc.com>
+Sent: Friday, June 5, 2026 8:51 PM
+To: Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Usman Ishaq <uishaq@basecampconsulting.co>
+Cc: Shahrukh Kazmi <skazmi@basecampconsulting.co>; Greytrix - Sage X3 Team <x3@greytrix.com>; Mubasher Ali <mubasher@basecampconsulting.co>; Maleeha Malik <mmalik@hightideinc.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Muthu Raman (Greytrix) <raman@greytrix.com>; Sanket Karnik (Greytrix) <sanket@greytrix.com>
+Subject: Re: USD Transaction setup
+
+ 
+
+Hi Usman/Sharukh,
+
+ 
+
+Please provide and update.
+
+ 
+
+Thank you 
+
+ 
+
+Hemal Damani | Lead Revenue and Cash Accountant
+
+Email: hdamani@hightideinc.com
+
+#112, 11127 15th Street NE | Calgary, AB T3K 2M4
+
+[www.hightideinc.com]www.hightideinc.com
+
+TSXV:HITI | OTCQB:HITIF | FRA:2LY
+
+ 
+
+ 
+
+From: Hemal Damani <hdamani@hightideinc.com>
+Sent: Wednesday, June 3, 2026 9:48 AM
+To: Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Usman Ishaq <uishaq@basecampconsulting.co>
+Cc: Shahrukh Kazmi <skazmi@basecampconsulting.co>; Greytrix - Sage X3 Team <x3@greytrix.com>; Mubasher Ali <mubasher@basecampconsulting.co>; Maleeha Malik <mmalik@hightideinc.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Muthu Raman (Greytrix) <raman@greytrix.com>; Sanket Karnik (Greytrix) <sanket@greytrix.com>
+Subject: Re: USD Transaction setup
+
+ 
+
+Hi Usman/Shahrukh,
+ 
+Please confirm these entries as per Deepak.
+ 
+
+USD Transaction setup: Completed with the setup in HTPILOT1 folder for the M Merchant 554630119986209 for the credit and debit side as per the rules shared on email.
+Below are the generated Journal entries as per the bank statement number:
+ 
+
+Date
+
+Bank statement number
+
+Journal entries
+
+1/5/2026
+
+BNKDHBHO260000

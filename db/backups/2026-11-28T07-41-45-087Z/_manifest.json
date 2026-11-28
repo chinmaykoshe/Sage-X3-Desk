@@ -1,0 +1,150 @@
+{
+  "createdAt": "2026-11-28T07:41:45.446Z",
+  "database": "sage_x3_desk",
+  "collections": [
+    {
+      "collection": "emailmessages",
+      "count": 57
+    },
+    {
+      "collection": "helptickets",
+      "count": 0
+    },
+    {
+      "collection": "teams",
+      "count": 2
+    },
+    {
+      "collection": "signupverifications",
+      "count": 0
+    },
+    {
+      "collection": "environments",
+      "count": 13
+    },
+    {
+      "collection": "timelogs",
+      "count": 6
+    },
+    {
+      "collection": "projects",
+      "count": 5
+    },
+    {
+      "collection": "developmentactivities",
+      "count": 1
+    },
+    {
+      "collection": "attachments",
+      "count": 39
+    },
+    {
+      "collection": "activitylogs",
+      "count": 155
+    },
+    {
+      "collection": "permissiongroups",
+      "count": 0
+    },
+    {
+      "collection": "milestones",
+      "count": 7
+    },
+    {
+      "collection": "tasks",
+      "count": 19
+    },
+    {
+      "collection": "systemlogs",
+      "count": 56
+    },
+    {
+      "collection": "users",
+      "count": 12
+    },
+    {
+      "collection": "aiactionrequests",
+      "count": 1
+    },
+    {
+      "collection": "settings",
+      "count": 1
+    },
+    {
+      "collection": "passwordresetrequests",
+      "count": 2
+    },
+    {
+      "collection": "comments",
+      "count": 6
+    },
+    {
+      "collection": "emailprocessinglogs",
+      "count": 203
+    },
+    {
+      "collection": "knowledgebases",
+      "count": 3
+    },
+    {
+      "collection": "screenregistries",
+      "count": 30
+    },
+    {
+      "collection": "counters",
+      "count": 10
+    },
+    {
+      "collection": "savedviews",
+      "count": 3
+    },
+    {
+      "collection": "approvalhistories",
+      "count": 38
+    },
+    {
+      "collection": "emailticketlinks",
+      "count": 23
+    },
+    {
+      "collection": "notifications",
+      "count": 215
+    },
+    {
+      "collection": "clients",
+      "count": 8
+    },
+    {
+      "collection": "ticketdrafts",
+      "count": 26
+    },
+    {
+      "collection": "tickets",
+      "count": 43
+    },
+    {
+      "collection": "userpermissions",
+      "count": 1
+    },
+    {
+      "collection": "aiactivitylogs",
+      "count": 54
+    },
+    {
+      "collection": "emailintegrations",
+      "count": 2
+    },
+    {
+      "collection": "aiconversations",
+      "count": 32
+    },
+    {
+      "collection": "deployments",
+      "count": 3
+    },
+    {
+      "collection": "auditlogs",
+      "count": 75
+    }
+  ]
+}

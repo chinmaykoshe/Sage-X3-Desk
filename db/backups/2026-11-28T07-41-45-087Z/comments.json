@@ -1,0 +1,105 @@
+[
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b43",
+    "entityType": "ticket",
+    "entityId": "6b070cfbb30fdb5e7bdb8b1d",
+    "author": "6b070cfab30fdb5e7bdb8ab3",
+    "parentComment": null,
+    "body": "Analyzed SYR batch trace: line 142 in ZMT940IMP truncates :86: tag when bank sends multi-line remittance info. Updating buffer to Clbfile / 1024-char array.",
+    "isInternal": true,
+    "editedAt": null,
+    "mentions": [
+      "6b070cfab30fdb5e7bdb8ab2",
+      "6b070cfab30fdb5e7bdb8ab4"
+    ],
+    "attachments": [],
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.771Z",
+    "updatedAt": "2026-11-25T16:29:47.771Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b44",
+    "entityType": "ticket",
+    "entityId": "6b070cfbb30fdb5e7bdb8b1d",
+    "author": "6b070cfab30fdb5e7bdb8ab2",
+    "parentComment": null,
+    "body": "We have identified the root cause in the MT940 parser and are preparing a patch for Pilot validation.",
+    "isInternal": false,
+    "editedAt": null,
+    "mentions": [],
+    "attachments": [],
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.771Z",
+    "updatedAt": "2026-11-25T16:29:47.771Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b45",
+    "entityType": "ticket",
+    "entityId": "6b070cfbb30fdb5e7bdb8b1e",
+    "author": "6b070cfab30fdb5e7bdb8ab4",
+    "parentComment": null,
+    "body": "Deployed YWS_APINV optimization to APXPLT. Average response time dropped from 34s to 4.2s on 150-line invoices.",
+    "isInternal": true,
+    "editedAt": null,
+    "mentions": [
+      "6b070cfab30fdb5e7bdb8ab2"
+    ],
+    "attachments": [],
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.771Z",
+    "updatedAt": "2026-11-25T16:29:47.771Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b071049949a508286e0aa35",
+    "entityType": "ticket",
+    "entityId": "6b070cfbb30fdb5e7bdb8b20",
+    "author": "6b070cfab30fdb5e7bdb8ab2",
+    "parentComment": null,
+    "body": "arjun is working on the report",
+    "isInternal": true,
+    "editedAt": null,
+    "mentions": [],
+    "attachments": [],
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:43:53.339Z",
+    "updatedAt": "2026-11-25T16:43:53.339Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07105b949a508286e0aa56",
+    "entityType": "ticket",
+    "entityId": "6b070cfbb30fdb5e7bdb8b20",
+    "author": "6b070cfab30fdb5e7bdb8ab2",
+    "parentComment": null,
+    "body": "@arjun is working on report",
+    "isInternal": true,
+    "editedAt": null,
+    "mentions": [
+      "6b070cfab30fdb5e7bdb8ab5"
+    ],
+    "attachments": [],
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:44:11.328Z",
+    "updatedAt": "2026-11-25T16:44:11.328Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0a73255b2e6e900d8585a1",
+    "entityType": "ticket",
+    "entityId": "6b099cbeacc5e2c0cf779bcb",
+    "author": "6b070cfab30fdb5e7bdb8ab1",
+    "parentComment": null,
+    "body": "[Email Update from Vanya from foundit · 11/28/2026, 6:49:56 AM]\nSubject: CHINMAY, Hot Job Opportunities Waiting For You\n\nMailer @import url(http://fonts.googleapis.com/css?family=Noto+Sans:400,700); @import url(https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700); body { padding: 0; font-family: 'Noto Sans', sans-serif; margin: 0; min-width: 100%; background: #f9faff !important; color: #1d1e1f } .only-desktop { display: block !important; padding: 0 24px } .only-mobile { display: none !important } @media only screen and (max-width:480px) { .only-desktop { display: none !important } } @media only screen and (min-width:600px) { .mobile, .only-desktop { display: block !important; padding: 0 24px } .only-mobile { display: none !important } } @media only screen and (max-width:600px) { .only-desktop { display: none !important } .only-mobile { display: table !important; margin: 0 auto !important; width: 100% } } 10 new jobs from puretech digital - a genesis company , Allianz Technology and more Get the app Top jobs matching your profile🔥 Hi CHINMAY ABHIJEET KOSHE, we’ve curated job opportunities where you’d be a top applicant, based on your profile and preferences. View all Jobs &#8594; Associate - Tender Manager puretech digital - a genesis company Mumbai Apply now Assistant Data Architect (Data Scientist)_ Allianz Technology Pune Apply now How is the search relevance? Accountant WeSCO Pune Apply now Senior Credit Analyst incred financial services Mumbai Apply now Senior Account Executive BatteryPool Pune Apply now Lead, Data Validation Specialist Addepar Pune Apply now Accounts assistant HospITy Thane Apply now Junior Software Developer_V4 Saksoft Limited Mumbai Quick Apply Sales / Sr. Sales Executive inkarp telecom india pvt ltd Mumbai Apply now Sr. Accountant Vinod Ganpatrao Reddy Pune Quick Apply View All Jobs Your profile was last updated on 18/08/2026 Keep it fresh to appear in more recruiter searches. Update Now Team foundit (Formerly Monster APAC & ME) You have received this mail because your e-mail address is registered with https://www.foundit.in Please do not reply to this mail, as this is a system-generated communication sent to you based on your job preferences on foundit. We have enabled an auto-login facility for your convenience to ensure that your job searches and application experience are smoother and faster. We recommend you do NOT forward this e-mail to protect your foundit account from unauthorized access/misuse. Although, foundit has adopted the required feasible measures to ensure that the information provided is authentic. However, we strongly recommend you verify the authenticity of the information. foundit also advises users to beware of any fraudulent communication asking for personal /banking information or seeking money for any job offer. foundit does NOT authorize any agency/partner to collect any fees for job offers. Report any such suspicious activity to: spam@foundit.in or info@foundit.in . Please note in no event shall foundit be liable for any damages whatsoever. We also recommend you visit the \"Terms of Use\" and \"Privacy P",
+    "isInternal": false,
+    "editedAt": null,
+    "mentions": [],
+    "attachments": [],
+    "isDeleted": false,
+    "createdAt": "2026-11-28T06:22:29.680Z",
+    "updatedAt": "2026-11-28T06:22:29.680Z",
+    "__v": 0
+  }
+]

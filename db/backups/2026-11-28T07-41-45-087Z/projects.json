@@ -1,0 +1,132 @@
+[
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b05",
+    "projectId": "PRJ-101",
+    "name": "Bank Statement Automation",
+    "client": "6b070cfbb30fdb5e7bdb8ae9",
+    "description": "Automated MT940 SFTP bank statement ingestion, auto-matching rules, and exception dashboard in Sage X3.",
+    "projectManager": "6b070cfab30fdb5e7bdb8ab2",
+    "teamMembers": [
+      "6b070cfab30fdb5e7bdb8ab2",
+      "6b070cfab30fdb5e7bdb8ab3",
+      "6b070cfab30fdb5e7bdb8ab4"
+    ],
+    "startDate": "2026-10-11T16:29:47.643Z",
+    "targetCompletionDate": "2026-12-10T16:29:47.646Z",
+    "status": "Active",
+    "progressPercentage": 61,
+    "sageX3Modules": [
+      "AP/AR Accounting",
+      "Bank Reconciliation",
+      "4GL Batch"
+    ],
+    "createdBy": "6b070cfab30fdb5e7bdb8ab1",
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.652Z",
+    "updatedAt": "2026-11-27T19:22:39.194Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b06",
+    "projectId": "PRJ-102",
+    "name": "Invoice Import Integration",
+    "client": "6b070cfbb30fdb5e7bdb8aea",
+    "description": "Real-time purchase & sales invoice ingestion from CargoWise via Sage X3 REST Web Services.",
+    "projectManager": "6b070cfab30fdb5e7bdb8ab2",
+    "teamMembers": [
+      "6b070cfab30fdb5e7bdb8ab2",
+      "6b070cfab30fdb5e7bdb8ab4"
+    ],
+    "startDate": "2026-10-26T16:29:47.646Z",
+    "targetCompletionDate": "2026-12-20T16:29:47.646Z",
+    "status": "Active",
+    "progressPercentage": 50,
+    "sageX3Modules": [
+      "Web Services",
+      "Purchasing",
+      "Sales Invoicing"
+    ],
+    "createdBy": "6b070cfab30fdb5e7bdb8ab2",
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.653Z",
+    "updatedAt": "2026-11-25T16:29:47.653Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b07",
+    "projectId": "PRJ-103",
+    "name": "Stock Valuation Customization",
+    "client": "6b070cfbb30fdb5e7bdb8aeb",
+    "description": "FIFO lot-level cost adjustment & GMP quarantine stock valuation report enhancements.",
+    "projectManager": "6b070cfab30fdb5e7bdb8ab1",
+    "teamMembers": [
+      "6b070cfab30fdb5e7bdb8ab5",
+      "6b070cfab30fdb5e7bdb8ab3"
+    ],
+    "startDate": "2026-09-26T16:29:47.646Z",
+    "targetCompletionDate": "2026-12-05T16:29:47.647Z",
+    "status": "Active",
+    "progressPercentage": 80,
+    "sageX3Modules": [
+      "Inventory",
+      "Costing",
+      "Crystal Reports"
+    ],
+    "createdBy": "6b070cfab30fdb5e7bdb8ab1",
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.653Z",
+    "updatedAt": "2026-11-27T20:12:52.480Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b08",
+    "projectId": "PRJ-104",
+    "name": "Financial Reporting Enhancements",
+    "client": "6b070cfbb30fdb5e7bdb8aec",
+    "description": "Multi-plant consolidated P&L, Balance Sheet, and GST reconciliation Crystal Reports pack.",
+    "projectManager": "6b070cfab30fdb5e7bdb8ab2",
+    "teamMembers": [
+      "6b070cfab30fdb5e7bdb8ab5"
+    ],
+    "startDate": "2026-09-16T16:29:47.647Z",
+    "targetCompletionDate": "2026-11-20T16:29:47.647Z",
+    "status": "Completed",
+    "progressPercentage": 100,
+    "sageX3Modules": [
+      "General Ledger",
+      "Financials",
+      "Crystal Reports"
+    ],
+    "createdBy": "6b070cfab30fdb5e7bdb8ab2",
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.653Z",
+    "updatedAt": "2026-11-25T16:29:47.653Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b085109bb1f7c47200ba05b",
+    "projectId": "PRJ-105",
+    "name": "for hightide where 2 new banks are needed to be setuped",
+    "client": "6b070cfbb30fdb5e7bdb8ae9",
+    "description": "",
+    "projectManager": "6b070cfab30fdb5e7bdb8ab2",
+    "teamMembers": [
+      "6b070cfab30fdb5e7bdb8ab2"
+    ],
+    "targetCompletionDate": null,
+    "status": "Active",
+    "progressPercentage": 0,
+    "sageX3Modules": [],
+    "createdBy": "6b070cfab30fdb5e7bdb8ab2",
+    "isDeleted": false,
+    "deletedAt": null,
+    "startDate": "2026-11-26T15:32:25.345Z",
+    "createdAt": "2026-11-26T15:32:25.346Z",
+    "updatedAt": "2026-11-26T15:32:25.346Z",
+    "__v": 0
+  }
+]

@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "6b084a492fef45534097a692",
+    "actionType": "CREATE_CLIENT",
+    "title": "Add Client: hightide ventures",
+    "summary": "Industry: Manufacturing",
+    "payload": {
+      "name": "hightide ventures",
+      "email": "",
+      "industry": "Manufacturing",
+      "sageX3Version": "V12"
+    },
+    "requestedBy": "6b070cfab30fdb5e7bdb8ab2",
+    "status": "Pending TL Approval",
+    "rejectionReason": "",
+    "createdRecordType": "",
+    "createdAt": "2026-11-26T15:03:37.308Z",
+    "updatedAt": "2026-11-26T15:03:37.308Z",
+    "__v": 0
+  }
+]

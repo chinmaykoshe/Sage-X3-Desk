@@ -1,0 +1,425 @@
+[
+  {
+    "_id": "6b070cfab30fdb5e7bdb8ab2",
+    "employeeId": "EMP-102",
+    "fullName": "Ananya Rao",
+    "email": "ananya.rao@sagex3desk.com",
+    "password": "$2a$10$G7Fc5iWmDNhMnKMimksYb.6KUYVNq3E2hAD0SLpS7TRhJYvPkn2va",
+    "contactNumber": "+91 98201 33445",
+    "designation": "Sage X3 Team Lead",
+    "department": "Sage X3 Delivery",
+    "role": "team_lead",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [
+      "4GL Scripting",
+      "Finance",
+      "EDI",
+      "Crystal Reports"
+    ],
+    "avatarColor": "#0d9488",
+    "permissions": {
+      "canAssignTickets": true,
+      "canApproveDeployments": true,
+      "canManageClients": true,
+      "canViewReports": true,
+      "canWaiveTicketClose": true
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-25T16:29:46.387Z",
+    "createdAt": "2026-11-25T16:29:46.399Z",
+    "updatedAt": "2026-11-26T18:16:46.150Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfab30fdb5e7bdb8ab3",
+    "employeeId": "EMP-103",
+    "fullName": "Rohan Kulkarni",
+    "email": "rohan.k@sagex3desk.com",
+    "password": "$2a$10$BW5JI7l7OHGv6oN71HHrqOkv1ofnkb5kkeh647Su.RxIgH8fGu2tG",
+    "contactNumber": "+91 98201 55667",
+    "designation": "Senior 4GL Developer",
+    "department": "Sage X3 Development",
+    "role": "developer",
+    "team": "6b070cfbb30fdb5e7bdb8ad9",
+    "clientRef": null,
+    "status": "Active",
+    "skills": [
+      "4GL Scripting",
+      "Import Templates",
+      "Bank Reconciliation",
+      "Syracuse"
+    ],
+    "avatarColor": "#7c3aed",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-25T16:29:46.389Z",
+    "createdAt": "2026-11-25T16:29:46.399Z",
+    "updatedAt": "2026-11-26T18:16:46.430Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfab30fdb5e7bdb8ab4",
+    "employeeId": "EMP-104",
+    "fullName": "Priya Nair",
+    "email": "priya.n@sagex3desk.com",
+    "password": "$2a$10$MLIyoQLdhJLY.rzPw39/j.UZeePTVKNzDbfUTi8.sEIvgygEDK3U6",
+    "contactNumber": "+91 98201 77889",
+    "designation": "Integration & Web Services Engineer",
+    "department": "Sage X3 Integrations",
+    "role": "developer",
+    "team": "6b070cfbb30fdb5e7bdb8ada",
+    "clientRef": null,
+    "status": "Active",
+    "skills": [
+      "REST Web Services",
+      "SOAP",
+      "Node.js",
+      "XML/JSON",
+      "4GL"
+    ],
+    "avatarColor": "#d97706",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-25T16:29:46.390Z",
+    "createdAt": "2026-11-25T16:29:46.399Z",
+    "updatedAt": "2026-11-26T18:16:46.596Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfab30fdb5e7bdb8ab5",
+    "employeeId": "EMP-105",
+    "fullName": "Arjun Verma",
+    "email": "arjun.v@sagex3desk.com",
+    "password": "$2a$10$LfHkPU7UbLcE1l0LARB/L.O7XeNeiHPyHGbiFr5nZufY2xWK.5Fru",
+    "contactNumber": "+91 98201 99001",
+    "designation": "Functional & Crystal Reports Consultant",
+    "department": "Sage X3 Support",
+    "role": "developer",
+    "team": "6b070cfbb30fdb5e7bdb8ad9",
+    "clientRef": null,
+    "status": "Active",
+    "skills": [
+      "Crystal Reports",
+      "Stock Valuation",
+      "Manufacturing",
+      "SQL"
+    ],
+    "avatarColor": "#059669",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-25T16:29:46.391Z",
+    "createdAt": "2026-11-25T16:29:46.399Z",
+    "updatedAt": "2026-11-26T18:16:46.793Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfab30fdb5e7bdb8ab1",
+    "employeeId": "EMP-101",
+    "fullName": "Vikram Mehta",
+    "email": "admin@sagex3desk.com",
+    "password": "$2a$10$yYmEwkiK2VhgwedOPWWe7.cTTMjM.wKL4Fj6enCSRF.y5PtztyYN.",
+    "contactNumber": "+91 98201 11220",
+    "designation": "Practice Director & Admin",
+    "department": "Sage X3 Practice",
+    "role": "admin",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [
+      "Sage X3 Architecture",
+      "4GL",
+      "SQL Server",
+      "Governance"
+    ],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": true,
+      "canApproveDeployments": true,
+      "canManageClients": true,
+      "canViewReports": true,
+      "canWaiveTicketClose": true
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-25T16:29:46.384Z",
+    "createdAt": "2026-11-25T16:29:46.398Z",
+    "updatedAt": "2026-11-26T18:16:45.831Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084aec3d76220a19a0fb31",
+    "employeeId": "EMP-106",
+    "fullName": "arnav",
+    "email": "arnav@sagex3desk.com",
+    "password": "$2a$10$K3aR7HStkb4coSJwFz.bxONYdgrkmx0AAoOgfi7d7xrajG0.4GLtO",
+    "contactNumber": "",
+    "designation": "Sage X3 Consultant",
+    "department": "Sage X3 Practice",
+    "role": "developer",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T15:06:20.749Z",
+    "createdAt": "2026-11-26T15:06:20.752Z",
+    "updatedAt": "2026-11-26T18:16:46.987Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084efa3d76220a19a101f6",
+    "employeeId": "EMP-107",
+    "fullName": "chinmay",
+    "email": "chinmaykoshe2004@gmail.com",
+    "password": "$2a$10$yqks02pMwuLz/l9kWHkCaewCj4.5porW8Axns5IB7cLFvbWgeFK4u",
+    "contactNumber": "",
+    "designation": "Sage X3 Consultant",
+    "department": "Sage X3 Practice",
+    "role": "developer",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T15:23:38.602Z",
+    "createdAt": "2026-11-26T15:23:38.602Z",
+    "updatedAt": "2026-11-28T07:11:08.162Z",
+    "__v": 0,
+    "emailVerified": false
+  },
+  {
+    "_id": "6b0850cbbb1f7c47200b9f26",
+    "employeeId": "EMP-108",
+    "fullName": "manash",
+    "email": "manash@sagex3desk.com",
+    "password": "$2a$10$OUajqqm3uFtChRqCg8338eYD1cgwvbZYXUD7uPFW1leeyboLcAnM6",
+    "contactNumber": "",
+    "designation": "Sage X3 Consultant",
+    "department": "Sage X3 Practice",
+    "role": "developer",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T15:31:23.134Z",
+    "createdAt": "2026-11-26T15:31:23.135Z",
+    "updatedAt": "2026-11-26T18:16:47.357Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0854c8d6de34a3eadd54ab",
+    "employeeId": "EMP-109",
+    "fullName": "jayesh",
+    "email": "jayesh@sagex3desk.com",
+    "password": "$2a$10$UThXcoP2tX2QFAKD4LR3Z.msgclrBU33nFKkJz8JFzrvOtrrN1ZK2",
+    "contactNumber": "",
+    "designation": "Sage X3 Consultant",
+    "department": "Sage X3 Practice",
+    "role": "developer",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T15:48:24.187Z",
+    "createdAt": "2026-11-26T15:48:24.188Z",
+    "updatedAt": "2026-11-26T18:16:47.576Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0854c8d6de34a3eadd54af",
+    "employeeId": "EMP-110",
+    "fullName": "aryan",
+    "email": "aryan@sagex3desk.com",
+    "password": "$2a$10$LW7vf3GPopXlsqNSBSKmBu0IGrFmZrzsEEeQNjltehhNUq9fJWsFO",
+    "contactNumber": "",
+    "designation": "Sage X3 Consultant",
+    "department": "Sage X3 Practice",
+    "role": "developer",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T15:48:24.329Z",
+    "createdAt": "2026-11-26T15:48:24.331Z",
+    "updatedAt": "2026-11-26T18:16:47.797Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0854c8d6de34a3eadd54b3",
+    "employeeId": "EMP-111",
+    "fullName": "sujal",
+    "email": "sujal@sagex3desk.com",
+    "password": "$2a$10$8JTEcGw42LEO9yvYMwpx3.vtyXRbZjIWK8JNB/biKbZcBLHzHJpri",
+    "contactNumber": "",
+    "designation": "Sage X3 Consultant",
+    "department": "Sage X3 Practice",
+    "role": "developer",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T15:48:24.475Z",
+    "createdAt": "2026-11-26T15:48:24.477Z",
+    "updatedAt": "2026-11-26T18:16:48.049Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0877cbacc5e2c0cf77886e",
+    "employeeId": "EMP-112",
+    "fullName": "Chinmay Koshe",
+    "email": "chinmaykoshe@grey.com",
+    "password": "$2a$10$UuaqqdrT9mnP4.u6pOf.pedmnklBJVBcdIv0SVXR9tEwCrPZ.sbxO",
+    "contactNumber": "9131231232",
+    "designation": "X3 dev",
+    "department": "Sage X3 Practice",
+    "role": "admin",
+    "team": null,
+    "clientRef": null,
+    "status": "Active",
+    "skills": [],
+    "avatarColor": "#2563eb",
+    "permissions": {
+      "canAssignTickets": false,
+      "canApproveDeployments": false,
+      "canManageClients": false,
+      "canViewReports": false,
+      "canWaiveTicketClose": false
+    },
+    "preferences": {
+      "theme": "light",
+      "emailNotifications": true
+    },
+    "isDeleted": false,
+    "deletedAt": null,
+    "joiningDate": "2026-11-26T18:17:47.779Z",
+    "createdAt": "2026-11-26T18:17:47.780Z",
+    "updatedAt": "2026-11-27T19:11:05.905Z",
+    "__v": 0
+  }
+]

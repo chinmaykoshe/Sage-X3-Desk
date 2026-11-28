@@ -1,0 +1,68 @@
+[
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b55",
+    "articleId": "KB-101",
+    "title": "Handling Multi-Line :86: Tags in Sage X3 MT940 Bank Imports",
+    "category": "4GL Scripting",
+    "sageX3Version": "V12 P30+",
+    "tags": [
+      "MT940",
+      "4GL",
+      "Bank Import",
+      "ZMT940IMP"
+    ],
+    "summary": "Best practices for parsing long structured :86: remittance strings in Sage X3 4GL without 255-character truncation.",
+    "content": "When importing MT940 files using custom 4GL routines, declare intermediate buffers as `Char(255)(1..10)` or `Clbfile` and concatenate lines until the next `:` tag prefix (`:61:`, `:62F:`, or `:86:`). Always run a full GL reconciliation in the Pilot folder before requesting Production deployment approval.",
+    "author": "6b070cfab30fdb5e7bdb8ab3",
+    "relatedTickets": [],
+    "isPublished": true,
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.799Z",
+    "updatedAt": "2026-11-25T16:29:47.799Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b57",
+    "articleId": "KB-103",
+    "title": "Production Deployment Checklist for Validated Sage X3 Folders",
+    "category": "Runbook",
+    "sageX3Version": "V11 / V12",
+    "tags": [
+      "Deployment",
+      "Pilot",
+      "Production",
+      "Patching"
+    ],
+    "summary": "Mandatory steps before promoting a patch from Pilot to Production.",
+    "content": "1. Verify all tasks under the parent ticket are Completed.\n2. Confirm Pilot Testing is marked Passed.\n3. Obtain Team Lead / Manager approval in Sage X3 Desk.\n4. Take folder snapshot / backup of modified `.src` and `.rpt` files.\n5. Recompile affected windows/screens and validate batch server status.",
+    "author": "6b070cfab30fdb5e7bdb8ab2",
+    "relatedTickets": [],
+    "isPublished": true,
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.799Z",
+    "updatedAt": "2026-11-25T16:29:47.799Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b56",
+    "articleId": "KB-102",
+    "title": "Optimizing Sage X3 REST Web Services for High-Line Invoices",
+    "category": "Web Services & API",
+    "sageX3Version": "V12",
+    "tags": [
+      "REST",
+      "YWS_APINV",
+      "Performance",
+      "Dimensions"
+    ],
+    "summary": "Eliminate redundant SQL roundtrips during Web Service subprogram calls by caching analytical dimensions.",
+    "content": "For invoices exceeding 50 lines, avoid calling `Read [DIE]` or `Call VERIF_CCE` repeatedly inside line loops for identical cost centers. Cache validated dimension pairs in a local 4GL hash/array variable per request.",
+    "author": "6b070cfab30fdb5e7bdb8ab4",
+    "relatedTickets": [],
+    "isPublished": true,
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.799Z",
+    "updatedAt": "2026-11-25T16:29:47.799Z",
+    "__v": 0
+  }
+]

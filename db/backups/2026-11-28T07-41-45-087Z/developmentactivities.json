@@ -1,0 +1,21 @@
+[
+  {
+    "_id": "6b0735384cea964f591b2404",
+    "employeeId": "6b070cfab30fdb5e7bdb8ab5",
+    "clientId": "6b070cfbb30fdb5e7bdb8aec",
+    "ticketId": "6b0735364cea964f591b237a",
+    "taskId": null,
+    "description": "Checked 4GL script ZTEST",
+    "investigationNotes": "",
+    "affectedComponent": "ZTEST.src",
+    "changesImplemented": "",
+    "testingPerformed": "",
+    "environment": "Pilot",
+    "workStatus": "In Development",
+    "timeSpent": 1.5,
+    "timestamp": "2026-11-25T19:21:28.502Z",
+    "createdAt": "2026-11-25T19:21:28.507Z",
+    "updatedAt": "2026-11-25T19:21:28.507Z",
+    "__v": 0
+  }
+]

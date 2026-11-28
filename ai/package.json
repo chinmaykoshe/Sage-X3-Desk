@@ -1,0 +1,15 @@
+{
+  "name": "sage-x3-desk-ai",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "services/ollamaService.js",
+  "scripts": {
+    "gateway": "node gateway.js",
+    "start": "node start-ai.cjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "tesseract.js": "^7.0.0",
+    "zod": "^3.24.1"
+  }
+}

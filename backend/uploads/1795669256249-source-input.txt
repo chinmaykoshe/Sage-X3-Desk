@@ -1,0 +1,256 @@
+BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502
+Anthony Taiwo<ataiwo@hightideinc.com>
+
+Patel, Digisha <Digisha.Patel@bmo.com>;
+Chinmay Koshe (Greytrix)
+Ragini Mulay (Greytrix);
+Deepak Gotmukale (Greytrix);Chitransh Vikas Jadhav;
+CAUTION: This email originated from outside the organization. Do not click links or open attachments unless you recognize the sender and know the content is safe. Otherwise, contact your IT Department.
+
+@Patel, Digisha good morning,
+
+ 
+
+See attached for each of the accounts. Let me know if I miss anything. Please refer to our conversation. We seek to replicate exactly what we have for other accounts currently.
+
+ 
+
+Anthony Taiwo, CTP| Head of Treasury
+
+C: 403.796.5201
+
+Email:ataiwo@hightideinc.com
+
+#112, 11127 15th Street NE | Calgary, AB T3K 2M4
+
+www.hightideinc.com
+
+TSXV:HITI | OTCQB:HITIF | FRA:2LY
+
+ 
+
+signature_798746437
+
+ 
+
+From: Chinmay Koshe (Greytrix) <Chinmay.Koshe@greytrix.com>
+Sent: November 24, 2026 1:10 AM
+To: Patel, Digisha <Digisha.Patel@bmo.com>; Anthony Taiwo <ataiwo@hightideinc.com>
+Cc: Ragini Mulay (Greytrix) <ragini@greytrix.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Chitransh Vikas Jadhav <cjadhav@basecampconsulting.co>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Hemal Damani <hdamani@hightideinc.com>; Sunita Moloo <smoloo@hightideinc.com>; Hemal Damani <hdamani@hightideinc.com>; ROSARIO, JACKSON <JACKSON.ROSARIO@bmo.com>; EGGUM, CANDACE <CANDACE.EGGUM@bmo.com>
+Subject: RE: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502
+
+ 
+
+Hi @Anthony Taiwo , Could you please share the completed form with Digisha at your earliest convenience so she can proceed with the SFTP directory setup.   Regards, Chinmay   From: Patel, Digisha <Digisha.Patel@bmo.com> Sent: 21 November 2026 00:13 To: C
+
+External sender <chinmay.koshe@greytrix.com>
+Make sure you trust this sender before taking any actions.
+
+Hi @Anthony Taiwo,
+
+Could you please share the completed form with Digisha at your earliest convenience so she can proceed with the SFTP directory setup.
+
+ 
+
+Regards,
+
+Chinmay
+
+ 
+
+From: Patel, Digisha <Digisha.Patel@bmo.com>
+Sent: 21 November 2026 00:13
+To: Chinmay Koshe (Greytrix) <Chinmay.Koshe@greytrix.com>; Anthony Taiwo <ataiwo@hightideinc.com>; Chitransh Vikas Jadhav <cjadhav@basecampconsulting.co>
+Cc: Ragini Mulay (Greytrix) <ragini@greytrix.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Hemal Damani <hdamani@hightideinc.com>; Sunita Moloo <smoloo@hightideinc.com>; Hemal Damani <hdamani@hightideinc.com>; ROSARIO, JACKSON <JACKSON.ROSARIO@bmo.com>; EGGUM, CANDACE <CANDACE.EGGUM@bmo.com>
+Subject: RE: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502
+
+ 
+
+CAUTION: This email originated from outside the organization. Do not click links or open attachments unless you recognize the sender and know the content is safe. Otherwise, contact your IT Department.
+
+ 
+
+Hi Chinmay,
+
+ 
+
+Thank you for letting me know,
+
+ 
+
+I thought the directory below were part of existing file you were receiving and it has stopped.
+
+ 
+
+The directory below has not been yet created; I will be creating the directory below as soon as I receive the form back from Anthony.
+
+ 
+
+Thank you,
+
+ 
+
+A black background with white text
+
+Description automatically generated
+
+ 
+
+You may receive a survey about our interaction with me. Your feedback is appreciated as it helps us grow & better serve you. Thank you for being a part of BMO family.
+
+ 
+
+ 
+
+ 
+
+Dates d’absence / Out of Office:  
+
+Digisha Patel
+Client Onboarding Advisor | Conseiller en intégration des clients
+
+Treasury & Payment Solutions | Solutions de Trésorerie et de Paiement
+
+BMO Commercial Bank
+
+105 St-Jacques W. 1st FL | Montreal, Quebec | H2Y 1L6
+
+Office Hours- 8:30am to 4:30pm EST
+
+digisha.patel@bmo.com
+
+T: 1 514-881-3748
+
+ 
+
+For any technical inquiries, please contact BMO Technical Help Desk at:
+
+Telephone: 289-305-5940
+
+Toll-Free: 1-800-565-6444
+
+Email: TPSCAD.HelpDesk@bmo.com
+Monday to Friday, 7:30 a.m. – 8:00 p.m. (ET)
+
+ 
+
+Online Resources:
+
+Visit our Help Centre for step by step guides and training resources
+
+Register for Live Training
+
+New to a service? Watch our video tutorials
+
+bmo.com
+
+ 
+
+This email and its attachments are confidential. Any unauthorized use or disclaimer is prohibited. If you receive this email in error, please notify me by reply email and permanently delete the original without making any copies or disclosing its contents.
+
+ 
+
+ 
+
+From: Chinmay Koshe (Greytrix) <Chinmay.Koshe@greytrix.com>
+Sent: Friday, November 20, 2026 1:25 PM
+To: Patel, Digisha <Digisha.Patel@bmo.com>; Anthony Taiwo <ataiwo@hightideinc.com>; Chitransh Vikas Jadhav <cjadhav@basecampconsulting.co>
+Cc: Ragini Mulay (Greytrix) <ragini@greytrix.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Hemal Damani <hdamani@hightideinc.com>; Sunita Moloo <smoloo@hightideinc.com>; Hemal Damani <hdamani@hightideinc.com>; ROSARIO, JACKSON <JACKSON.ROSARIO@bmo.com>; EGGUM, CANDACE <CANDACE.EGGUM@bmo.com>
+Subject: Re: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502
+
+ 
+
+Hi Digisha,
+
+We have tested both SFTP connections using the credentials provided.
+
+Please note that we are using the same password across both usernames, as well as the other SFTP usernames that have already been configured and are working successfully.
+
+However, we are still encountering an "Access denied" error for both connections during authentication.
+
+The details are as follows:
+
+JSBMO: ADW41931-M_BAIRPTING-PD843BAIFLE-A:
+LHBMO: ADW41931-M_BAIRPTING-PD851BAIFLE-A:
+I have attached screenshots of the errors encountered for both connections for your reference.
+
+Could you please check whether both usernames are correctly configured and enabled for SFTP access and verify if there are any authentication-related issues on your end.
+
+Regards,
+
+Chinmay
+
+ 
+
+From: Patel, Digisha <Digisha.Patel@bmo.com>
+Sent: Friday, November 20, 2026 11:18 PM
+To: Anthony Taiwo <ataiwo@hightideinc.com>; Chitransh Vikas Jadhav <cjadhav@basecampconsulting.co>; Chinmay Koshe (Greytrix) <Chinmay.Koshe@greytrix.com>
+Cc: Ragini Mulay (Greytrix) <ragini@greytrix.com>; Deepak Gotmukale (Greytrix) <Deepak.Gotmukale@greytrix.com>; Muhammad Waqar Majeed - X3 Expert <mwaqarmajeed@basecampconsulting.co>; Hemal Damani <hdamani@hightideinc.com>; Sunita Moloo <smoloo@hightideinc.com>; Hemal Damani <hdamani@hightideinc.com>; ROSARIO, JACKSON <JACKSON.ROSARIO@bmo.com>; EGGUM, CANDACE <CANDACE.EGGUM@bmo.com>
+Subject: RE: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502
+
+ 
+
+CAUTION: This email originated from outside the organization. Do not click links or open attachments unless you recognize the sender and know the content is safe. Otherwise, contact your IT Department.
+
+ 
+
+Hi Anthony and team,
+
+ 
+
+Thank you for meeting me today,
+
+ 
+
+Attached are the forms that we need to add the report scheduler, once the form is completed, we will request new SFTP directory (mail slot) to support each report.  
+
+ 
+
+@Chinmay Koshe (Greytrix) Please let me know what errors you are receiving for the two directories below.  
+
+ 
+
+JSBMO: ADW41931-M_BAIRPTING-PD843BAIFLE-A:
+
+LHBMO: ADW41931-M_BAIRPTING-PD851BAIFLE-A:
+
+ 
+
+Thank you,
+
+ 
+
+A black background with white text
+
+Description automatically generated
+
+ 
+
+You may receive a survey about our interaction with me. Your feedback is appreciated as it helps us grow & better serve you. Thank you for being a part of BMO family.
+
+ 
+
+ 
+
+ 
+
+Dates d’absence / Out of Office:  
+
+Digisha Patel
+Client Onboarding Advisor | Conseiller en intégration des clients
+
+Treasury & Payment Solutions | Solutions de Trésorerie et de Paiement
+
+BMO Commercial Bank
+
+105 St-Jacques W. 1st FL | Montreal, Quebec | H2Y 1L6
+
+Office Hours- 8:30am to 4:30pm EST
+
+digisha.patel@bmo.com
+
+T: 1 514-881-3748
+
+ 
+
+For any technical inquiries, please con

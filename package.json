@@ -1,15 +1,25 @@
-  {
+{
   "name": "sage-x3-desk",
   "version": "1.0.0",
   "private": true,
-  "description": "Sage X3 Desk - Team Ticketing & Operations Management System",
+  "type": "module",
+  "description": "Sage X3 Desk - Hybrid Hosting Architecture (Frontend, Backend, DB, AI)",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "db",
+    "ai"
+  ],
   "scripts": {
-    "dev": "concurrently -n API,WEB -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
-    "start": "node kill-ports.cjs && node start-ai.cjs && npm --prefix server start",
-    "start:full": "node kill-ports.cjs && node start-ai.cjs && concurrently -n API,WEB -c blue,green \"npm --prefix server start\" \"npm --prefix client run dev\"",
-    "seed": "npm --prefix server run seed",
-    "build": "npm --prefix client run build",
-    "test:api": "node server/tests/api.test.js"
+    "dev": "concurrently -n API,WEB -c blue,green \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "start": "node kill-ports.cjs && node ai/start-ai.cjs && npm --prefix backend start",
+    "start:full": "node kill-ports.cjs && node ai/start-ai.cjs && concurrently -n API,WEB -c blue,green \"npm --prefix backend start\" \"npm --prefix frontend run dev\"",
+    "gateway:db": "npm --prefix db run gateway",
+    "gateway:ai": "npm --prefix ai run gateway",
+    "backup:db": "npm --prefix db run backup",
+    "seed": "npm --prefix db run seed",
+    "build": "npm --prefix frontend run build",
+    "test:api": "node backend/tests/api.test.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

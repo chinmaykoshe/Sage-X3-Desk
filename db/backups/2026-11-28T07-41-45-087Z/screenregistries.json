@@ -1,0 +1,728 @@
+[
+  {
+    "_id": "6b073533e6e9daf3c35a0b7d",
+    "screenKey": "dashboard",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:23.713Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Role-adapted operational overview and KPIs",
+    "label": "Overview",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/",
+    "sortOrder": 10,
+    "updatedAt": "2026-11-28T07:22:23.812Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b7e",
+    "screenKey": "my_tasks",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "change_status",
+      "track_time",
+      "add_dev_note"
+    ],
+    "createdAt": "2026-11-25T19:21:23.731Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Personal assigned tasks and time tracking",
+    "label": "My Work",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/my-tasks",
+    "sortOrder": 20,
+    "updatedAt": "2026-11-28T07:22:23.823Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b7f",
+    "screenKey": "inbox",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:23.742Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Real-time notifications and mentions",
+    "label": "Inbox",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/notifications",
+    "sortOrder": 30,
+    "updatedAt": "2026-11-28T07:22:23.836Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b80",
+    "screenKey": "smart_intake",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create"
+    ],
+    "createdAt": "2026-11-25T19:21:23.751Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "OCR screenshot & email ticket intake",
+    "label": "Smart Intake (AI)",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/smart-intake",
+    "sortOrder": 40,
+    "updatedAt": "2026-11-28T07:22:23.839Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b81",
+    "screenKey": "calendar",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:23.820Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Due dates, deadlines, and sprint schedule",
+    "label": "Calendar",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/calendar",
+    "sortOrder": 50,
+    "updatedAt": "2026-11-28T07:22:23.842Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b82",
+    "screenKey": "tickets",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "delete",
+      "assign",
+      "reassign",
+      "change_status",
+      "approve",
+      "reject",
+      "request_changes",
+      "export",
+      "view_history"
+    ],
+    "createdAt": "2026-11-25T19:21:23.845Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Approved operational ticket queue & Kanban",
+    "label": "All Tickets",
+    "navigationGroup": "TICKET MANAGEMENT",
+    "parentKey": null,
+    "route": "/tickets",
+    "sortOrder": 60,
+    "updatedAt": "2026-11-28T07:22:23.845Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b83",
+    "screenKey": "approval_inbox",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "approve",
+      "reject",
+      "request_changes",
+      "edit"
+    ],
+    "createdAt": "2026-11-25T19:21:23.881Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": false
+    },
+    "description": "Team Lead approval queue for pending tickets and AI actions",
+    "label": "TL Approvals",
+    "navigationGroup": "TICKET MANAGEMENT",
+    "parentKey": null,
+    "route": "/approvals",
+    "sortOrder": 70,
+    "updatedAt": "2026-11-28T07:22:23.848Z"
+  },
+  {
+    "_id": "6b073533e6e9daf3c35a0b84",
+    "screenKey": "task_board",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "delete",
+      "assign",
+      "reassign",
+      "change_status",
+      "track_time",
+      "add_dev_note"
+    ],
+    "createdAt": "2026-11-25T19:21:23.968Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Execution tasks & workflow board",
+    "label": "Task Board",
+    "navigationGroup": "TICKET MANAGEMENT",
+    "parentKey": null,
+    "route": "/task-board",
+    "sortOrder": 80,
+    "updatedAt": "2026-11-28T07:22:23.851Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b85",
+    "screenKey": "clients",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "delete",
+      "view_documents",
+      "upload_documents",
+      "download_documents"
+    ],
+    "createdAt": "2026-11-25T19:21:23.998Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Sage X3 client profiles, folders & documents",
+    "label": "Clients",
+    "navigationGroup": "MANAGEMENT",
+    "parentKey": null,
+    "route": "/clients",
+    "sortOrder": 90,
+    "updatedAt": "2026-11-28T07:22:23.854Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b86",
+    "screenKey": "projects",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "delete",
+      "assign"
+    ],
+    "createdAt": "2026-11-25T19:21:24.003Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Sage X3 implementation & enhancement projects",
+    "label": "Projects",
+    "navigationGroup": "MANAGEMENT",
+    "parentKey": null,
+    "route": "/projects",
+    "sortOrder": 100,
+    "updatedAt": "2026-11-28T07:22:23.857Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b87",
+    "screenKey": "team",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "deactivate",
+      "manage_permissions"
+    ],
+    "createdAt": "2026-11-25T19:21:24.015Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": false
+    },
+    "description": "Employee directory and roles",
+    "label": "Team Members",
+    "navigationGroup": "MANAGEMENT",
+    "parentKey": null,
+    "route": "/team",
+    "sortOrder": 110,
+    "updatedAt": "2026-11-28T07:22:23.860Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b88",
+    "screenKey": "workload",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.019Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": false
+    },
+    "description": "Team capacity and allocation",
+    "label": "Workload",
+    "navigationGroup": "MANAGEMENT",
+    "parentKey": null,
+    "route": "/workload",
+    "sortOrder": 120,
+    "updatedAt": "2026-11-28T07:22:23.863Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b89",
+    "screenKey": "deployments",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "approve",
+      "deploy_production"
+    ],
+    "createdAt": "2026-11-25T19:21:24.023Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Pilot & Production release pipeline",
+    "label": "Deployments",
+    "navigationGroup": "MANAGEMENT",
+    "parentKey": null,
+    "route": "/deployments",
+    "sortOrder": 130,
+    "updatedAt": "2026-11-28T07:22:23.866Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b8a",
+    "screenKey": "reports",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "export"
+    ],
+    "createdAt": "2026-11-25T19:21:24.029Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": false
+    },
+    "description": "SLA, workload, and resolution analytics",
+    "label": "Reports",
+    "navigationGroup": "INSIGHTS",
+    "parentKey": null,
+    "route": "/reports",
+    "sortOrder": 140,
+    "updatedAt": "2026-11-28T07:22:23.870Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b8b",
+    "screenKey": "activity_logs",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.113Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Operational activity timeline",
+    "label": "Activity",
+    "navigationGroup": "INSIGHTS",
+    "parentKey": null,
+    "route": "/activity-logs",
+    "sortOrder": 150,
+    "updatedAt": "2026-11-28T07:22:23.872Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b8c",
+    "screenKey": "knowledge_base",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "delete"
+    ],
+    "createdAt": "2026-11-25T19:21:24.152Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Sage X3 troubleshooting runbooks",
+    "label": "Knowledge Base",
+    "navigationGroup": "INSIGHTS",
+    "parentKey": null,
+    "route": "/knowledge-base",
+    "sortOrder": 160,
+    "updatedAt": "2026-11-28T07:22:23.875Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b8d",
+    "screenKey": "admin_overview",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.179Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Global Administrator system health & audit overview",
+    "label": "System Overview",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/overview",
+    "sortOrder": 170,
+    "updatedAt": "2026-11-28T07:22:23.878Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b8e",
+    "screenKey": "admin_user_activity",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "export"
+    ],
+    "createdAt": "2026-11-25T19:21:24.184Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Unified chronological employee operational timeline",
+    "label": "User Activity",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/user-activity",
+    "sortOrder": 180,
+    "updatedAt": "2026-11-28T07:22:23.880Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b8f",
+    "screenKey": "admin_dev_logs",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create"
+    ],
+    "createdAt": "2026-11-25T19:21:24.191Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Chronological employee development & X3 script updates",
+    "label": "Development Logs",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/dev-logs",
+    "sortOrder": 190,
+    "updatedAt": "2026-11-28T07:22:23.883Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b90",
+    "screenKey": "admin_system_logs",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.200Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Backend errors, AI/Ollama failures, and auth failures",
+    "label": "System Logs",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/system-logs",
+    "sortOrder": 200,
+    "updatedAt": "2026-11-28T07:22:23.886Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b91",
+    "screenKey": "admin_api_monitoring",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.203Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "API endpoint errors, latencies, and response metrics",
+    "label": "API Monitoring",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/api-monitoring",
+    "sortOrder": 210,
+    "updatedAt": "2026-11-28T07:22:23.889Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b92",
+    "screenKey": "admin_deployment_history",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.208Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Cross-client chronological release & approval audit",
+    "label": "Deployment History",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/deployments",
+    "sortOrder": 220,
+    "updatedAt": "2026-11-28T07:22:23.892Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b93",
+    "screenKey": "admin_time_tracking",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "export"
+    ],
+    "createdAt": "2026-11-25T19:21:24.212Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Team-wide logged development hours",
+    "label": "Time Tracking",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/time-tracking",
+    "sortOrder": 230,
+    "updatedAt": "2026-11-28T07:22:23.895Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b94",
+    "screenKey": "admin_ai_activity",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.218Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "X3 AI intents, drafts, OCR status & errors",
+    "label": "AI Activity",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/ai-activity",
+    "sortOrder": 240,
+    "updatedAt": "2026-11-28T07:22:23.897Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b95",
+    "screenKey": "admin_audit_logs",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view"
+    ],
+    "createdAt": "2026-11-25T19:21:24.227Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Immutable append-only security and governance audit trail",
+    "label": "Security & Audit Logs",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/audit-logs",
+    "sortOrder": 250,
+    "updatedAt": "2026-11-28T07:22:23.900Z"
+  },
+  {
+    "_id": "6b073534e6e9daf3c35a0b96",
+    "screenKey": "settings",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "edit",
+      "manage_permissions",
+      "manage_groups"
+    ],
+    "createdAt": "2026-11-25T19:21:24.237Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Workspace configuration, screen access & permission groups",
+    "label": "Settings & Access",
+    "navigationGroup": "SYSTEM",
+    "parentKey": null,
+    "route": "/settings",
+    "sortOrder": 260,
+    "updatedAt": "2026-11-28T07:22:23.907Z"
+  },
+  {
+    "_id": "6b086025e6e9daf3c35a0b9d",
+    "screenKey": "email_inbox",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit"
+    ],
+    "createdAt": "2026-11-26T16:36:53.715Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": false
+    },
+    "description": "Incoming Outlook & Gmail email queue, manual review, and ticket linking",
+    "label": "Email Inbox",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/email-inbox",
+    "sortOrder": 45,
+    "updatedAt": "2026-11-28T07:22:23.905Z"
+  },
+  {
+    "_id": "6b09b35fe6e9daf3c35a0bd2",
+    "screenKey": "admin_governance",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "delete"
+    ],
+    "createdAt": "2026-11-27T16:44:15.885Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": false,
+      "developer": false
+    },
+    "description": "Manage new users, newly created tickets, duplicate tickets, and deletion audit logs",
+    "label": "Data & Duplicate Control",
+    "navigationGroup": "ADMINISTRATION",
+    "parentKey": null,
+    "route": "/admin/governance",
+    "sortOrder": 260,
+    "updatedAt": "2026-11-28T07:22:23.902Z"
+  },
+  {
+    "_id": "6b09b946e6e9daf3c35a0bd3",
+    "screenKey": "timesheet",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit",
+      "delete",
+      "export"
+    ],
+    "createdAt": "2026-11-27T17:09:26.018Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Individual daily/monthly timesheet entry across clients and projects",
+    "label": "Timesheet",
+    "navigationGroup": "WORKSPACE",
+    "parentKey": null,
+    "route": "/timesheet",
+    "sortOrder": 25,
+    "updatedAt": "2026-11-28T07:22:23.827Z"
+  },
+  {
+    "_id": "6b09c866e6e9daf3c35a0bd4",
+    "screenKey": "help_center",
+    "__v": 0,
+    "active": true,
+    "availableActions": [
+      "view",
+      "create",
+      "edit"
+    ],
+    "createdAt": "2026-11-27T18:13:58.478Z",
+    "defaultRoleAccess": {
+      "admin": true,
+      "team_lead": true,
+      "developer": true
+    },
+    "description": "Report software bugs, UI issues, and support tickets directly to Administrators",
+    "label": "Help Center",
+    "navigationGroup": "SYSTEM",
+    "parentKey": null,
+    "route": "/help-center",
+    "sortOrder": 185,
+    "updatedAt": "2026-11-28T07:22:23.831Z"
+  }
+]

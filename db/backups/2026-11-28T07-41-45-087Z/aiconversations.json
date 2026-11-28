@@ -1,0 +1,2215 @@
+[
+  {
+    "_id": "6b070d6d2f17da4502ffd460",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "Show all open tickets",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Show all open tickets",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b070d6e2f17da4502ffd474",
+        "createdAt": "2026-11-25T16:31:42.118Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 5 matching ticket(s). Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b070d6e2f17da4502ffd475",
+        "createdAt": "2026-11-25T16:31:42.119Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "FILTER_TICKETS",
+      "lastResultIds": [
+        "6b070cfbb30fdb5e7bdb8b22",
+        "6b070cfbb30fdb5e7bdb8b1d",
+        "6b070cfbb30fdb5e7bdb8b1e",
+        "6b070cfbb30fdb5e7bdb8b20",
+        "6b070cfbb30fdb5e7bdb8b1f"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:31:42.008Z",
+    "updatedAt": "2026-11-25T16:31:42.124Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b070e662f17da4502ffd654",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "Show pending TL approvals",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Show pending TL approvals",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b070e662f17da4502ffd667",
+        "createdAt": "2026-11-25T16:35:50.242Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 3 submission(s) waiting in the TL Approval Inbox.",
+        "intent": "SHOW_APPROVAL_QUEUE",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/approvals?status=Pending%20TL%20Approval"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "approval",
+        "_id": "6b070e662f17da4502ffd668",
+        "createdAt": "2026-11-25T16:35:50.242Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "SHOW_APPROVAL_QUEUE",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:35:50.144Z",
+    "updatedAt": "2026-11-25T16:35:50.244Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b070e6b2f17da4502ffd67a",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "X3 AI Session",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Show recent Production deployments",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b070e712f17da4502ffd696",
+        "createdAt": "2026-11-25T16:36:01.053Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Opening the Sage X3 Deployment Pipeline.",
+        "intent": "NAVIGATE",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/deployments"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b070e712f17da4502ffd697",
+        "createdAt": "2026-11-25T16:36:01.054Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "NAVIGATE",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:35:55.657Z",
+    "updatedAt": "2026-11-25T16:36:01.056Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b070e752f17da4502ffd6cf",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:36:05.113Z",
+    "updatedAt": "2026-11-25T16:36:05.113Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070e792f17da4502ffd6d3",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:36:09.557Z",
+    "updatedAt": "2026-11-25T16:36:09.557Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735374cea964f591b23d7",
+    "userId": "6b070cfab30fdb5e7bdb8ab5",
+    "title": "Open settings page",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Open settings page",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b0735384cea964f591b23ea",
+        "createdAt": "2026-11-25T19:21:28.298Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Access denied: you do not have permission to view \"settings\".",
+        "intent": "NAVIGATE",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b0735384cea964f591b23eb",
+        "createdAt": "2026-11-25T19:21:28.299Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "NAVIGATE",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T19:21:27.935Z",
+    "updatedAt": "2026-11-25T19:21:28.301Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b07bbdbf3c5ecec773c5f44",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "Find overdue tasks",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Find overdue tasks",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b07bbdcf3c5ecec773c5f58",
+        "createdAt": "2026-11-26T04:55:56.031Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 1 matching task(s).",
+        "intent": "FILTER_TASKS",
+        "action": {
+          "type": "FILTER_TASKS",
+          "route": "/task-board?scope=all&view=overdue",
+          "filters": {
+            "scope": "all",
+            "view": "overdue"
+          }
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b07bbdcf3c5ecec773c5f59",
+        "createdAt": "2026-11-26T04:55:56.032Z"
+      },
+      {
+        "role": "user",
+        "content": "Show tickets for ABC Manufacturing",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b07bbe6f3c5ecec773c5fb7",
+        "createdAt": "2026-11-26T04:56:06.685Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 5 matching ticket(s) for Hindustan Precision Manufacturing Ltd.. Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets?client=6b070cfbb30fdb5e7bdb8ae9",
+          "filters": {
+            "client": "6b070cfbb30fdb5e7bdb8ae9"
+          }
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b07bbe6f3c5ecec773c5fb8",
+        "createdAt": "2026-11-26T04:56:06.686Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": "6b070cfbb30fdb5e7bdb8ae9",
+      "lastClientName": "Hindustan Precision Manufacturing Ltd.",
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "FILTER_TICKETS",
+      "lastFilters": {
+        "client": "6b070cfbb30fdb5e7bdb8ae9"
+      },
+      "lastResultIds": [
+        "6b070cfbb30fdb5e7bdb8b1d",
+        "6b0710b7949a508286e0ad32",
+        "6b0710b4949a508286e0ad07",
+        "6b0710b1949a508286e0acd6",
+        "6b070cfbb30fdb5e7bdb8b20"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T04:55:55.840Z",
+    "updatedAt": "2026-11-26T04:56:06.698Z",
+    "__v": 2
+  },
+  {
+    "_id": "6b0847712fef455340979d51",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "can you add client hightide here",
+    "messages": [
+      {
+        "role": "user",
+        "content": "can you add client hightide here",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b08477d2fef455340979d67",
+        "createdAt": "2026-11-26T14:51:41.162Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 5 matching ticket(s) for Hindustan Precision Manufacturing Ltd.. Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets?client=6b070cfbb30fdb5e7bdb8ae9&priority=High",
+          "filters": {
+            "client": "6b070cfbb30fdb5e7bdb8ae9",
+            "priority": [
+              "High"
+            ]
+          }
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b08477d2fef455340979d68",
+        "createdAt": "2026-11-26T14:51:41.163Z"
+      },
+      {
+        "role": "user",
+        "content": "no create new client 'hightide ventures here'",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b0847932fef455340979ea8",
+        "createdAt": "2026-11-26T14:52:03.271Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 5 matching ticket(s) for Hindustan Precision Manufacturing Ltd.. Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets?client=6b070cfbb30fdb5e7bdb8ae9&priority=High",
+          "filters": {
+            "client": "6b070cfbb30fdb5e7bdb8ae9",
+            "priority": [
+              "High"
+            ]
+          }
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b0847932fef455340979ea9",
+        "createdAt": "2026-11-26T14:52:03.273Z"
+      },
+      {
+        "role": "user",
+        "content": "can you create new user named arnav pojari here",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b0847bc2fef455340979fce",
+        "createdAt": "2026-11-26T14:52:44.047Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Prepared ticket draft DRF-1025: \"Create New User (ARNAV POJARI)\". Client was not verified automatically—open the draft to select the client before TL approval.",
+        "intent": "CREATE_TICKET_DRAFT",
+        "action": {
+          "type": "OPEN_DRAFT",
+          "draftId": "6b0847bb2fef455340979fc1",
+          "route": "/approvals?draft=6b0847bb2fef455340979fc1"
+        },
+        "draftId": "6b0847bb2fef455340979fc1",
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b0847bc2fef455340979fcf",
+        "createdAt": "2026-11-26T14:52:44.048Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": "6b070cfbb30fdb5e7bdb8ae9",
+      "lastClientName": "Hindustan Precision Manufacturing Ltd.",
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "FILTER_TICKETS",
+      "lastFilters": {
+        "client": "6b070cfbb30fdb5e7bdb8ae9",
+        "priority": [
+          "High"
+        ]
+      },
+      "lastResultIds": [
+        "6b07c428999dd9a47e4a97f6",
+        "6b07c3e302d2ec39f8c160c4",
+        "6b0710b7949a508286e0ad32",
+        "6b0710b4949a508286e0ad07",
+        "6b0710b1949a508286e0acd6"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T14:51:29.380Z",
+    "updatedAt": "2026-11-26T14:52:44.070Z",
+    "__v": 3
+  },
+  {
+    "_id": "6b08487c2fef45534097a1c9",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create new user arnav as 4gl dev",
+    "messages": [
+      {
+        "role": "user",
+        "content": "create new user arnav as 4gl dev",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b0849372fef45534097a2a1",
+        "createdAt": "2026-11-26T14:59:03.410Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Prepared ticket draft DRF-1026: \"create new user arnav as 4gl dev\". Client was not verified automatically—open the draft to select the client before TL approval.",
+        "intent": "CREATE_TICKET_DRAFT",
+        "action": {
+          "type": "OPEN_DRAFT",
+          "draftId": "6b0849362fef45534097a28f",
+          "route": "/approvals?draft=6b0849362fef45534097a28f"
+        },
+        "draftId": "6b0849362fef45534097a28f",
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b0849372fef45534097a2a2",
+        "createdAt": "2026-11-26T14:59:03.417Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T14:55:56.064Z",
+    "updatedAt": "2026-11-26T14:59:03.445Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b0849322fef45534097a27e",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T14:58:58.860Z",
+    "updatedAt": "2026-11-26T14:58:58.860Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084ae03d76220a19a0fafa",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create a client hightide ventures",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:06:08.979Z",
+    "updatedAt": "2026-11-26T15:06:08.979Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084aec3d76220a19a0fb20",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create new user arnav",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:06:20.651Z",
+    "updatedAt": "2026-11-26T15:06:20.651Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084ecf3d76220a19a100d0",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create a new client as flower wood",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:22:55.040Z",
+    "updatedAt": "2026-11-26T15:22:55.040Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084efa3d76220a19a101e5",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create a new user chinmay",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:23:38.551Z",
+    "updatedAt": "2026-11-26T15:23:38.551Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0850cbbb1f7c47200b9f15",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create user manash",
+    "messages": [
+      {
+        "role": "user",
+        "content": "create user manash",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b0850cbbb1f7c47200b9f2a",
+        "createdAt": "2026-11-26T15:31:23.268Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Created user manash (EMP-108 · manash@sagex3desk.com, Sage X3 Consultant). Default password: Password@123.",
+        "intent": "CREATE_USER_REQUEST",
+        "action": {
+          "type": "OPEN_CREATED",
+          "route": "/team/6b0850cbbb1f7c47200b9f26",
+          "label": "Go to manash"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "success",
+        "_id": "6b0850cbbb1f7c47200b9f2b",
+        "createdAt": "2026-11-26T15:31:23.269Z"
+      },
+      {
+        "role": "user",
+        "content": "create project for hightide where 2 new banks are needed to be setuped",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b085109bb1f7c47200ba05f",
+        "createdAt": "2026-11-26T15:32:25.356Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Created project \"for hightide where 2 new banks are needed to be setuped\" (PRJ-105).",
+        "intent": "CREATE_PROJECT_REQUEST",
+        "action": {
+          "type": "OPEN_CREATED",
+          "route": "/projects/6b085109bb1f7c47200ba05b",
+          "label": "Go to for hightide where 2 new banks are needed to be setuped"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "success",
+        "_id": "6b085109bb1f7c47200ba060",
+        "createdAt": "2026-11-26T15:32:25.357Z"
+      },
+      {
+        "role": "user",
+        "content": "create a task for issue faced when posting jv",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b08513abb1f7c47200ba199",
+        "createdAt": "2026-11-26T15:33:14.648Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b08513abb1f7c47200ba19a",
+        "createdAt": "2026-11-26T15:33:14.648Z"
+      },
+      {
+        "role": "user",
+        "content": "new ticket",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b08514bbb1f7c47200ba2c3",
+        "createdAt": "2026-11-26T15:33:31.850Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could not find ticket TKT-2026-00112.",
+        "intent": "OPEN_TICKET",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b08514bbb1f7c47200ba2c4",
+        "createdAt": "2026-11-26T15:33:31.851Z"
+      },
+      {
+        "role": "user",
+        "content": "draft a new ticket",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b085158bb1f7c47200ba3ee",
+        "createdAt": "2026-11-26T15:33:44.647Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Created ticket draft with the provided details.",
+        "intent": "CREATE_TICKET_DRAFT",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b085158bb1f7c47200ba3ef",
+        "createdAt": "2026-11-26T15:33:44.648Z"
+      },
+      {
+        "role": "user",
+        "content": "create client palmleco",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b08519dbb1f7c47200ba51f",
+        "createdAt": "2026-11-26T15:34:53.859Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Created client \"palmleco\" (CLT-107).",
+        "intent": "CREATE_CLIENT_REQUEST",
+        "action": {
+          "type": "OPEN_CREATED",
+          "route": "/clients/6b08519dbb1f7c47200ba518",
+          "label": "Go to palmleco"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "success",
+        "_id": "6b08519dbb1f7c47200ba520",
+        "createdAt": "2026-11-26T15:34:53.860Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "CREATE_TICKET_DRAFT",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:31:23.050Z",
+    "updatedAt": "2026-11-26T15:34:53.864Z",
+    "__v": 6
+  },
+  {
+    "_id": "6b085499bb1f7c47200ba750",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create 3 new users jayesh aryan and sujal",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:47:37.086Z",
+    "updatedAt": "2026-11-26T15:47:37.086Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0854c8d6de34a3eadd549a",
+    "userId": "6b070cfab30fdb5e7bdb8ab2",
+    "title": "create 3 new users jayesh aryan and sujal",
+    "messages": [
+      {
+        "role": "user",
+        "content": "create 3 new users jayesh aryan and sujal",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b0854c8d6de34a3eadd54b7",
+        "createdAt": "2026-11-26T15:48:24.624Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Created 3 user(s): jayesh (EMP-109), aryan (EMP-110), sujal (EMP-111).",
+        "intent": "CREATE_USER_REQUEST",
+        "action": {
+          "type": "OPEN_CREATED",
+          "buttons": [
+            {
+              "label": "Go to jayesh",
+              "route": "/team/6b0854c8d6de34a3eadd54ab"
+            },
+            {
+              "label": "Go to aryan",
+              "route": "/team/6b0854c8d6de34a3eadd54af"
+            },
+            {
+              "label": "Go to sujal",
+              "route": "/team/6b0854c8d6de34a3eadd54b3"
+            }
+          ],
+          "route": "/team/6b0854c8d6de34a3eadd54ab",
+          "label": "Go to jayesh"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "success",
+        "_id": "6b0854c8d6de34a3eadd54b8",
+        "createdAt": "2026-11-26T15:48:24.625Z"
+      },
+      {
+        "role": "user",
+        "content": "create 4 clients",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b085564d6de34a3eadd5609",
+        "createdAt": "2026-11-26T15:51:00.149Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Created 1 client(s): New Client (CLT-108).",
+        "intent": "CREATE_CLIENT_REQUEST",
+        "action": {
+          "type": "OPEN_CREATED",
+          "buttons": [
+            {
+              "label": "Go to New Client",
+              "route": "/clients/6b085564d6de34a3eadd5602"
+            }
+          ],
+          "route": "/clients/6b085564d6de34a3eadd5602",
+          "label": "Go to New Client"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "success",
+        "_id": "6b085564d6de34a3eadd560a",
+        "createdAt": "2026-11-26T15:51:00.149Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-26T15:48:24.120Z",
+    "updatedAt": "2026-11-26T15:51:00.153Z",
+    "__v": 2
+  },
+  {
+    "_id": "6b09b427d7f3a869b0781120",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "CSV format for clients",
+    "messages": [
+      {
+        "role": "user",
+        "content": "CSV format for clients",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09b427d7f3a869b0781132",
+        "createdAt": "2026-11-27T16:47:35.896Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Clients CSV format (paste rows or upload .csv):\nname, description, hosting, env1, env2\nAcme Corp, Sage X3 V12 rollout, AWS Cloud, ACMEPLT, ACMEPRD\nBeta Ltd, EDI & Banking setup, Azure, BETAPLT, BETAPRD",
+        "intent": "BULK_CREATE_TEMPLATE",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09b427d7f3a869b0781133",
+        "createdAt": "2026-11-27T16:47:35.897Z"
+      },
+      {
+        "role": "user",
+        "content": "password fro admin",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09b455d7f3a869b078119a",
+        "createdAt": "2026-11-27T16:48:21.809Z"
+      },
+      {
+        "role": "assistant",
+        "content": "The password for the admin user is 'admin123'.",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09b455d7f3a869b078119b",
+        "createdAt": "2026-11-27T16:48:21.810Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T16:47:35.825Z",
+    "updatedAt": "2026-11-27T16:48:21.813Z",
+    "__v": 2
+  },
+  {
+    "_id": "6b09b476d7f3a869b07811ab",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "dumb client",
+    "messages": [
+      {
+        "role": "user",
+        "content": "dumb client",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09b478d7f3a869b07811be",
+        "createdAt": "2026-11-27T16:48:56.051Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 1 client(s).",
+        "intent": "FILTER_CLIENTS",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/clients?search=hightide%20ventures"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09b478d7f3a869b07811bf",
+        "createdAt": "2026-11-27T16:48:56.052Z"
+      },
+      {
+        "role": "user",
+        "content": "new users",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09b495d7f3a869b07811ef",
+        "createdAt": "2026-11-27T16:49:25.922Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 33 submission(s) waiting in the TL Approval Inbox.",
+        "intent": "SHOW_APPROVAL_QUEUE",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/approvals?status=Pending%20TL%20Approval"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "approval",
+        "_id": "6b09b495d7f3a869b07811f0",
+        "createdAt": "2026-11-27T16:49:25.923Z"
+      },
+      {
+        "role": "user",
+        "content": "list new users",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09b4a3d7f3a869b078122d",
+        "createdAt": "2026-11-27T16:49:39.620Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09b4a3d7f3a869b078122e",
+        "createdAt": "2026-11-27T16:49:39.621Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T16:48:54.702Z",
+    "updatedAt": "2026-11-27T16:49:39.625Z",
+    "__v": 3
+  },
+  {
+    "_id": "6b09c01e92f6d1c2e0e20761",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "list all the users",
+    "messages": [
+      {
+        "role": "user",
+        "content": "list all the users",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c02792f6d1c2e0e20784",
+        "createdAt": "2026-11-27T17:38:47.879Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c02792f6d1c2e0e20785",
+        "createdAt": "2026-11-27T17:38:47.885Z"
+      },
+      {
+        "role": "user",
+        "content": "list the clients",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c03692f6d1c2e0e207b3",
+        "createdAt": "2026-11-27T17:39:02.748Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c03692f6d1c2e0e207b4",
+        "createdAt": "2026-11-27T17:39:02.748Z"
+      },
+      {
+        "role": "user",
+        "content": "list clients",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c19392f6d1c2e0e20a23",
+        "createdAt": "2026-11-27T17:44:51.999Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 8 client(s):\n• New Client (CLT-108) — V12 P33 · Folders: NEWCPLT/NEWCPLT/NEWCPRD\n• palmleco (CLT-107) — V12 P33 · Folders: PALMPRD/PALMPLT/PALMPRD\n• as flower wood (CLT-106) — V12 P33 · Folders: ASFLPRD/ASFLPLT/ASFLPRD\n• hightide ventures (CLT-105) — V12 P33 · Folders: HIGHPRD/HIGHPLT/HIGHPRD\n• Zenith Automotive Components (CLI-104) — V11 P19 · Folders: ZNTPRD/ZNTPLT/ZNTPRD\n• Hindustan Precision Manufacturing Ltd. (CLI-101) — V12 P33 · Folders: HTPROD/HTPILOT/HTPROD\n• Apex Global Logistics Pvt. Ltd. (CLI-102) — V12 P31 · Folders: APXPRD/APXPLT/APXPRD\n• Meridian Pharma & Life Sciences (CLI-103) — V12 P34 · Folders: MRDPRD/MRDPLT/MRDPRD",
+        "intent": "QUERY_DATABASE",
+        "action": {
+          "type": "DB_QUERY_RESULT",
+          "buttons": [
+            {
+              "label": "View Clients",
+              "route": "/clients"
+            }
+          ]
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c19392f6d1c2e0e20a24",
+        "createdAt": "2026-11-27T17:44:52.000Z"
+      },
+      {
+        "role": "user",
+        "content": "list users",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c19a92f6d1c2e0e20a51",
+        "createdAt": "2026-11-27T17:44:58.367Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 12 user(s) (showing newest 10):\n• chinmay (EMP-112) — admin · X3 dev · Active · chinmaykoshe@grey.com (joined 2026-11-26)\n• sujal (EMP-111) — developer · Sage X3 Consultant · Active · sujal@sagex3desk.com (joined 2026-11-26)\n• aryan (EMP-110) — developer · Sage X3 Consultant · Active · aryan@sagex3desk.com (joined 2026-11-26)\n• jayesh (EMP-109) — developer · Sage X3 Consultant · Active · jayesh@sagex3desk.com (joined 2026-11-26)\n• manash (EMP-108) — developer · Sage X3 Consultant · Active · manash@sagex3desk.com (joined 2026-11-26)\n• chinmay (EMP-107) — developer · Sage X3 Consultant · Active · chinmay@sagex3desk.com (joined 2026-11-26)\n• arnav (EMP-106) — developer · Sage X3 Consultant · Active · arnav@sagex3desk.com (joined 2026-11-26)\n• Arjun Verma (EMP-105) — developer · Functional & Crystal Reports Consultant · Active · arjun.v@sagex3desk.com (joined 2026-11-25)\n• Ananya Rao (EMP-102) — team_lead · Sage X3 Team Lead · Active · ananya.rao@sagex3desk.com (joined 2026-11-25)\n• Rohan Kulkarni (EMP-103) — developer · Senior 4GL Developer · Active · rohan.k@sagex3desk.com (joined 2026-11-25)",
+        "intent": "QUERY_DATABASE",
+        "action": {
+          "type": "DB_QUERY_RESULT",
+          "buttons": [
+            {
+              "label": "Open Team Directory",
+              "route": "/team"
+            }
+          ]
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c19a92f6d1c2e0e20a52",
+        "createdAt": "2026-11-27T17:44:58.367Z"
+      },
+      {
+        "role": "user",
+        "content": "user with name chinmay",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c1b292f6d1c2e0e20a86",
+        "createdAt": "2026-11-27T17:45:22.074Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c1b292f6d1c2e0e20a87",
+        "createdAt": "2026-11-27T17:45:22.075Z"
+      },
+      {
+        "role": "user",
+        "content": "client hightide",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c1c892f6d1c2e0e20ab4",
+        "createdAt": "2026-11-27T17:45:44.144Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 8 client(s).",
+        "intent": "FILTER_CLIENTS",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/clients"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c1c892f6d1c2e0e20ab5",
+        "createdAt": "2026-11-27T17:45:44.144Z"
+      },
+      {
+        "role": "user",
+        "content": "ticket for the 2 new bank setup",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c1eb92f6d1c2e0e20b1b",
+        "createdAt": "2026-11-27T17:46:19.675Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c1eb92f6d1c2e0e20b1c",
+        "createdAt": "2026-11-27T17:46:19.676Z"
+      },
+      {
+        "role": "user",
+        "content": "show ticket for 2 new bank setup",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c1fd92f6d1c2e0e20b52",
+        "createdAt": "2026-11-27T17:46:37.301Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 36 ticket(s) (showing latest 10):\n• TKT-2026-1068 [New · Medium] Project Server Paused (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1067 [New · Medium] Personal Access Token Added (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1066 [New · Medium] ENDING SOON: 30% OFF (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1065 [New · High] Security Alert (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1063 [New · Medium] Non-IT Recruiter / Talent Acquisition Executive (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1062 [New · Medium] Support Request (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1061 [New · Medium] Support Request (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1060 [New · Medium] Love Story - Family Blessing (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1059 [New · Medium] Save your ideas about Diy Diwali Lanterns (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1058 [New · Medium] Support Request (Hindustan Precision Manufacturing Ltd. · Unassigned)",
+        "intent": "QUERY_DATABASE",
+        "action": {
+          "type": "DB_QUERY_RESULT",
+          "buttons": [
+            {
+              "label": "Open TKT-2026-1068",
+              "route": "/tickets/6b09b25dd7f3a869b0780963"
+            },
+            {
+              "label": "All Tickets",
+              "route": "/tickets"
+            }
+          ]
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c1fd92f6d1c2e0e20b53",
+        "createdAt": "2026-11-27T17:46:37.301Z"
+      },
+      {
+        "role": "user",
+        "content": "user with name chinmay",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c29292f6d1c2e0e20d1b",
+        "createdAt": "2026-11-27T17:49:06.786Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c29292f6d1c2e0e20d1c",
+        "createdAt": "2026-11-27T17:49:06.786Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [
+        "6b09b25dd7f3a869b0780963",
+        "6b099f11acc5e2c0cf779ccf",
+        "6b099d17acc5e2c0cf779cb2",
+        "6b099cdaacc5e2c0cf779c94",
+        "6b099cd7acc5e2c0cf779c6e",
+        "6b099cd1acc5e2c0cf779c5b",
+        "6b099cd0acc5e2c0cf779c48",
+        "6b099ccfacc5e2c0cf779c35",
+        "6b099ccbacc5e2c0cf779c22",
+        "6b099cc3acc5e2c0cf779c0f"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:38:38.693Z",
+    "updatedAt": "2026-11-27T17:49:06.795Z",
+    "__v": 9
+  },
+  {
+    "_id": "6b09c38292f6d1c2e0e20edd",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:53:06.378Z",
+    "updatedAt": "2026-11-27T17:53:06.378Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09c38392f6d1c2e0e20ee1",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:53:07.346Z",
+    "updatedAt": "2026-11-27T17:53:07.346Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09c38a92f6d1c2e0e20ef5",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "X3 AI Session",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Show recent Production deployments",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c39b92f6d1c2e0e20f22",
+        "createdAt": "2026-11-27T17:53:31.154Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Opening the Sage X3 Deployment Pipeline.",
+        "intent": "NAVIGATE",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/deployments"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09c39b92f6d1c2e0e20f23",
+        "createdAt": "2026-11-27T17:53:31.154Z"
+      },
+      {
+        "role": "user",
+        "content": "Show tickets for ABC Manufacturing",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c39f92f6d1c2e0e20f81",
+        "createdAt": "2026-11-27T17:53:35.420Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 29 matching ticket(s) for Hindustan Precision Manufacturing Ltd.. Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets?client=6b070cfbb30fdb5e7bdb8ae9",
+          "filters": {
+            "client": "6b070cfbb30fdb5e7bdb8ae9"
+          }
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c39f92f6d1c2e0e20f82",
+        "createdAt": "2026-11-27T17:53:35.420Z"
+      },
+      {
+        "role": "user",
+        "content": "Find overdue tasks",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c3a292f6d1c2e0e20fcf",
+        "createdAt": "2026-11-27T17:53:38.315Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 5 matching task(s).",
+        "intent": "FILTER_TASKS",
+        "action": {
+          "type": "FILTER_TASKS",
+          "route": "/task-board?scope=all&view=overdue",
+          "filters": {
+            "scope": "all",
+            "view": "overdue"
+          }
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c3a292f6d1c2e0e20fd0",
+        "createdAt": "2026-11-27T17:53:38.319Z"
+      },
+      {
+        "role": "user",
+        "content": "Show my assigned tasks",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c3a492f6d1c2e0e21024",
+        "createdAt": "2026-11-27T17:53:40.262Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Opening your assigned tasks in My Work.",
+        "intent": "SHOW_MY_WORK",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/my-tasks"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09c3a492f6d1c2e0e21025",
+        "createdAt": "2026-11-27T17:53:40.263Z"
+      },
+      {
+        "role": "user",
+        "content": "Show all open tickets",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c3a692f6d1c2e0e2105c",
+        "createdAt": "2026-11-27T17:53:42.398Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 34 matching ticket(s). Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c3a692f6d1c2e0e2105d",
+        "createdAt": "2026-11-27T17:53:42.398Z"
+      },
+      {
+        "role": "user",
+        "content": "CSV format for users",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c3a992f6d1c2e0e210ad",
+        "createdAt": "2026-11-27T17:53:45.227Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Users CSV format (paste rows or upload .csv):\nname, email, designation, role, department\nJayesh Patil, jayesh@sagex3desk.com, 4GL Developer, Developer / Employee, Sage X3 Practice\nAryan Shah, aryan@sagex3desk.com, Functional Consultant, Developer / Employee, Finance",
+        "intent": "BULK_CREATE_TEMPLATE",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09c3a992f6d1c2e0e210ae",
+        "createdAt": "2026-11-27T17:53:45.228Z"
+      },
+      {
+        "role": "user",
+        "content": "CSV format for clients",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c3ab92f6d1c2e0e210dd",
+        "createdAt": "2026-11-27T17:53:47.253Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Clients CSV format (paste rows or upload .csv):\nname, description, hosting, env1, env2\nAcme Corp, Sage X3 V12 rollout, AWS Cloud, ACMEPLT, ACMEPRD\nBeta Ltd, EDI & Banking setup, Azure, BETAPLT, BETAPRD",
+        "intent": "BULK_CREATE_TEMPLATE",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09c3ab92f6d1c2e0e210de",
+        "createdAt": "2026-11-27T17:53:47.254Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": "6b070cfbb30fdb5e7bdb8ae9",
+      "lastClientName": "Hindustan Precision Manufacturing Ltd.",
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "FILTER_TICKETS",
+      "lastResultIds": [
+        "6b070cfbb30fdb5e7bdb8b1d",
+        "6b09b25dd7f3a869b0780963",
+        "6b099f11acc5e2c0cf779ccf",
+        "6b099d17acc5e2c0cf779cb2",
+        "6b099cdaacc5e2c0cf779c94",
+        "6b099cd7acc5e2c0cf779c6e",
+        "6b099cd1acc5e2c0cf779c5b",
+        "6b099cd0acc5e2c0cf779c48",
+        "6b099ccfacc5e2c0cf779c35",
+        "6b099ccbacc5e2c0cf779c22",
+        "6b099cc3acc5e2c0cf779c0f",
+        "6b099cc2acc5e2c0cf779bfc",
+        "6b099cc1acc5e2c0cf779be9",
+        "6b099cbeacc5e2c0cf779bcb",
+        "6b0880c7acc5e2c0cf7798b8",
+        "6b0880c5acc5e2c0cf7798a5",
+        "6b0880bcacc5e2c0cf779892",
+        "6b087998acc5e2c0cf779856",
+        "6b0872b3acc5e2c0cf7777aa",
+        "6b0871aaacc5e2c0cf7775b2",
+        "6b0871a5acc5e2c0cf777469",
+        "6b08717bacc5e2c0cf777256",
+        "6b07c428999dd9a47e4a97f6",
+        "6b07c3e302d2ec39f8c160c4",
+        "6b07c3acbea42c4ffa7a38ba",
+        "6b07bb7af3c5ecec773c5e2b",
+        "6b0735634cea964f591b24c7",
+        "6b0710b7949a508286e0ad32",
+        "6b0710b4949a508286e0ad07",
+        "6b0710b1949a508286e0acd6",
+        "6b070cfbb30fdb5e7bdb8b22",
+        "6b070cfbb30fdb5e7bdb8b1e",
+        "6b070cfbb30fdb5e7bdb8b20",
+        "6b070cfbb30fdb5e7bdb8b1f"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:53:14.485Z",
+    "updatedAt": "2026-11-27T17:53:47.258Z",
+    "__v": 7
+  },
+  {
+    "_id": "6b09c3af92f6d1c2e0e210e8",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:53:51.649Z",
+    "updatedAt": "2026-11-27T17:53:51.649Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09c3b192f6d1c2e0e210ee",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "X3 AI Session",
+    "messages": [],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": null,
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:53:53.762Z",
+    "updatedAt": "2026-11-27T17:53:53.762Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09c3b492f6d1c2e0e210f2",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "X3 AI Session",
+    "messages": [
+      {
+        "role": "user",
+        "content": "ticket for 2 bank setup",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c40292f6d1c2e0e2111f",
+        "createdAt": "2026-11-27T17:55:14.311Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c40292f6d1c2e0e21120",
+        "createdAt": "2026-11-27T17:55:14.311Z"
+      },
+      {
+        "role": "user",
+        "content": "show ticket with 2 bank setup",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c42392f6d1c2e0e2117d",
+        "createdAt": "2026-11-27T17:55:47.683Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 36 ticket(s) (showing latest 10):\n• TKT-2026-1068 [New · Medium] Project Server Paused (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1067 [New · Medium] Personal Access Token Added (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1066 [New · Medium] ENDING SOON: 30% OFF (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1065 [New · High] Security Alert (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1063 [New · Medium] Non-IT Recruiter / Talent Acquisition Executive (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1062 [New · Medium] Support Request (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1061 [New · Medium] Support Request (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1060 [New · Medium] Love Story - Family Blessing (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1059 [New · Medium] Save your ideas about Diy Diwali Lanterns (Hindustan Precision Manufacturing Ltd. · Unassigned)\n• TKT-2026-1058 [New · Medium] Support Request (Hindustan Precision Manufacturing Ltd. · Unassigned)",
+        "intent": "QUERY_DATABASE",
+        "action": {
+          "type": "DB_QUERY_RESULT",
+          "buttons": [
+            {
+              "label": "Open TKT-2026-1068",
+              "route": "/tickets/6b09b25dd7f3a869b0780963"
+            },
+            {
+              "label": "All Tickets",
+              "route": "/tickets"
+            }
+          ]
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c42392f6d1c2e0e2117e",
+        "createdAt": "2026-11-27T17:55:47.684Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "QUERY_DATABASE",
+      "lastResultIds": [
+        "6b09b25dd7f3a869b0780963",
+        "6b099f11acc5e2c0cf779ccf",
+        "6b099d17acc5e2c0cf779cb2",
+        "6b099cdaacc5e2c0cf779c94",
+        "6b099cd7acc5e2c0cf779c6e",
+        "6b099cd1acc5e2c0cf779c5b",
+        "6b099cd0acc5e2c0cf779c48",
+        "6b099ccfacc5e2c0cf779c35",
+        "6b099ccbacc5e2c0cf779c22",
+        "6b099cc3acc5e2c0cf779c0f"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T17:53:56.636Z",
+    "updatedAt": "2026-11-27T17:55:47.688Z",
+    "__v": 2
+  },
+  {
+    "_id": "6b09c5de92f6d1c2e0e211dc",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "user with name chinmay",
+    "messages": [
+      {
+        "role": "user",
+        "content": "user with name chinmay",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c5e692f6d1c2e0e21200",
+        "createdAt": "2026-11-27T18:03:18.301Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c5e692f6d1c2e0e21201",
+        "createdAt": "2026-11-27T18:03:18.303Z"
+      },
+      {
+        "role": "user",
+        "content": "hightide client",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c5e992f6d1c2e0e21226",
+        "createdAt": "2026-11-27T18:03:21.413Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 1 client(s).",
+        "intent": "FILTER_CLIENTS",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/clients?search=hightide"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09c5e992f6d1c2e0e21227",
+        "createdAt": "2026-11-27T18:03:21.413Z"
+      },
+      {
+        "role": "user",
+        "content": "user with name chinmay",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c6a392f6d1c2e0e21354",
+        "createdAt": "2026-11-27T18:06:27.907Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify whether you want to filter tickets, search clients, or draft a new ticket?",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "warning",
+        "_id": "6b09c6a392f6d1c2e0e21355",
+        "createdAt": "2026-11-27T18:06:27.907Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T18:03:10.317Z",
+    "updatedAt": "2026-11-27T18:06:27.910Z",
+    "__v": 3
+  },
+  {
+    "_id": "6b09c8ec313c11159f9e02ca",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "your name",
+    "messages": [
+      {
+        "role": "user",
+        "content": "your name",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c8ec313c11159f9e02e6",
+        "createdAt": "2026-11-27T18:16:12.801Z"
+      },
+      {
+        "role": "assistant",
+        "content": "X3 AI is not available for now. Please try again after a while. Direct navigation and manual ticket creation remain available.",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c8ec313c11159f9e02e7",
+        "createdAt": "2026-11-27T18:16:12.802Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T18:16:12.681Z",
+    "updatedAt": "2026-11-27T18:16:12.806Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b09c8fe313c11159f9e0319",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "your name brother",
+    "messages": [
+      {
+        "role": "user",
+        "content": "your name brother",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c8fe313c11159f9e0335",
+        "createdAt": "2026-11-27T18:16:30.549Z"
+      },
+      {
+        "role": "assistant",
+        "content": "X3 AI is not available for now. Please try again after a while. Direct navigation and manual ticket creation remain available.",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09c8fe313c11159f9e0336",
+        "createdAt": "2026-11-27T18:16:30.550Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T18:16:30.453Z",
+    "updatedAt": "2026-11-27T18:16:30.552Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b09ca16313c11159f9e0458",
+    "userId": "6b070cfab30fdb5e7bdb8ab1",
+    "title": "CSV format for projects",
+    "messages": [
+      {
+        "role": "user",
+        "content": "CSV format for projects",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09ca16313c11159f9e0470",
+        "createdAt": "2026-11-27T18:21:10.908Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Projects CSV format (paste rows or upload .csv):\nname, client, description, status\nSFTP Bank Setup, hightide ventures, Replicate BMO SFTP in Pilot, Active\nV12 Migration, ABC Manufacturing, Upgrade from V11 to V12, Active",
+        "intent": "BULK_CREATE_TEMPLATE",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09ca16313c11159f9e0471",
+        "createdAt": "2026-11-27T18:21:10.911Z"
+      },
+      {
+        "role": "user",
+        "content": "Show all open tickets",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09ca1a313c11159f9e049b",
+        "createdAt": "2026-11-27T18:21:14.140Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 34 matching ticket(s). Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09ca1a313c11159f9e049c",
+        "createdAt": "2026-11-27T18:21:14.140Z"
+      },
+      {
+        "role": "user",
+        "content": "hii'",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09ca1e313c11159f9e04db",
+        "createdAt": "2026-11-27T18:21:18.891Z"
+      },
+      {
+        "role": "assistant",
+        "content": "X3 AI is not available for now. Please try again after a while. Direct navigation and manual ticket creation remain available.",
+        "intent": "GENERAL_ANSWER",
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09ca1e313c11159f9e04dc",
+        "createdAt": "2026-11-27T18:21:18.892Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [
+        "6b070cfbb30fdb5e7bdb8b1d",
+        "6b09b25dd7f3a869b0780963",
+        "6b099f11acc5e2c0cf779ccf",
+        "6b099d17acc5e2c0cf779cb2",
+        "6b099cdaacc5e2c0cf779c94",
+        "6b099cd7acc5e2c0cf779c6e",
+        "6b099cd1acc5e2c0cf779c5b",
+        "6b099cd0acc5e2c0cf779c48",
+        "6b099ccfacc5e2c0cf779c35",
+        "6b099ccbacc5e2c0cf779c22",
+        "6b099cc3acc5e2c0cf779c0f",
+        "6b099cc2acc5e2c0cf779bfc",
+        "6b099cc1acc5e2c0cf779be9",
+        "6b099cbeacc5e2c0cf779bcb",
+        "6b0880c7acc5e2c0cf7798b8",
+        "6b0880c5acc5e2c0cf7798a5",
+        "6b0880bcacc5e2c0cf779892",
+        "6b087998acc5e2c0cf779856",
+        "6b0872b3acc5e2c0cf7777aa",
+        "6b0871aaacc5e2c0cf7775b2",
+        "6b0871a5acc5e2c0cf777469",
+        "6b08717bacc5e2c0cf777256",
+        "6b07c428999dd9a47e4a97f6",
+        "6b07c3e302d2ec39f8c160c4",
+        "6b07c3acbea42c4ffa7a38ba",
+        "6b07bb7af3c5ecec773c5e2b",
+        "6b0735634cea964f591b24c7",
+        "6b0710b7949a508286e0ad32",
+        "6b0710b4949a508286e0ad07",
+        "6b0710b1949a508286e0acd6",
+        "6b070cfbb30fdb5e7bdb8b22",
+        "6b070cfbb30fdb5e7bdb8b1e",
+        "6b070cfbb30fdb5e7bdb8b20",
+        "6b070cfbb30fdb5e7bdb8b1f"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T18:21:10.831Z",
+    "updatedAt": "2026-11-27T18:21:18.894Z",
+    "__v": 3
+  },
+  {
+    "_id": "6b09ce1e49f5d05ee00c4593",
+    "userId": "6b0877cbacc5e2c0cf77886e",
+    "title": "Show all open tickets",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Show all open tickets",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09ce1f49f5d05ee00c45b2",
+        "createdAt": "2026-11-27T18:38:23.034Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Found 34 matching ticket(s). Applied filter on All Tickets.",
+        "intent": "FILTER_TICKETS",
+        "action": {
+          "type": "FILTER_TICKETS",
+          "route": "/tickets"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09ce1f49f5d05ee00c45b3",
+        "createdAt": "2026-11-27T18:38:23.035Z"
+      },
+      {
+        "role": "user",
+        "content": "your name",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09ce2449f5d05ee00c4606",
+        "createdAt": "2026-11-27T18:38:28.577Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Database matches for \"your\":\n• Tickets (5): TKT-2026-1052: Two Factor Authentication Successfully Enabled [New] | TKT-2026-1053: Vercel Email Verification [New] | TKT-2026-1054: Security Alert [New] | TKT-2026-1055: Senior Data Scientist [New] | TKT-2026-1059: Save your ideas about Diy Diwali Lanterns [New]\n• Ticket Drafts (4): DRF-1010: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502 | DRF-1011: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502 | DRF-1012: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502 | DRF-1013: BMO - SFTP Connection - HIGH TIDE INC. - IR 20261027_502\n• Emails (3): \"Cloud Platform Architect at Xeroadss Pvt Ltd and 11 more jobs in Navi Mumbai for you. Apply Now.\", \"[Firebase] Your Realtime Database 'chat-app-31ca7-default-rtdb' has insecure rules\", \"Memories from Uran\"",
+        "intent": "GENERAL_ANSWER",
+        "action": {
+          "type": "DB_QUERY_RESULT",
+          "buttons": [
+            {
+              "label": "Open TKT-2026-1052",
+              "route": "/tickets/6b0880bcacc5e2c0cf779892"
+            },
+            {
+              "label": "Review DRF-1010",
+              "route": "/approvals/drafts?draft=6b07bcf9f3c5ecec773c62e5&status=All"
+            }
+          ]
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "search",
+        "_id": "6b09ce2449f5d05ee00c4607",
+        "createdAt": "2026-11-27T18:38:28.578Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "GENERAL_ANSWER",
+      "lastResultIds": [
+        "6b070cfbb30fdb5e7bdb8b1d",
+        "6b09b25dd7f3a869b0780963",
+        "6b099f11acc5e2c0cf779ccf",
+        "6b099d17acc5e2c0cf779cb2",
+        "6b099cdaacc5e2c0cf779c94",
+        "6b099cd7acc5e2c0cf779c6e",
+        "6b099cd1acc5e2c0cf779c5b",
+        "6b099cd0acc5e2c0cf779c48",
+        "6b099ccfacc5e2c0cf779c35",
+        "6b099ccbacc5e2c0cf779c22",
+        "6b099cc3acc5e2c0cf779c0f",
+        "6b099cc2acc5e2c0cf779bfc",
+        "6b099cc1acc5e2c0cf779be9",
+        "6b099cbeacc5e2c0cf779bcb",
+        "6b0880c7acc5e2c0cf7798b8",
+        "6b0880c5acc5e2c0cf7798a5",
+        "6b0880bcacc5e2c0cf779892",
+        "6b087998acc5e2c0cf779856",
+        "6b0872b3acc5e2c0cf7777aa",
+        "6b0871aaacc5e2c0cf7775b2",
+        "6b0871a5acc5e2c0cf777469",
+        "6b08717bacc5e2c0cf777256",
+        "6b07c428999dd9a47e4a97f6",
+        "6b07c3e302d2ec39f8c160c4",
+        "6b07c3acbea42c4ffa7a38ba",
+        "6b07bb7af3c5ecec773c5e2b",
+        "6b0735634cea964f591b24c7",
+        "6b0710b7949a508286e0ad32",
+        "6b0710b4949a508286e0ad07",
+        "6b0710b1949a508286e0acd6",
+        "6b070cfbb30fdb5e7bdb8b22",
+        "6b070cfbb30fdb5e7bdb8b1e",
+        "6b070cfbb30fdb5e7bdb8b20",
+        "6b070cfbb30fdb5e7bdb8b1f"
+      ],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T18:38:22.890Z",
+    "updatedAt": "2026-11-27T18:38:28.585Z",
+    "__v": 2
+  },
+  {
+    "_id": "6b09d1275bbaaca03b565019",
+    "userId": "6b0877cbacc5e2c0cf77886e",
+    "title": "Show my assigned tasks",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Show my assigned tasks",
+        "intent": null,
+        "action": null,
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "response",
+        "_id": "6b09d1285bbaaca03b565035",
+        "createdAt": "2026-11-27T18:51:20.020Z"
+      },
+      {
+        "role": "assistant",
+        "content": "Opening your assigned tasks in My Work.",
+        "intent": "SHOW_MY_WORK",
+        "action": {
+          "type": "NAVIGATE",
+          "route": "/my-tasks"
+        },
+        "draftId": null,
+        "attachments": [],
+        "clarificationOptions": [],
+        "statusType": "navigation",
+        "_id": "6b09d1285bbaaca03b565036",
+        "createdAt": "2026-11-27T18:51:20.021Z"
+      }
+    ],
+    "contextState": {
+      "lastClientId": null,
+      "lastClientName": null,
+      "lastEmployeeId": null,
+      "lastEmployeeName": null,
+      "lastIntent": "SHOW_MY_WORK",
+      "lastResultIds": [],
+      "lastTicketId": null
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-27T18:51:19.880Z",
+    "updatedAt": "2026-11-27T18:51:20.024Z",
+    "__v": 1
+  }
+]

@@ -1,0 +1,1808 @@
+[
+  {
+    "_id": "6b0735344cea964f591b230e",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:24.266Z",
+    "createdAt": "2026-11-25T19:21:24.288Z",
+    "updatedAt": "2026-11-25T19:21:24.288Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735344cea964f591b231c",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab5",
+    "recordRef": "EMP-105",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:24.884Z",
+    "createdAt": "2026-11-25T19:21:24.891Z",
+    "updatedAt": "2026-11-25T19:21:24.891Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735354cea964f591b2320",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:25.465Z",
+    "createdAt": "2026-11-25T19:21:25.467Z",
+    "updatedAt": "2026-11-25T19:21:25.467Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735354cea964f591b2335",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "TICKET_CREATED_PENDING_APPROVAL",
+    "recordType": "Ticket",
+    "recordId": "6b0735354cea964f591b232f",
+    "recordRef": "PND-1001",
+    "previousValue": null,
+    "newValue": {
+      "approvalStatus": "PENDING_APPROVAL",
+      "status": "New",
+      "unassigned": true,
+      "role": "developer"
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:25.714Z",
+    "createdAt": "2026-11-25T19:21:25.715Z",
+    "updatedAt": "2026-11-25T19:21:25.715Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735354cea964f591b234f",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "ACCESS_DENIED_ACTION",
+    "recordType": "tickets",
+    "recordId": "",
+    "recordRef": "tickets:approve",
+    "previousValue": null,
+    "newValue": null,
+    "module": "rbac",
+    "result": "DENIED",
+    "metadata": {
+      "endpoint": "/api/tickets/6b0735354cea964f591b232f/approve"
+    },
+    "timestamp": "2026-11-25T19:21:25.888Z",
+    "createdAt": "2026-11-25T19:21:25.897Z",
+    "updatedAt": "2026-11-25T19:21:25.897Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735364cea964f591b235b",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "TICKET_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b0735354cea964f591b232f",
+    "recordRef": "TKT-1008",
+    "previousValue": {
+      "approvalStatus": "PENDING_APPROVAL",
+      "tempId": "PND-1001"
+    },
+    "newValue": {
+      "approvalStatus": "APPROVED",
+      "ticketId": "TKT-1008",
+      "unassigned": true
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:26.083Z",
+    "createdAt": "2026-11-25T19:21:26.084Z",
+    "updatedAt": "2026-11-25T19:21:26.084Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735364cea964f591b236e",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "TICKET_ASSIGNED",
+    "recordType": "Ticket",
+    "recordId": "6b0735354cea964f591b232f",
+    "recordRef": "TKT-1008",
+    "previousValue": {
+      "assignedDevelopers": [],
+      "assignedTeamLead": null
+    },
+    "newValue": {
+      "assignedDevelopers": [
+        "6b070cfab30fdb5e7bdb8ab5"
+      ],
+      "assignedTeamLead": null
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:26.324Z",
+    "createdAt": "2026-11-25T19:21:26.325Z",
+    "updatedAt": "2026-11-25T19:21:26.325Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735364cea964f591b2380",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b0735364cea964f591b237a",
+    "recordRef": "TKT-1009",
+    "previousValue": null,
+    "newValue": {
+      "approvalStatus": "APPROVED",
+      "status": "New",
+      "unassigned": true,
+      "role": "team_lead"
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:26.598Z",
+    "createdAt": "2026-11-25T19:21:26.599Z",
+    "updatedAt": "2026-11-25T19:21:26.599Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735364cea964f591b238f",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b0735364cea964f591b2389",
+    "recordRef": "TKT-1010",
+    "previousValue": null,
+    "newValue": {
+      "approvalStatus": "APPROVED",
+      "status": "New",
+      "unassigned": true,
+      "role": "admin"
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:26.751Z",
+    "createdAt": "2026-11-25T19:21:26.752Z",
+    "updatedAt": "2026-11-25T19:21:26.752Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735364cea964f591b2398",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "ACCESS_DENIED_SCREEN",
+    "recordType": "Screen",
+    "recordId": "",
+    "recordRef": "reports",
+    "previousValue": null,
+    "newValue": null,
+    "module": "rbac",
+    "result": "DENIED",
+    "metadata": {
+      "endpoint": "/api/reports/tickets"
+    },
+    "timestamp": "2026-11-25T19:21:26.819Z",
+    "createdAt": "2026-11-25T19:21:26.827Z",
+    "updatedAt": "2026-11-25T19:21:26.827Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735364cea964f591b23a1",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "PERMISSION_GROUP_CREATED",
+    "recordType": "PermissionGroup",
+    "recordId": "6b0735364cea964f591b239f",
+    "recordRef": "TEST_GRP_1795634486824",
+    "previousValue": null,
+    "newValue": {
+      "screenPermissions": [
+        "reports",
+        "tickets"
+      ],
+      "actionPermissions": {
+        "reports": [
+          "view"
+        ]
+      }
+    },
+    "module": "rbac",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:26.889Z",
+    "createdAt": "2026-11-25T19:21:26.890Z",
+    "updatedAt": "2026-11-25T19:21:26.890Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735374cea964f591b23ac",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_PERMISSIONS_UPDATED",
+    "recordType": "UserPermissions",
+    "recordId": "6b070cfab30fdb5e7bdb8ab5",
+    "recordRef": "EMP-105",
+    "previousValue": {
+      "screens": [
+        "dashboard",
+        "my_tasks",
+        "inbox",
+        "smart_intake",
+        "calendar",
+        "tickets",
+        "task_board",
+        "clients",
+        "projects",
+        "deployments",
+        "activity_logs",
+        "knowledge_base"
+      ],
+      "actions": {
+        "dashboard": [
+          "view"
+        ],
+        "my_tasks": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "inbox": [
+          "view"
+        ],
+        "smart_intake": [
+          "view",
+          "create"
+        ],
+        "calendar": [
+          "view"
+        ],
+        "tickets": [
+          "view",
+          "create",
+          "change_status",
+          "view_history"
+        ],
+        "task_board": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "clients": [
+          "view",
+          "view_documents",
+          "download_documents"
+        ],
+        "projects": [
+          "view"
+        ],
+        "deployments": [
+          "view",
+          "create"
+        ],
+        "activity_logs": [
+          "view"
+        ],
+        "knowledge_base": [
+          "view",
+          "create"
+        ]
+      }
+    },
+    "newValue": {
+      "role": "developer",
+      "screens": [
+        "dashboard",
+        "my_tasks",
+        "inbox",
+        "smart_intake",
+        "calendar",
+        "tickets",
+        "task_board",
+        "clients",
+        "projects",
+        "deployments",
+        "activity_logs",
+        "knowledge_base"
+      ],
+      "actions": {
+        "dashboard": [
+          "view"
+        ],
+        "my_tasks": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "inbox": [
+          "view"
+        ],
+        "smart_intake": [
+          "view",
+          "create"
+        ],
+        "calendar": [
+          "view"
+        ],
+        "tickets": [
+          "view",
+          "create",
+          "change_status",
+          "view_history"
+        ],
+        "task_board": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "clients": [
+          "view",
+          "view_documents",
+          "download_documents"
+        ],
+        "projects": [
+          "view"
+        ],
+        "deployments": [
+          "view",
+          "create"
+        ],
+        "activity_logs": [
+          "view"
+        ],
+        "knowledge_base": [
+          "view",
+          "create"
+        ]
+      }
+    },
+    "module": "rbac",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:27.071Z",
+    "createdAt": "2026-11-25T19:21:27.076Z",
+    "updatedAt": "2026-11-25T19:21:27.076Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735374cea964f591b23b3",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "ACCESS_DENIED_SCREEN",
+    "recordType": "Screen",
+    "recordId": "",
+    "recordRef": "reports",
+    "previousValue": null,
+    "newValue": null,
+    "module": "rbac",
+    "result": "DENIED",
+    "metadata": {
+      "endpoint": "/api/reports/tickets"
+    },
+    "timestamp": "2026-11-25T19:21:27.157Z",
+    "createdAt": "2026-11-25T19:21:27.161Z",
+    "updatedAt": "2026-11-25T19:21:27.161Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735374cea964f591b23c1",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_PERMISSIONS_UPDATED",
+    "recordType": "UserPermissions",
+    "recordId": "6b070cfab30fdb5e7bdb8ab5",
+    "recordRef": "EMP-105",
+    "previousValue": {
+      "screens": [
+        "dashboard",
+        "my_tasks",
+        "inbox",
+        "smart_intake",
+        "calendar",
+        "tickets",
+        "task_board",
+        "clients",
+        "projects",
+        "deployments",
+        "activity_logs",
+        "knowledge_base"
+      ],
+      "actions": {
+        "dashboard": [
+          "view"
+        ],
+        "my_tasks": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "inbox": [
+          "view"
+        ],
+        "smart_intake": [
+          "view",
+          "create"
+        ],
+        "calendar": [
+          "view"
+        ],
+        "tickets": [
+          "view",
+          "create",
+          "change_status",
+          "view_history"
+        ],
+        "task_board": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "clients": [
+          "view",
+          "view_documents",
+          "download_documents"
+        ],
+        "projects": [
+          "view"
+        ],
+        "deployments": [
+          "view",
+          "create"
+        ],
+        "activity_logs": [
+          "view"
+        ],
+        "knowledge_base": [
+          "view",
+          "create"
+        ]
+      }
+    },
+    "newValue": {
+      "role": "developer",
+      "screens": [
+        "dashboard",
+        "my_tasks",
+        "inbox",
+        "smart_intake",
+        "calendar",
+        "tickets",
+        "task_board",
+        "clients",
+        "projects",
+        "deployments",
+        "activity_logs",
+        "knowledge_base",
+        "reports"
+      ],
+      "actions": {
+        "dashboard": [
+          "view"
+        ],
+        "my_tasks": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "inbox": [
+          "view"
+        ],
+        "smart_intake": [
+          "view",
+          "create"
+        ],
+        "calendar": [
+          "view"
+        ],
+        "tickets": [
+          "view",
+          "create",
+          "change_status",
+          "view_history"
+        ],
+        "task_board": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "clients": [
+          "view",
+          "view_documents",
+          "download_documents"
+        ],
+        "projects": [
+          "view"
+        ],
+        "deployments": [
+          "view",
+          "create"
+        ],
+        "activity_logs": [
+          "view"
+        ],
+        "knowledge_base": [
+          "view",
+          "create"
+        ],
+        "reports": [
+          "view"
+        ]
+      }
+    },
+    "module": "rbac",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:27.265Z",
+    "createdAt": "2026-11-25T19:21:27.268Z",
+    "updatedAt": "2026-11-25T19:21:27.268Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735384cea964f591b23f6",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_PERMISSIONS_UPDATED",
+    "recordType": "UserPermissions",
+    "recordId": "6b070cfab30fdb5e7bdb8ab5",
+    "recordRef": "EMP-105",
+    "previousValue": {
+      "screens": [
+        "dashboard",
+        "my_tasks",
+        "inbox",
+        "smart_intake",
+        "calendar",
+        "tickets",
+        "task_board",
+        "clients",
+        "projects",
+        "deployments",
+        "activity_logs",
+        "knowledge_base",
+        "reports"
+      ],
+      "actions": {
+        "dashboard": [
+          "view"
+        ],
+        "my_tasks": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "inbox": [
+          "view"
+        ],
+        "smart_intake": [
+          "view",
+          "create"
+        ],
+        "calendar": [
+          "view"
+        ],
+        "tickets": [
+          "view",
+          "create",
+          "change_status",
+          "view_history"
+        ],
+        "task_board": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "clients": [
+          "view",
+          "view_documents",
+          "download_documents"
+        ],
+        "projects": [
+          "view"
+        ],
+        "deployments": [
+          "view",
+          "create"
+        ],
+        "activity_logs": [
+          "view"
+        ],
+        "knowledge_base": [
+          "view",
+          "create"
+        ],
+        "reports": [
+          "view"
+        ]
+      }
+    },
+    "newValue": {
+      "role": "developer",
+      "screens": [
+        "dashboard",
+        "my_tasks",
+        "inbox",
+        "smart_intake",
+        "calendar",
+        "tickets",
+        "task_board",
+        "clients",
+        "projects",
+        "deployments",
+        "activity_logs",
+        "knowledge_base"
+      ],
+      "actions": {
+        "dashboard": [
+          "view"
+        ],
+        "my_tasks": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "inbox": [
+          "view"
+        ],
+        "smart_intake": [
+          "view",
+          "create"
+        ],
+        "calendar": [
+          "view"
+        ],
+        "tickets": [
+          "view",
+          "create",
+          "change_status",
+          "view_history"
+        ],
+        "task_board": [
+          "view",
+          "create",
+          "edit",
+          "change_status",
+          "track_time",
+          "add_dev_note"
+        ],
+        "clients": [
+          "view",
+          "view_documents",
+          "download_documents"
+        ],
+        "projects": [
+          "view"
+        ],
+        "deployments": [
+          "view",
+          "create"
+        ],
+        "activity_logs": [
+          "view"
+        ],
+        "knowledge_base": [
+          "view",
+          "create"
+        ]
+      }
+    },
+    "module": "rbac",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:28.443Z",
+    "createdAt": "2026-11-25T19:21:28.444Z",
+    "updatedAt": "2026-11-25T19:21:28.444Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735384cea964f591b23fd",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "PERMISSION_GROUP_DELETED",
+    "recordType": "PermissionGroup",
+    "recordId": "6b0735364cea964f591b239f",
+    "recordRef": "TEST_GRP_1795634486824",
+    "previousValue": {
+      "name": "TEST_GRP_1795634486824"
+    },
+    "newValue": null,
+    "module": "rbac",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:28.474Z",
+    "createdAt": "2026-11-25T19:21:28.476Z",
+    "updatedAt": "2026-11-25T19:21:28.476Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735384cea964f591b245c",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "ACCESS_DENIED_SCREEN",
+    "recordType": "Screen",
+    "recordId": "",
+    "recordRef": "admin_audit_logs",
+    "previousValue": null,
+    "newValue": null,
+    "module": "rbac",
+    "result": "DENIED",
+    "metadata": {
+      "endpoint": "/api/monitoring/audit-logs"
+    },
+    "timestamp": "2026-11-25T19:21:28.827Z",
+    "createdAt": "2026-11-25T19:21:28.829Z",
+    "updatedAt": "2026-11-25T19:21:28.829Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735384cea964f591b2467",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "AUDIT_TAMPER_ATTEMPT",
+    "recordType": "AuditLog",
+    "recordId": "6b0735384cea964f591b245c",
+    "recordRef": "",
+    "previousValue": null,
+    "newValue": null,
+    "module": "security",
+    "result": "DENIED",
+    "timestamp": "2026-11-25T19:21:28.869Z",
+    "createdAt": "2026-11-25T19:21:28.870Z",
+    "updatedAt": "2026-11-25T19:21:28.870Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735564cea964f591b248e",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:58.874Z",
+    "createdAt": "2026-11-25T19:21:58.878Z",
+    "updatedAt": "2026-11-25T19:21:58.878Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735574cea964f591b249c",
+    "actorId": "6b070cfab30fdb5e7bdb8ab5",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab5",
+    "recordRef": "EMP-105",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:21:59.199Z",
+    "createdAt": "2026-11-25T19:21:59.207Z",
+    "updatedAt": "2026-11-25T19:21:59.207Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735634cea964f591b24cd",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b0735634cea964f591b24c7",
+    "recordRef": "TKT-2026-00105",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1005",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:22:11.521Z",
+    "createdAt": "2026-11-25T19:22:11.522Z",
+    "updatedAt": "2026-11-25T19:22:11.522Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0735694cea964f591b2508",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "ACCESS_DENIED_ACTION",
+    "recordType": "tickets",
+    "recordId": "",
+    "recordRef": "tickets:delete",
+    "previousValue": null,
+    "newValue": null,
+    "module": "rbac",
+    "result": "DENIED",
+    "metadata": {
+      "endpoint": "/api/tickets/6b0735634cea964f591b24c7"
+    },
+    "timestamp": "2026-11-25T19:22:17.256Z",
+    "createdAt": "2026-11-25T19:22:17.260Z",
+    "updatedAt": "2026-11-25T19:22:17.260Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0736344cea964f591b2520",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-25T19:25:40.010Z",
+    "createdAt": "2026-11-25T19:25:40.012Z",
+    "updatedAt": "2026-11-25T19:25:40.012Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07386b4cea964f591b2544",
+    "actorId": null,
+    "action": "LOGIN_FAILED",
+    "recordType": "User",
+    "recordId": "",
+    "recordRef": "admin@sagex3.com",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "FAILED",
+    "timestamp": "2026-11-25T19:35:07.792Z",
+    "createdAt": "2026-11-25T19:35:07.793Z",
+    "updatedAt": "2026-11-25T19:35:07.793Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07387b4cea964f591b254b",
+    "actorId": null,
+    "action": "LOGIN_FAILED",
+    "recordType": "User",
+    "recordId": "",
+    "recordRef": "ananya.rao@sagex3.com",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "FAILED",
+    "timestamp": "2026-11-25T19:35:23.384Z",
+    "createdAt": "2026-11-25T19:35:23.385Z",
+    "updatedAt": "2026-11-25T19:35:23.385Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07bb7af3c5ecec773c5e31",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b07bb7af3c5ecec773c5e2b",
+    "recordRef": "TKT-2026-00106",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1007",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T04:54:18.102Z",
+    "createdAt": "2026-11-26T04:54:18.105Z",
+    "updatedAt": "2026-11-26T04:54:18.105Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07bb84f3c5ecec773c5e4a",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b07bb84f3c5ecec773c5e44",
+    "recordRef": "TKT-2026-00107",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1008",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T04:54:28.614Z",
+    "createdAt": "2026-11-26T04:54:28.616Z",
+    "updatedAt": "2026-11-26T04:54:28.616Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07bbc3f3c5ecec773c5f22",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b07bbc2f3c5ecec773c5f1c",
+    "recordRef": "TKT-2026-00108",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1009",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T04:55:31.028Z",
+    "createdAt": "2026-11-26T04:55:31.031Z",
+    "updatedAt": "2026-11-26T04:55:31.031Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07bc62f3c5ecec773c622d",
+    "actorId": "6b070cfab30fdb5e7bdb8ab3",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab3",
+    "recordRef": "EMP-103",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T04:58:10.775Z",
+    "createdAt": "2026-11-26T04:58:10.781Z",
+    "updatedAt": "2026-11-26T04:58:10.781Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07c005f3c5ecec773c6590",
+    "actorId": "6b070cfab30fdb5e7bdb8ab3",
+    "action": "ACCESS_DENIED_ACTION",
+    "recordType": "tickets",
+    "recordId": "",
+    "recordRef": "tickets:edit",
+    "previousValue": null,
+    "newValue": null,
+    "module": "rbac",
+    "result": "DENIED",
+    "metadata": {
+      "endpoint": "/api/tickets/6b07bbc2f3c5ecec773c5f1c"
+    },
+    "timestamp": "2026-11-26T05:13:41.775Z",
+    "createdAt": "2026-11-26T05:13:41.790Z",
+    "updatedAt": "2026-11-26T05:13:41.790Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07c3acbea42c4ffa7a38c0",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b07c3acbea42c4ffa7a38ba",
+    "recordRef": "TKT-2026-00109",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1019",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T05:29:16.147Z",
+    "createdAt": "2026-11-26T05:29:16.148Z",
+    "updatedAt": "2026-11-26T05:29:16.148Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07c3e302d2ec39f8c160ca",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b07c3e302d2ec39f8c160c4",
+    "recordRef": "TKT-2026-00110",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1020",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T05:30:11.340Z",
+    "createdAt": "2026-11-26T05:30:11.341Z",
+    "updatedAt": "2026-11-26T05:30:11.341Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b07c428999dd9a47e4a97fc",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "AI_TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b07c428999dd9a47e4a97f6",
+    "recordRef": "TKT-2026-00111",
+    "previousValue": null,
+    "newValue": {
+      "draftId": "DRF-1021",
+      "approvalStatus": "APPROVED",
+      "unassigned": true
+    },
+    "module": "ai",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T05:31:20.471Z",
+    "createdAt": "2026-11-26T05:31:20.472Z",
+    "updatedAt": "2026-11-26T05:31:20.472Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b08450b2fef455340979624",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T14:41:15.667Z",
+    "createdAt": "2026-11-26T14:41:15.672Z",
+    "updatedAt": "2026-11-26T14:41:15.672Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0845212fef455340979891",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "TICKET_ASSIGNED",
+    "recordType": "Ticket",
+    "recordId": "6b07c428999dd9a47e4a97f6",
+    "recordRef": "TKT-2026-00111",
+    "previousValue": {
+      "assignedDevelopers": [],
+      "assignedTeamLead": null
+    },
+    "newValue": {
+      "assignedDevelopers": [
+        "6b070cfab30fdb5e7bdb8ab1"
+      ],
+      "assignedTeamLead": null
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T14:41:37.805Z",
+    "createdAt": "2026-11-26T14:41:37.810Z",
+    "updatedAt": "2026-11-26T14:41:37.810Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0845222fef4553409798de",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "TICKET_REASSIGNED",
+    "recordType": "Ticket",
+    "recordId": "6b07c428999dd9a47e4a97f6",
+    "recordRef": "TKT-2026-00111",
+    "previousValue": {
+      "assignedDevelopers": [
+        "6b070cfab30fdb5e7bdb8ab1"
+      ],
+      "assignedTeamLead": null
+    },
+    "newValue": {
+      "assignedDevelopers": [
+        "6b070cfab30fdb5e7bdb8ab1",
+        "6b070cfab30fdb5e7bdb8ab3"
+      ],
+      "assignedTeamLead": null
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T14:41:38.820Z",
+    "createdAt": "2026-11-26T14:41:38.824Z",
+    "updatedAt": "2026-11-26T14:41:38.824Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0845242fef455340979919",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "TICKET_REASSIGNED",
+    "recordType": "Ticket",
+    "recordId": "6b07c428999dd9a47e4a97f6",
+    "recordRef": "TKT-2026-00111",
+    "previousValue": {
+      "assignedDevelopers": [
+        "6b070cfab30fdb5e7bdb8ab1",
+        "6b070cfab30fdb5e7bdb8ab3"
+      ],
+      "assignedTeamLead": null
+    },
+    "newValue": {
+      "assignedDevelopers": [
+        "6b070cfab30fdb5e7bdb8ab1",
+        "6b070cfab30fdb5e7bdb8ab3"
+      ],
+      "assignedTeamLead": null
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T14:41:40.099Z",
+    "createdAt": "2026-11-26T14:41:40.103Z",
+    "updatedAt": "2026-11-26T14:41:40.103Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084acf3d76220a19a0f960",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T15:05:51.811Z",
+    "createdAt": "2026-11-26T15:05:51.831Z",
+    "updatedAt": "2026-11-26T15:05:51.831Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b084b9a3d76220a19a0fcd3",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "DEPLOYMENT_UPDATED",
+    "recordType": "Deployment",
+    "recordId": "6b070cfbb30fdb5e7bdb8b3f",
+    "recordRef": "DEP-103",
+    "previousValue": null,
+    "newValue": {
+      "approvalStatus": "Approved",
+      "workflowStage": "Pilot Deployment"
+    },
+    "module": "deployments",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T15:09:14.037Z",
+    "createdAt": "2026-11-26T15:09:14.045Z",
+    "updatedAt": "2026-11-26T15:09:14.045Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0850bdbb1f7c47200b9d95",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T15:31:09.819Z",
+    "createdAt": "2026-11-26T15:31:09.830Z",
+    "updatedAt": "2026-11-26T15:31:09.830Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0854c0d6de34a3eadd5331",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T15:48:16.971Z",
+    "createdAt": "2026-11-26T15:48:16.985Z",
+    "updatedAt": "2026-11-26T15:48:16.985Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b085794d6de34a3eadd5ca9",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T16:00:20.508Z",
+    "createdAt": "2026-11-26T16:00:20.510Z",
+    "updatedAt": "2026-11-26T16:00:20.510Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0860324f93a0d93941b683",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T16:37:06.768Z",
+    "createdAt": "2026-11-26T16:37:06.771Z",
+    "updatedAt": "2026-11-26T16:37:06.771Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0860534f93a0d93941b7f7",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T16:37:39.725Z",
+    "createdAt": "2026-11-26T16:37:39.727Z",
+    "updatedAt": "2026-11-26T16:37:39.727Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0860954f93a0d93941ba7d",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T16:38:45.759Z",
+    "createdAt": "2026-11-26T16:38:45.760Z",
+    "updatedAt": "2026-11-26T16:38:45.760Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0860af4f93a0d93941bd08",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T16:39:11.154Z",
+    "createdAt": "2026-11-26T16:39:11.155Z",
+    "updatedAt": "2026-11-26T16:39:11.155Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0860d64f93a0d93941be9b",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T16:39:50.835Z",
+    "createdAt": "2026-11-26T16:39:50.837Z",
+    "updatedAt": "2026-11-26T16:39:50.837Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b086b6cacc5e2c0cf7762d9",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T17:25:00.984Z",
+    "createdAt": "2026-11-26T17:25:00.987Z",
+    "updatedAt": "2026-11-26T17:25:00.987Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0872bcacc5e2c0cf77791a",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_CHANGES_REQUESTED",
+    "recordType": "Ticket",
+    "recordId": "6b0872b3acc5e2c0cf7777aa",
+    "recordRef": "TKT-2026-1050",
+    "previousValue": null,
+    "newValue": {
+      "approvalStatus": "CHANGES_REQUESTED",
+      "comments": "Changes requested from full ticket view"
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T17:56:12.145Z",
+    "createdAt": "2026-11-26T17:56:12.147Z",
+    "updatedAt": "2026-11-26T17:56:12.147Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0876c1acc5e2c0cf777eac",
+    "actorId": "6b070cfab30fdb5e7bdb8ab3",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab3",
+    "recordRef": "EMP-103",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T18:13:21.752Z",
+    "createdAt": "2026-11-26T18:13:21.753Z",
+    "updatedAt": "2026-11-26T18:13:21.753Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0876c9acc5e2c0cf77817b",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T18:13:29.656Z",
+    "createdAt": "2026-11-26T18:13:29.657Z",
+    "updatedAt": "2026-11-26T18:13:29.657Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0876ecacc5e2c0cf778594",
+    "actorId": "6b070cfab30fdb5e7bdb8ab2",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab2",
+    "recordRef": "EMP-102",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T18:14:04.910Z",
+    "createdAt": "2026-11-26T18:14:04.911Z",
+    "updatedAt": "2026-11-26T18:14:04.911Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0877f5acc5e2c0cf778c87",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T18:18:29.169Z",
+    "createdAt": "2026-11-26T18:18:29.170Z",
+    "updatedAt": "2026-11-26T18:18:29.170Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b08785facc5e2c0cf7791dc",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T18:20:15.327Z",
+    "createdAt": "2026-11-26T18:20:15.329Z",
+    "updatedAt": "2026-11-26T18:20:15.329Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b08788eacc5e2c0cf779517",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-26T18:21:02.617Z",
+    "createdAt": "2026-11-26T18:21:02.618Z",
+    "updatedAt": "2026-11-26T18:21:02.618Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09a166dcc432e09ebc13b3",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "LOGIN_FAILED",
+    "recordType": "User",
+    "recordId": "",
+    "recordRef": "admin@sagex3desk.com",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "FAILED",
+    "timestamp": "2026-11-27T15:27:34.130Z",
+    "createdAt": "2026-11-27T15:27:34.132Z",
+    "updatedAt": "2026-11-27T15:27:34.132Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09a17ae13a7fd25db4456e",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T15:27:54.121Z",
+    "createdAt": "2026-11-27T15:27:54.135Z",
+    "updatedAt": "2026-11-27T15:27:54.135Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09aa2ed7f3a869b07800b6",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:05:02.075Z",
+    "createdAt": "2026-11-27T16:05:02.077Z",
+    "updatedAt": "2026-11-27T16:05:02.077Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09ac71d7f3a869b0780129",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:14:41.121Z",
+    "createdAt": "2026-11-27T16:14:41.124Z",
+    "updatedAt": "2026-11-27T16:14:41.124Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09aca7d7f3a869b0780198",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:15:35.721Z",
+    "createdAt": "2026-11-27T16:15:35.722Z",
+    "updatedAt": "2026-11-27T16:15:35.722Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09b010d7f3a869b07804d9",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b099f11acc5e2c0cf779ccf",
+    "recordRef": "TKT-2026-1067",
+    "previousValue": {
+      "approvalStatus": "PENDING_APPROVAL",
+      "tempId": "TKT-2026-1067"
+    },
+    "newValue": {
+      "approvalStatus": "APPROVED",
+      "ticketId": "TKT-2026-1067",
+      "unassigned": true
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:30:08.641Z",
+    "createdAt": "2026-11-27T16:30:08.642Z",
+    "updatedAt": "2026-11-27T16:30:08.642Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09b283d7f3a869b0780b1f",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:40:35.686Z",
+    "createdAt": "2026-11-27T16:40:35.687Z",
+    "updatedAt": "2026-11-27T16:40:35.687Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09b35fe0b001fce1700195",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:44:15.909Z",
+    "createdAt": "2026-11-27T16:44:15.930Z",
+    "updatedAt": "2026-11-27T16:44:15.930Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09b360e0b001fce17001c7",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_AUTO_APPROVED",
+    "recordType": "Ticket",
+    "recordId": "6b09b360e0b001fce17001c1",
+    "recordRef": "TKT-1069",
+    "previousValue": null,
+    "newValue": {
+      "approvalStatus": "APPROVED",
+      "status": "New",
+      "unassigned": true,
+      "role": "admin"
+    },
+    "module": "tickets",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:44:16.241Z",
+    "createdAt": "2026-11-27T16:44:16.243Z",
+    "updatedAt": "2026-11-27T16:44:16.243Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09b360e0b001fce17001e1",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_DELETED_BY_ADMIN",
+    "recordType": "Ticket",
+    "recordId": "6b09b360e0b001fce17001c1",
+    "recordRef": "TKT-1069",
+    "previousValue": {
+      "title": "__VERIFY_TEMP_ADMIN_TICKET__",
+      "status": "Resolved",
+      "approvalStatus": "APPROVED"
+    },
+    "newValue": {
+      "isDeleted": true,
+      "reason": "Temp verification cleanup",
+      "summary": "Admin Vikram Mehta deleted ticket TKT-1069 (__VERIFY_TEMP_ADMIN_TICKET__) — Temp verification cleanup"
+    },
+    "module": "admin_governance",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T16:44:16.346Z",
+    "createdAt": "2026-11-27T16:44:16.348Z",
+    "updatedAt": "2026-11-27T16:44:16.348Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09bca992f6d1c2e0e1faab",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_DELETED_BY_ADMIN",
+    "recordType": "Ticket",
+    "recordId": "6b07bb84f3c5ecec773c5e44",
+    "recordRef": "TKT-2026-00107",
+    "previousValue": {
+      "title": "USD Transaction Setup",
+      "status": "New",
+      "approvalStatus": "APPROVED"
+    },
+    "newValue": {
+      "isDeleted": true,
+      "reason": "Duplicate / test cleanup by Admin",
+      "summary": "Admin Vikram Mehta deleted ticket TKT-2026-00107 (USD Transaction Setup) — Duplicate / test cleanup by Admin"
+    },
+    "module": "admin_governance",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T17:23:53.896Z",
+    "createdAt": "2026-11-27T17:23:53.898Z",
+    "updatedAt": "2026-11-27T17:23:53.898Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09bcad92f6d1c2e0e1fad6",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_DELETED_BY_ADMIN",
+    "recordType": "Ticket",
+    "recordId": "6b07bbc2f3c5ecec773c5f1c",
+    "recordRef": "TKT-2026-00108",
+    "previousValue": {
+      "title": "USD Transaction Setup",
+      "status": "New",
+      "approvalStatus": "APPROVED"
+    },
+    "newValue": {
+      "isDeleted": true,
+      "reason": "Duplicate / test cleanup by Admin",
+      "summary": "Admin Vikram Mehta deleted ticket TKT-2026-00108 (USD Transaction Setup) — Duplicate / test cleanup by Admin"
+    },
+    "module": "admin_governance",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T17:23:57.111Z",
+    "createdAt": "2026-11-27T17:23:57.113Z",
+    "updatedAt": "2026-11-27T17:23:57.113Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09bccf92f6d1c2e0e1fc11",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "TICKET_DELETED_BY_ADMIN",
+    "recordType": "Ticket",
+    "recordId": "6b099cd9acc5e2c0cf779c81",
+    "recordRef": "TKT-2026-1064",
+    "previousValue": {
+      "title": "Support Request",
+      "status": "New",
+      "approvalStatus": "PENDING_APPROVAL"
+    },
+    "newValue": {
+      "isDeleted": true,
+      "reason": "Duplicate / test cleanup by Admin",
+      "summary": "Admin Vikram Mehta deleted ticket TKT-2026-1064 (Support Request) — Duplicate / test cleanup by Admin"
+    },
+    "module": "admin_governance",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T17:24:31.518Z",
+    "createdAt": "2026-11-27T17:24:31.520Z",
+    "updatedAt": "2026-11-27T17:24:31.520Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09ce1849f5d05ee00c4539",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T18:38:16.792Z",
+    "createdAt": "2026-11-27T18:38:16.795Z",
+    "updatedAt": "2026-11-27T18:38:16.795Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09d7825bbaaca03b565eb8",
+    "actorId": "6b070cfab30fdb5e7bdb8ab4",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab4",
+    "recordRef": "EMP-104",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T19:18:26.198Z",
+    "createdAt": "2026-11-27T19:18:26.199Z",
+    "updatedAt": "2026-11-27T19:18:26.199Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b09e34b5bbaaca03b5678ae",
+    "actorId": "6b070cfab30fdb5e7bdb8ab1",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b070cfab30fdb5e7bdb8ab1",
+    "recordRef": "EMP-101",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-27T20:08:43.858Z",
+    "createdAt": "2026-11-27T20:08:43.860Z",
+    "updatedAt": "2026-11-27T20:08:43.860Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0a72ce5b2e6e900d8584f1",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-28T06:21:02.227Z",
+    "createdAt": "2026-11-28T06:21:02.256Z",
+    "updatedAt": "2026-11-28T06:21:02.256Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0a7d068c3718ab5e55ad66",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-28T07:04:38.052Z",
+    "createdAt": "2026-11-28T07:04:38.066Z",
+    "updatedAt": "2026-11-28T07:04:38.066Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0a7ea02cbf411cbe44cc02",
+    "actorId": "6b084efa3d76220a19a101f6",
+    "action": "LOGIN_FAILED",
+    "recordType": "User",
+    "recordId": "",
+    "recordRef": "chinmaykoshe2004@gmail.com",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "FAILED",
+    "timestamp": "2026-11-28T07:11:28.143Z",
+    "createdAt": "2026-11-28T07:11:28.145Z",
+    "updatedAt": "2026-11-28T07:11:28.145Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b0a812f673c0162d364b7bb",
+    "actorId": "6b0877cbacc5e2c0cf77886e",
+    "action": "USER_LOGIN",
+    "recordType": "User",
+    "recordId": "6b0877cbacc5e2c0cf77886e",
+    "recordRef": "EMP-112",
+    "previousValue": null,
+    "newValue": null,
+    "module": "auth",
+    "result": "SUCCESS",
+    "timestamp": "2026-11-28T07:22:23.917Z",
+    "createdAt": "2026-11-28T07:22:23.920Z",
+    "updatedAt": "2026-11-28T07:22:23.920Z",
+    "__v": 0
+  }
+]

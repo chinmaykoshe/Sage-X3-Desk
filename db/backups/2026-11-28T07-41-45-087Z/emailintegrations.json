@@ -1,0 +1,89 @@
+[
+  {
+    "_id": "6b0860254f93a0d93941b56c",
+    "provider": "gmail",
+    "mailboxAddress": "chinmaykoshe2004@gmail.com",
+    "displayName": "chinmaykoshe2004@gmail.com",
+    "publicConfig": {
+      "tenantId": "",
+      "clientId": "938763560468-8be57d9m5m2k2gkmk6jomdafgbh0fes6.apps.googleusercontent.com",
+      "projectId": "x3-desk-email-integration",
+      "pubsubTopic": "",
+      "authFlow": "oauth2"
+    },
+    "encryptedCredentials": "e33d4aefc33a676cc6689525:9ec18632d61365f90961a85187751d74:fccf199c76a0d2ee17b180ce2fb1841a9a338bbd2efe0503332eca3b70389228f28f0ff482c52971d89448803b491c4144405c0edafdb1ea9d8738a479746e4528a38aaa5b322df34e4f246b1dfb88c6f0ae5d5deef08457fab194a2d25ddb76140239beca5bae634b91eec1257328bc92217472b02ff758940b522f41ec47e45e86d20d65c1806f6ff641f1683db40344784a9d7e66fc1afea835db3326c6292bedba8dd104f5edd335f40127a8ed06870d6eb716af0a2e4d6ec80344644989d7cca2e5a97a10e1deee53a32404618f07a54b1bbb609b6a6f60d723b34e9bc1cc4ec3e773b7b81cc0680f1c395eac7908bd7ef1fa88ea66a9cada7b6faa9f810af93b5adbba1ac74ef9bedc91ebd467e53d0cade2404ae7f3ced399aefa3aa16c68d41586d45ebf86367c9618bf8d18aec02403c966c33eea32dc978310eaa65fca6949bffa1e0e1bbf409b85fe2808aaa52403dabffe0a9843ee94d06373a4f71fbf99dffd1b672256eb8d2b0b002a1e740eda432a9edf8a5a1ee8bdc486a2e549bf79ce37c555a35a24bfa808b28fccdcb00b45fbb145de5fb51ed9676cb4efc63f4ae8e51b0e5614be5bfa1f01d54ab826309057a4662701fc6185acc92ba2178599ef0a11e5b3f99006e3dfeb7d6165b5e08d7197d5c03f8977fa44491ac054b0ab0da94c2dee99d23f798f2ba5984d191d6ac86215afb69818e1034298455fcad688ff317c7ed98545655c04db81672cd07fbe7a8ac260d0e22894fd5072f7d606ebb6f8e79df413f2424b9c12440c82300c29e0abd36743875708658b9c66aa16605b3ebaac4c199d3dfaf00ef2cd0e55fbaf0339ba2505f75166d8",
+    "hasClientSecret": true,
+    "hasOAuthTokens": true,
+    "connectionStatus": "Connected",
+    "grantedScopes": [
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/gmail.modify"
+    ],
+    "subscriptionId": "",
+    "subscriptionExpiration": null,
+    "clientStateToken": "",
+    "lastHistoryId": "1700639",
+    "lastSyncedAt": "2026-11-28T07:31:35.136Z",
+    "lastError": "",
+    "isActive": true,
+    "automationRules": {
+      "autoCreateTickets": false,
+      "autoUpdateExistingTickets": true,
+      "ignoreSenders": [],
+      "ignoreFoldersOrLabels": [],
+      "filterSpamAndAutoReplies": true,
+      "defaultPriority": "Medium",
+      "enableAiAnalysis": true,
+      "enableAttachmentProcessing": true,
+      "sendUncertainToReview": true,
+      "trustedAutoApproval": false
+    },
+    "createdBy": "6b070cfab30fdb5e7bdb8ab1",
+    "updatedBy": "6b0877cbacc5e2c0cf77886e",
+    "createdAt": "2026-11-26T16:36:53.756Z",
+    "updatedAt": "2026-11-28T07:31:35.137Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b0a72ef5b2e6e900d858558",
+    "provider": "gmail",
+    "mailboxAddress": "sagex3desk@gmail.com",
+    "displayName": "sagex3desk@gmail.com",
+    "publicConfig": {
+      "tenantId": "",
+      "clientId": "568862185001-gs0d2h7e5chh78qgv4envapq7lbf7up4.apps.googleusercontent.com",
+      "projectId": "sagex3desk",
+      "pubsubTopic": "",
+      "authFlow": "oauth2"
+    },
+    "encryptedCredentials": "20b77533c899e40b22e57c1f:d2985d4d25db96ba79ac2dec01c8f006:c9511c50ae05cab0a05357fef56ab831d30d5430085c886bdbc099d4ca176779a4d85c68d109f5ba7bcaf5a10eef3b951fa7146b591cb970d4f8606e22326bf2c18e4c8a029a2e46a21d01540faecf29ce378ee74ed4dca376b292567b30fc0d0fdf2ac03137307f9ab37d03cffcecbc0867b0e551c52a02d610fddb103348dd4d2247bfeb363870fe1a809e",
+    "hasClientSecret": false,
+    "hasOAuthTokens": false,
+    "connectionStatus": "Disconnected",
+    "grantedScopes": [],
+    "subscriptionId": "",
+    "subscriptionExpiration": null,
+    "clientStateToken": "",
+    "lastHistoryId": "",
+    "lastSyncedAt": null,
+    "lastError": "",
+    "isActive": true,
+    "automationRules": {
+      "autoCreateTickets": false,
+      "autoUpdateExistingTickets": true,
+      "ignoreSenders": [],
+      "ignoreFoldersOrLabels": [],
+      "filterSpamAndAutoReplies": true,
+      "defaultPriority": "Medium",
+      "enableAiAnalysis": true,
+      "enableAttachmentProcessing": true,
+      "sendUncertainToReview": true,
+      "trustedAutoApproval": false
+    },
+    "createdBy": "6b0877cbacc5e2c0cf77886e",
+    "updatedBy": "6b0877cbacc5e2c0cf77886e",
+    "createdAt": "2026-11-28T06:21:35.274Z",
+    "updatedAt": "2026-11-28T06:21:52.415Z",
+    "__v": 0
+  }
+]

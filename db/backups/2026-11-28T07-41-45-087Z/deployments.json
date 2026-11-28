@@ -1,0 +1,159 @@
+[
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b3e",
+    "deploymentId": "DEP-102",
+    "ticket": "6b070cfbb30fdb5e7bdb8b21",
+    "task": "6b070cfbb30fdb5e7bdb8b33",
+    "client": "6b070cfbb30fdb5e7bdb8aec",
+    "sageX3Folder": "ZNTPRD",
+    "environment": "Production",
+    "workflowStage": "Completed",
+    "versionReference": "REL-2026.11.18-ZNT",
+    "description": "Consolidated P&L Crystal Report pack with inter-company elimination columns.",
+    "patchObjects": "ZFINPNL.rpt, ZELIM_VIEW.sql",
+    "deployedBy": "6b070cfab30fdb5e7bdb8ab5",
+    "deploymentDate": "2026-11-20T16:29:47.755Z",
+    "approvalStatus": "Approved",
+    "approvedBy": "6b070cfab30fdb5e7bdb8ab2",
+    "approvedAt": "2026-11-19T16:29:47.755Z",
+    "approvalNotes": "Approved after CFO team verified figures in ZNTPLT.",
+    "testingStatus": "Passed",
+    "testedBy": "6b070cfab30fdb5e7bdb8ab2",
+    "deploymentNotes": "Promoted during maintenance window; zero errors.",
+    "history": [
+      {
+        "stage": "Pilot Testing",
+        "environment": "Pilot",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab5",
+        "updatedAt": "2026-11-18T16:29:47.755Z",
+        "note": ""
+      },
+      {
+        "stage": "Approval",
+        "environment": "Pilot",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab2",
+        "updatedAt": "2026-11-19T16:29:47.755Z",
+        "note": "Approved"
+      },
+      {
+        "stage": "Completed",
+        "environment": "Production",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab5",
+        "updatedAt": "2026-11-20T16:29:47.755Z",
+        "note": "Production cutover completed"
+      }
+    ],
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.763Z",
+    "updatedAt": "2026-11-25T16:29:47.763Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b3d",
+    "deploymentId": "DEP-101",
+    "ticket": "6b070cfbb30fdb5e7bdb8b1e",
+    "task": "6b070cfbb30fdb5e7bdb8b30",
+    "client": "6b070cfbb30fdb5e7bdb8aea",
+    "sageX3Folder": "APXPLT",
+    "environment": "Pilot",
+    "workflowStage": "Approval",
+    "versionReference": "REL-2026.11.22-APX",
+    "description": "YWS_APINV batch dimension caching optimization deployed to APXPLT; load test passed at 4.2s for 150 lines.",
+    "patchObjects": "YWS_APINV.src, ZDIMCACHE.adx",
+    "deployedBy": "6b070cfab30fdb5e7bdb8ab4",
+    "deploymentDate": "2026-11-24T16:29:47.755Z",
+    "approvalStatus": "Approved",
+    "approvedBy": "6b070cfab30fdb5e7bdb8ab2",
+    "approvedAt": "2026-11-25T16:31:45.843Z",
+    "approvalNotes": "Approved for Production rollout",
+    "testingStatus": "Passed",
+    "testedBy": "6b070cfab30fdb5e7bdb8ab4",
+    "deploymentNotes": "Ready for Team Lead approval to promote to APXPRD.",
+    "history": [
+      {
+        "stage": "Development Completed",
+        "environment": "Development",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab4",
+        "updatedAt": "2026-11-23T16:29:47.755Z",
+        "note": "Unit tested locally"
+      },
+      {
+        "stage": "Pilot Deployment",
+        "environment": "Pilot",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab4",
+        "updatedAt": "2026-11-24T16:29:47.755Z",
+        "note": "Patched APXPLT"
+      },
+      {
+        "stage": "Approval",
+        "environment": "Pilot",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab4",
+        "updatedAt": "2026-11-24T16:29:47.755Z",
+        "note": "Pilot testing passed, awaiting approval"
+      },
+      {
+        "stage": "Approval",
+        "environment": "Pilot",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab2",
+        "updatedAt": "2026-11-25T16:31:45.844Z",
+        "note": "Approved for Production rollout"
+      }
+    ],
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.763Z",
+    "updatedAt": "2026-11-25T16:31:45.848Z",
+    "__v": 1
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b3f",
+    "deploymentId": "DEP-103",
+    "ticket": "6b070cfbb30fdb5e7bdb8b1d",
+    "task": "6b070cfbb30fdb5e7bdb8b2d",
+    "client": "6b070cfbb30fdb5e7bdb8ae9",
+    "sageX3Folder": "HTDEV",
+    "environment": "Development",
+    "workflowStage": "Pilot Deployment",
+    "versionReference": "REL-2026.11.25-HT-WIP",
+    "description": "ZMT940IMP multi-line :86: buffer expansion patch.",
+    "patchObjects": "ZMT940IMP.src, ZMT940.obj",
+    "deployedBy": "6b070cfab30fdb5e7bdb8ab3",
+    "deploymentDate": "2026-11-25T16:29:47.755Z",
+    "approvalStatus": "Approved",
+    "approvedBy": "6b070cfab30fdb5e7bdb8ab2",
+    "approvedAt": "2026-11-25T16:31:44.502Z",
+    "approvalNotes": "Approved for Production rollout",
+    "testingStatus": "In Progress",
+    "testedBy": null,
+    "deploymentNotes": "deployed the dev on pilot",
+    "history": [
+      {
+        "stage": "Development Completed",
+        "environment": "Development",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab3",
+        "updatedAt": "2026-11-25T16:29:47.755Z",
+        "note": ""
+      },
+      {
+        "stage": "Development Completed",
+        "environment": "Development",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab2",
+        "updatedAt": "2026-11-25T16:31:44.502Z",
+        "note": "Approved for Production rollout"
+      },
+      {
+        "stage": "Pilot Deployment",
+        "environment": "Development",
+        "updatedBy": "6b070cfab30fdb5e7bdb8ab2",
+        "updatedAt": "2026-11-26T15:09:13.890Z",
+        "note": "Stage: Pilot Deployment, Approval: Approved"
+      }
+    ],
+    "isDeleted": false,
+    "deletedAt": null,
+    "createdAt": "2026-11-25T16:29:47.763Z",
+    "updatedAt": "2026-11-26T15:09:13.901Z",
+    "__v": 2
+  }
+]

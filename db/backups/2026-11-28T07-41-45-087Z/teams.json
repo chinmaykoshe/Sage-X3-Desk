@@ -1,0 +1,33 @@
+[
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8ad9",
+    "name": "Core 4GL & Finance",
+    "description": "Handles 4GL customizations, banking, and general ledger tickets",
+    "lead": "6b070cfab30fdb5e7bdb8ab2",
+    "members": [
+      "6b070cfab30fdb5e7bdb8ab2",
+      "6b070cfab30fdb5e7bdb8ab3",
+      "6b070cfab30fdb5e7bdb8ab5"
+    ],
+    "specialization": "Finance, 4GL, Crystal Reports",
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.574Z",
+    "updatedAt": "2026-11-25T16:29:47.574Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8ada",
+    "name": "Integrations & EDI",
+    "description": "REST/SOAP web services, third-party WMS & banking connectors",
+    "lead": "6b070cfab30fdb5e7bdb8ab2",
+    "members": [
+      "6b070cfab30fdb5e7bdb8ab2",
+      "6b070cfab30fdb5e7bdb8ab4"
+    ],
+    "specialization": "APIs, EDI, Import/Export",
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.575Z",
+    "updatedAt": "2026-11-25T16:29:47.575Z",
+    "__v": 0
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "_id": "client",
+    "seq": 108,
+    "__v": 0
+  },
+  {
+    "_id": "employee",
+    "seq": 112,
+    "__v": 0
+  },
+  {
+    "_id": "project",
+    "seq": 105,
+    "__v": 0
+  },
+  {
+    "_id": "ticket",
+    "seq": 1069,
+    "__v": 0
+  },
+  {
+    "_id": "task",
+    "seq": 1019,
+    "__v": 0
+  },
+  {
+    "_id": "deployment",
+    "seq": 103,
+    "__v": 0
+  },
+  {
+    "_id": "kb",
+    "seq": 103,
+    "__v": 0
+  },
+  {
+    "_id": "ticketDraft",
+    "seq": 1026,
+    "__v": 0
+  },
+  {
+    "_id": "ticket_2026",
+    "seq": 111
+  },
+  {
+    "_id": "pending_ticket",
+    "seq": 1001
+  }
+]

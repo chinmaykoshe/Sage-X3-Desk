@@ -1,0 +1,738 @@
+import Client from '../../db/models/Client.js';
+import Environment from '../../db/models/Environment.js';
+import Ticket from '../../db/models/Ticket.js';
+import Task from '../../db/models/Task.js';
+import Project from '../../db/models/Project.js';
+import User from '../../db/models/User.js';
+import TicketDraft from '../../db/models/TicketDraft.js';
+import AIActionRequest from '../../db/models/AIActionRequest.js';
+import { ROLES } from '../../backend/config/constants.js';
+import { getNextSequence } from '../../db/models/Counter.js';
+import AppError from '../../backend/utils/AppError.js';
+import { matchClientDeterministic, matchEmployeeDeterministic } from './aiContextService.js';
+import { generateAssistantReply } from './aiIntentService.js';
+import { userHasScreen } from '../../backend/services/rbacService.js';
+import {
+  isSensitiveCredentialQuery,
+  containsCredentialHallucination,
+  SENSITIVE_REFUSAL_RESPONSE,
+  querySafeDatabase,
+} from './aiDbQueryService.js';
+
+const DEST_TO_SCREEN = {
+  overview: 'dashboard',
+  dashboard: 'dashboard',
+  'my-tasks': 'my_tasks',
+  'my-work': 'my_tasks',
+  inbox: 'inbox',
+  notifications: 'inbox',
+  tickets: 'tickets',
+  'task-board': 'task_board',
+  tasks: 'task_board',
+  calendar: 'calendar',
+  clients: 'clients',
+  projects: 'projects',
+  team: 'team',
+  workload: 'workload',
+  deployments: 'deployments',
+  reports: 'reports',
+  activity: 'activity_logs',
+  'knowledge-base': 'knowledge_base',
+  approvals: 'approval_inbox',
+  intake: 'smart_intake',
+  settings: 'settings',
+};
+
+const DEST_TO_ROUTE = {
+  overview: '/',
+  dashboard: '/',
+  'my-tasks': '/my-tasks',
+  'my-work': '/my-tasks',
+  inbox: '/notifications',
+  notifications: '/notifications',
+  tickets: '/tickets',
+  'task-board': '/task-board',
+  tasks: '/task-board',
+  calendar: '/calendar',
+  clients: '/clients',
+  projects: '/projects',
+  team: '/team',
+  workload: '/workload',
+  deployments: '/deployments',
+  reports: '/reports',
+  activity: '/activity-logs',
+  'knowledge-base': '/knowledge-base',
+  approvals: '/approvals',
+  intake: '/smart-intake',
+  settings: '/settings',
+  profile: '/profile',
+};
+
+const asText = (v, fallback = '') => (typeof v === 'string' ? v.trim() : Array.isArray(v) ? String(v[0] || fallback).trim() : fallback);
+
+function normalizeEnvList(envs = [], folderBase = 'X3') {
+  if (!Array.isArray(envs) || envs.length === 0) {
+    return [
+      { name: 'Pilot', environmentType: 'Pilot', folderCode: `${folderBase}PLT` },
+      { name: 'Production', environmentType: 'Production', folderCode: `${folderBase}PRD` },
+    ];
+  }
+  return envs
+    .map((raw) => String(raw || '').trim())
+    .filter(Boolean)
+    .map((label) => {
+      const lower = label.toLowerCase();
+      const environmentType = lower.includes('prod')
+        ? 'Production'
+        : lower.includes('dev')
+          ? 'Development'
+          : lower.includes('uat')
+            ? 'UAT'
+            : lower.includes('sand')
+              ? 'Sandbox'
+              : 'Pilot';
+      return {
+        name: label,
+        environmentType,
+        folderCode: label.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || `${folderBase}PLT`,
+      };
+    });
+}
+
+export async function createEntityFromActionPayload(actionType, payload = {}, actor) {
+  if (actionType === 'CREATE_USER') {
+    const fullName = asText(payload.name, 'New Team Member') || 'New Team Member';
+    const email = (
+      asText(payload.email) || `${fullName.toLowerCase().replace(/[^a-z0-9]+/g, '.') || 'user'}@sagex3desk.com`
+    ).toLowerCase();
+    const existing = await User.findOne({ email });
+    if (existing) {
+      throw new AppError(`User with email ${email} already exists`, 409);
+    }
+    const employeeId = await getNextSequence('employee', 'EMP', 101);
+    const skillsArr = Array.isArray(payload.skills)
+      ? payload.skills
+      : asText(payload.skills)
+          .split(/[;|]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+    const createdRecord = await User.create({
+      employeeId,
+      fullName,
+      email,
+      password: 'Password@123',
+      role: Object.values(ROLES).includes(payload.role) ? payload.role : ROLES.DEVELOPER,
+      designation: asText(payload.designation, 'Sage X3 Consultant') || 'Sage X3 Consultant',
+      department: asText(payload.department, 'Sage X3 Practice') || 'Sage X3 Practice',
+      contactNumber: asText(payload.contactNumber, ''),
+      skills: skillsArr,
+    });
+    return { createdRecord, recordType: 'User', route: `/team/${createdRecord._id}` };
+  }
+
+  if (actionType === 'CREATE_CLIENT') {
+    const companyName = asText(payload.name, 'New Client') || 'New Client';
+    const slug = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '') || 'client';
+    const folderBase = slug.slice(0, 4).toUpperCase().padEnd(3, 'X');
+    const clientId = await getNextSequence('client', 'CLT', 101);
+    const envDocs = normalizeEnvList(payload.environments, folderBase);
+    const createdRecord = await Client.create({
+      clientId,
+      companyName,
+      companyDescription: asText(payload.description, ''),
+      hostingInformation: asText(payload.hosting, ''),
+      primaryContactPerson: asText(payload.contactPerson, 'Primary Contact') || 'Primary Contact',
+      contactEmail: (asText(payload.email) || `contact@${slug}.com`).toLowerCase(),
+      clientFolderCode: envDocs[0]?.folderCode || `${folderBase}PRD`,
+      pilotFolderCode: envDocs.find((e) => e.environmentType === 'Pilot')?.folderCode || `${folderBase}PLT`,
+      productionFolderCode: envDocs.find((e) => e.environmentType === 'Production')?.folderCode || `${folderBase}PRD`,
+      sageX3Version: asText(payload.sageX3Version, 'V12 P33') || 'V12 P33',
+      accountManager: actor?._id || null,
+    });
+    await Environment.insertMany(envDocs.map((e) => ({ ...e, client: createdRecord._id })));
+    return { createdRecord, recordType: 'Client', route: `/clients/${createdRecord._id}` };
+  }
+
+  if (actionType === 'CREATE_PROJECT') {
+    const projectName = asText(payload.name, 'New Sage X3 Project') || 'New Sage X3 Project';
+    const clients = await Client.find({ isDeleted: false }).select('_id companyName aliases clientFolderCode').lean();
+    let targetClient = null;
+    if (payload.client) {
+      targetClient = matchClientDeterministic(asText(payload.client), clients).bestMatch;
+    }
+    if (!targetClient) {
+      targetClient = clients[0] || null;
+    }
+    if (!targetClient) {
+      throw new AppError('Create at least one client first before creating a project.', 400);
+    }
+    const projectId = await getNextSequence('project', 'PRJ', 101);
+    const createdRecord = await Project.create({
+      projectId,
+      name: projectName,
+      description: asText(payload.description, ''),
+      status: asText(payload.status, 'Active') || 'Active',
+      client: targetClient._id,
+      projectManager: actor._id,
+      createdBy: actor._id,
+      teamMembers: [actor._id],
+    });
+    return { createdRecord, recordType: 'Project', route: `/projects/${createdRecord._id}` };
+  }
+
+  throw new AppError(`Unsupported action type: ${actionType}`, 400);
+}
+
+/**
+ * Validates permissions, executes read-only MongoDB queries, and builds a safe frontend action payload.
+ */
+export async function executeIntent({ parsed, message, user, conversation, effectivePermissions = null, ollamaAvailable = true }) {
+  const { intent, entities = {} } = parsed;
+  const canCreateDirectly = [ROLES.ADMIN, ROLES.TEAM_LEAD].includes(user?.role);
+
+  if (intent === 'BULK_CREATE_TEMPLATE') {
+    const t = entities.target || 'all';
+    const templates = {
+      client:
+        'Clients CSV format (paste rows or upload .csv):\nname, description, hosting, env1, env2\nAcme Corp, Sage X3 V12 rollout, AWS Cloud, ACMEPLT, ACMEPRD\nBeta Ltd, EDI & Banking setup, Azure, BETAPLT, BETAPRD',
+      user:
+        'Users CSV format (paste rows or upload .csv):\nname, email, designation, role, department\nJayesh Patil, jayesh@sagex3desk.com, 4GL Developer, Developer / Employee, Sage X3 Practice\nAryan Shah, aryan@sagex3desk.com, Functional Consultant, Developer / Employee, Finance',
+      project:
+        'Projects CSV format (paste rows or upload .csv):\nname, client, description, status\nSFTP Bank Setup, hightide ventures, Replicate BMO SFTP in Pilot, Active\nV12 Migration, ABC Manufacturing, Upgrade from V11 to V12, Active',
+    };
+    return {
+      statusType: 'navigation',
+      response:
+        t === 'all'
+          ? `${templates.client}\n\n${templates.user}\n\n${templates.project}`
+          : templates[t] || templates.client,
+    };
+  }
+
+  if (['CREATE_USER_REQUEST', 'CREATE_CLIENT_REQUEST', 'CREATE_PROJECT_REQUEST'].includes(intent)) {
+    const actionType =
+      intent === 'CREATE_USER_REQUEST'
+        ? 'CREATE_USER'
+        : intent === 'CREATE_CLIENT_REQUEST'
+          ? 'CREATE_CLIENT'
+          : 'CREATE_PROJECT';
+    const rawItems = Array.isArray(entities.items) && entities.items.length > 0 ? entities.items : [entities];
+
+    if (!canCreateDirectly) {
+      const createdReqs = [];
+      for (const item of rawItems) {
+        const itemName = asText(item?.name, actionType === 'CREATE_USER' ? 'New Team Member' : actionType === 'CREATE_CLIENT' ? 'New Client' : 'New Project');
+        const labelPrefix = actionType === 'CREATE_USER' ? 'Add User' : actionType === 'CREATE_CLIENT' ? 'Add Client' : 'Add Project';
+        const summaryParts =
+          actionType === 'CREATE_USER'
+            ? [item.email || `${itemName.toLowerCase().replace(/[^a-z0-9]+/g, '.')}@sagex3desk.com`, item.designation || 'Sage X3 Consultant', item.role || ROLES.DEVELOPER]
+            : actionType === 'CREATE_CLIENT'
+              ? [item.description || 'New Sage X3 Client', item.hosting ? `Host: ${item.hosting}` : null, Array.isArray(item.environments) && item.environments.length ? `Envs: ${item.environments.join(', ')}` : null]
+              : [item.client ? `Client: ${item.client}` : 'Default Client', item.description || 'New Project'];
+
+        const reqDoc = await AIActionRequest.create({
+          actionType,
+          title: `${labelPrefix}: ${itemName}`,
+          summary: summaryParts.filter(Boolean).join(' · '),
+          payload: { ...item, name: itemName },
+          requestedBy: user._id,
+          status: 'Pending TL Approval',
+        });
+        createdReqs.push(reqDoc);
+      }
+
+      return {
+        response: `Submitted ${createdReqs.length} request(s) (${createdReqs.map((r) => r.title).join(', ')}) for Team Lead / Admin approval.`,
+        action: { type: 'OPEN_CREATED', route: '/approvals', label: 'Open TL Approvals' },
+        statusType: 'approval',
+      };
+    }
+
+    const createdSummaries = [];
+    const errors = [];
+    const buttons = [];
+
+    for (const item of rawItems) {
+      try {
+        const { createdRecord, route } = await createEntityFromActionPayload(actionType, item, user);
+        const displayName = createdRecord.fullName || createdRecord.companyName || createdRecord.name;
+        const code = createdRecord.employeeId || createdRecord.clientId || createdRecord.projectId;
+        createdSummaries.push(`${displayName} (${code})`);
+        buttons.push({ label: `Go to ${displayName}`, route });
+      } catch (err) {
+        errors.push(`${asText(item?.name, 'item')}: ${err.message}`);
+      }
+    }
+
+    if (createdSummaries.length === 0) {
+      return { response: errors.join('; ') || 'Could not create records.', statusType: 'warning' };
+    }
+
+    const labelWord = actionType === 'CREATE_USER' ? 'user(s)' : actionType === 'CREATE_CLIENT' ? 'client(s)' : 'project(s)';
+    const msgText =
+      `Created ${createdSummaries.length} ${labelWord}: ${createdSummaries.join(', ')}.` +
+      (errors.length ? `\nSkipped: ${errors.join('; ')}` : '');
+
+    return {
+      response: msgText,
+      action: { type: 'OPEN_CREATED', buttons, route: buttons[0]?.route, label: buttons[0]?.label },
+      statusType: 'success',
+    };
+  }
+
+  const clients = await Client.find({ isDeleted: false })
+    .select('clientId companyName aliases clientFolderCode pilotFolderCode productionFolderCode sageX3Version')
+    .lean();
+  const users = await User.find({ isDeleted: false, role: { $ne: ROLES.CLIENT } })
+    .select('employeeId fullName designation role')
+    .lean();
+
+  const resolveClient = (hint) => {
+    const match = matchClientDeterministic(hint || message, clients);
+    return match;
+  };
+
+  const resolveEmployee = (hint) => matchEmployeeDeterministic(hint || message, users);
+
+  const contextUpdates = { lastIntent: intent };
+
+  if (intent === 'NAVIGATE') {
+    const destKey = String(entities.destination || '').toLowerCase();
+    const screenKey = DEST_TO_SCREEN[destKey];
+    if (screenKey && effectivePermissions && !userHasScreen(effectivePermissions, screenKey)) {
+      return {
+        statusType: 'warning',
+        response: `Access denied: you do not have permission to view "${destKey}".`,
+        action: null,
+        contextUpdates,
+      };
+    }
+    const route = DEST_TO_ROUTE[destKey] || '/';
+    return {
+      statusType: 'navigation',
+      response: parsed.response || `Navigated to ${destKey || 'Overview'}.`,
+      action: { type: 'NAVIGATE', route },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'SHOW_MY_WORK') {
+    return {
+      statusType: 'navigation',
+      response: 'Opening your assigned tasks in My Work.',
+      action: { type: 'NAVIGATE', route: '/my-tasks' },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'SHOW_APPROVAL_QUEUE') {
+    if (effectivePermissions && !userHasScreen(effectivePermissions, 'approval_inbox')) {
+      return {
+        statusType: 'warning',
+        response: 'Access denied: you do not have permission to view the TL Approval Inbox.',
+        action: null,
+        contextUpdates,
+      };
+    }
+    const [pendingDrafts, pendingManual] = await Promise.all([
+      TicketDraft.countDocuments({ isDeleted: false, approvalStatus: 'Pending TL Approval' }),
+      Ticket.countDocuments({ isDeleted: false, approvalStatus: 'PENDING_APPROVAL' }),
+    ]);
+    return {
+      statusType: 'approval',
+      response: `Found ${pendingDrafts + pendingManual} submission(s) waiting in the TL Approval Inbox.`,
+      action: { type: 'NAVIGATE', route: '/approvals?status=Pending%20TL%20Approval' },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'OPEN_CLIENT') {
+    const cMatch = resolveClient(entities.client);
+    if (cMatch.ambiguous) {
+      return {
+        statusType: 'warning',
+        response: 'Multiple clients match your query. Which client would you like to open?',
+        clarificationOptions: cMatch.candidates.map((c) => ({
+          label: `${c.companyName} (${c.folderCode})`,
+          command: `Open client profile for ${c.companyName}`,
+        })),
+        action: null,
+        contextUpdates,
+      };
+    }
+    if (!cMatch.bestMatch) {
+      return {
+        statusType: 'warning',
+        response: 'I could not match that client against our Sage X3 client directory.',
+        action: { type: 'NAVIGATE', route: '/clients' },
+        contextUpdates,
+      };
+    }
+    contextUpdates.lastClientId = cMatch.bestMatch._id;
+    contextUpdates.lastClientName = cMatch.bestMatch.companyName;
+    return {
+      statusType: 'navigation',
+      response: `Opened client profile for ${cMatch.bestMatch.companyName} (${cMatch.bestMatch.clientFolderCode}).`,
+      action: { type: 'NAVIGATE', route: `/clients/${cMatch.bestMatch._id}` },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'OPEN_TICKET') {
+    const ticketRef = entities.ticketId || '';
+    const t = ticketRef
+      ? await Ticket.findOne({ ticketId: ticketRef.toUpperCase(), isDeleted: false }).lean()
+      : await Ticket.findOne({ title: { $regex: entities.title || message, $options: 'i' }, isDeleted: false }).lean();
+    if (!t) {
+      return {
+        statusType: 'warning',
+        response: `Could not find ticket ${ticketRef || 'matching that description'}.`,
+        action: null,
+        contextUpdates,
+      };
+    }
+    contextUpdates.lastTicketId = t._id;
+    return {
+      statusType: 'navigation',
+      response: `Opening ${t.ticketId}: ${t.title}.`,
+      action: { type: 'OPEN_TICKET_DRAWER', ticketId: String(t._id) },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'OPEN_TASK') {
+    const taskRef = entities.taskId || '';
+    const t = taskRef
+      ? await Task.findOne({ taskId: taskRef.toUpperCase(), isDeleted: false }).lean()
+      : await Task.findOne({ title: { $regex: entities.title || message, $options: 'i' }, isDeleted: false }).lean();
+    if (!t) {
+      return {
+        statusType: 'warning',
+        response: `Could not find task ${taskRef || 'matching that description'}.`,
+        action: null,
+        contextUpdates,
+      };
+    }
+    return {
+      statusType: 'navigation',
+      response: `Opening ${t.taskId}: ${t.title}.`,
+      action: { type: 'OPEN_TASK_DRAWER', taskId: String(t._id) },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'FILTER_TICKETS' || intent === 'SHOW_OVERDUE') {
+    if (intent === 'SHOW_OVERDUE' && entities.target === 'tasks') {
+      return {
+        statusType: 'search',
+        response: 'Filtering overdue tasks.',
+        action: { type: 'NAVIGATE', route: '/my-tasks?view=overdue' },
+        contextUpdates,
+      };
+    }
+
+    const filter = { isDeleted: false };
+    const uiFilters = {};
+
+    if (user.role === ROLES.DEVELOPER) {
+      filter.$or = [{ assignedDevelopers: user._id }, { createdBy: user._id }];
+    }
+
+    if (entities.client) {
+      const cMatch = resolveClient(entities.client);
+      if (cMatch.ambiguous) {
+        return {
+          statusType: 'warning',
+          response: 'Multiple clients matched. Please choose one:',
+          clarificationOptions: cMatch.candidates.map((c) => ({
+            label: `${c.companyName} (${c.folderCode})`,
+            command: `Show tickets for ${c.companyName}`,
+          })),
+          action: null,
+          contextUpdates,
+        };
+      }
+      if (cMatch.bestMatch) {
+        filter.client = cMatch.bestMatch._id;
+        uiFilters.client = String(cMatch.bestMatch._id);
+        contextUpdates.lastClientId = cMatch.bestMatch._id;
+        contextUpdates.lastClientName = cMatch.bestMatch.companyName;
+      }
+    }
+
+    if (entities.developer) {
+      const emp = resolveEmployee(entities.developer);
+      if (emp) {
+        filter.assignedDevelopers = emp._id;
+        uiFilters.developer = String(emp._id);
+        contextUpdates.lastEmployeeId = emp._id;
+        contextUpdates.lastEmployeeName = emp.fullName;
+      }
+    }
+
+    if (entities.priority) {
+      filter.priority = entities.priority;
+      uiFilters.priority = entities.priority;
+    }
+
+    if (entities.status) {
+      const stList = Array.isArray(entities.status) ? entities.status : [entities.status];
+      filter.status = { $in: stList };
+      if (stList.length === 1) uiFilters.status = stList[0];
+    }
+
+    if (entities.overdueOnly) {
+      filter.dueDate = { $lt: new Date() };
+      filter.status = { $nin: ['Resolved', 'Closed'] };
+      uiFilters.overdueOnly = 'true';
+    }
+
+    if (entities.search) {
+      uiFilters.search = entities.search;
+      filter.title = { $regex: entities.search, $options: 'i' };
+    }
+
+    const matches = await Ticket.find(filter)
+      .populate('client', 'companyName')
+      .populate('assignedDevelopers', 'fullName')
+      .select('ticketId title status priority assignedDevelopers')
+      .sort({ sortOrder: 1, createdAt: -1 })
+      .limit(50)
+      .lean();
+
+    contextUpdates.lastFilters = uiFilters;
+    contextUpdates.lastResultIds = matches.map((m) => String(m._id));
+
+    const qs = new URLSearchParams(uiFilters).toString();
+    const label = contextUpdates.lastClientName ? ` for ${contextUpdates.lastClientName}` : '';
+    return {
+      statusType: 'search',
+      response: `Found ${matches.length} matching ticket(s)${label}. Applied filter on All Tickets.`,
+      action: { type: 'FILTER_TICKETS', route: `/tickets${qs ? `?${qs}` : ''}`, filters: uiFilters },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'FILTER_TASKS') {
+    const filter = { isDeleted: false, parentTask: null };
+    const uiFilters = { scope: 'all' };
+
+    if (entities.employee) {
+      const emp = resolveEmployee(entities.employee);
+      if (emp) {
+        filter.assignedEmployees = emp._id;
+        uiFilters.employee = String(emp._id);
+        contextUpdates.lastEmployeeId = emp._id;
+        contextUpdates.lastEmployeeName = emp.fullName;
+      }
+    }
+
+    if (entities.overdueOnly) {
+      filter.dueDate = { $lt: new Date() };
+      filter.status = { $ne: 'Completed' };
+      uiFilters.view = 'overdue';
+    }
+
+    if (entities.priority) {
+      filter.priority = entities.priority;
+      uiFilters.priority = entities.priority;
+    }
+
+    const matches = await Task.find(filter).select('taskId title status').limit(50).lean();
+    const qs = new URLSearchParams(uiFilters).toString();
+    return {
+      statusType: 'search',
+      response: `Found ${matches.length} matching task(s)${
+        contextUpdates.lastEmployeeName ? ` for ${contextUpdates.lastEmployeeName}` : ''
+      }.`,
+      action: { type: 'FILTER_TASKS', route: `/task-board?${qs}`, filters: uiFilters },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'FILTER_CLIENTS') {
+    const q = entities.search || '';
+    const count = await Client.countDocuments({
+      isDeleted: false,
+      ...(q ? { companyName: { $regex: q, $options: 'i' } } : {}),
+    });
+    return {
+      statusType: 'search',
+      response: `Found ${count} client(s).`,
+      action: { type: 'NAVIGATE', route: `/clients${q ? `?search=${encodeURIComponent(q)}` : ''}` },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'FILTER_PROJECTS') {
+    const count = await Project.countDocuments({ isDeleted: false });
+    return {
+      statusType: 'search',
+      response: `Opening Projects (${count} active/recorded).`,
+      action: { type: 'NAVIGATE', route: '/projects' },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'SEARCH_RECORDS') {
+    const q = entities.query || message;
+    return {
+      statusType: 'search',
+      response: `Searching tickets for "${q}".`,
+      action: { type: 'NAVIGATE', route: `/tickets?search=${encodeURIComponent(q)}` },
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'SUMMARIZE_CLIENT') {
+    const cMatch = resolveClient(entities.client);
+    if (!cMatch.bestMatch) {
+      return {
+        statusType: 'warning',
+        response: 'Which client would you like me to summarize?',
+        clarificationOptions: clients.slice(0, 4).map((c) => ({
+          label: c.companyName,
+          command: `Summarize ${c.companyName}'s recent issues`,
+        })),
+        action: null,
+        contextUpdates,
+      };
+    }
+    const c = cMatch.bestMatch;
+    const clientTickets = await Ticket.find({ client: c._id, isDeleted: false })
+      .populate('assignedDevelopers', 'fullName')
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean();
+    const openCount = clientTickets.filter((t) => !['Resolved', 'Closed'].includes(t.status)).length;
+    const criticalCount = clientTickets.filter((t) => t.priority === 'Critical').length;
+    const summaryLines = clientTickets
+      .slice(0, 4)
+      .map((t) => `• ${t.ticketId} (${t.status}, ${t.priority}): ${t.title}`)
+      .join('\n');
+
+    contextUpdates.lastClientId = c._id;
+    contextUpdates.lastClientName = c.companyName;
+
+    return {
+      statusType: 'response',
+      response: `${c.companyName} (${c.clientFolderCode}, ${c.sageX3Version}) has ${openCount} open ticket(s) (${criticalCount} Critical):\n${
+        summaryLines || 'No recent tickets found.'
+      }`,
+      action: null,
+      contextUpdates,
+    };
+  }
+
+  // Handle "Who is handling the first one?" from previous context
+  if (entities.inspectFirstTicket && conversation?.contextState?.lastResultIds?.length > 0) {
+    const firstId = conversation.contextState.lastResultIds[0];
+    const t = await Ticket.findById(firstId).populate('assignedDevelopers', 'fullName').lean();
+    if (t) {
+      const names = (t.assignedDevelopers || []).map((d) => d.fullName).join(', ') || 'nobody yet (Unassigned)';
+      return {
+        statusType: 'response',
+        response: `${t.ticketId} ("${t.title}") is currently assigned to ${names}.`,
+        action: { type: 'OPEN_TICKET_DRAWER', ticketId: String(t._id) },
+        contextUpdates,
+      };
+    }
+  }
+
+  if (intent === 'BLOCK_SENSITIVE' || isSensitiveCredentialQuery(message)) {
+    return {
+      statusType: 'warning',
+      response: SENSITIVE_REFUSAL_RESPONSE,
+      action: null,
+      contextUpdates,
+    };
+  }
+
+  if (intent === 'QUERY_DATABASE') {
+    const dbRes = await querySafeDatabase({
+      queryType: entities.queryType || 'auto',
+      search: entities.search || '',
+      message,
+      user,
+    });
+    return {
+      statusType: dbRes.statusType || 'search',
+      response: dbRes.response,
+      action: dbRes.action || null,
+      contextUpdates: { ...contextUpdates, ...(dbRes.contextUpdates || {}) },
+    };
+  }
+
+  if (intent === 'CREATE_TICKET_DRAFT') {
+    return {
+      statusType: 'navigation',
+      response:
+        'Describe the issue in detail (or upload a screenshot) here, or open Smart Ticket Intake to create a structured ticket draft.',
+      action: { type: 'OPEN_CREATED', route: '/smart-intake', label: 'Go to Smart Ticket Intake' },
+      contextUpdates,
+    };
+  }
+
+  const rawResponse = parsed.needsClarification ? parsed.clarificationQuestion || parsed.response : parsed.response;
+  if (containsCredentialHallucination(rawResponse)) {
+    return {
+      statusType: 'warning',
+      response: SENSITIVE_REFUSAL_RESPONSE,
+      action: null,
+      contextUpdates,
+    };
+  }
+
+  // Only run global DB keyword search when the user explicitly asked to search/find records
+  const looksLikeRecordSearch =
+    intent === 'SEARCH_RECORDS' ||
+    /\b(find|search|lookup|look\s+up|locate|show|list|filter|tkt-\d+|tsk-\d+|drf-\d+|clt-\d+|emp-\d+)\b/i.test(message);
+
+  if (looksLikeRecordSearch && (parsed.needsClarification || parsed.parsedBy === 'text-fallback' || intent === 'SEARCH_RECORDS')) {
+    const fallbackDb = await querySafeDatabase({ queryType: 'auto', search: message, message, user });
+    if (fallbackDb?.action || (fallbackDb?.response && !fallbackDb.response.startsWith('No database records matched'))) {
+      return {
+        statusType: fallbackDb.statusType || 'search',
+        response: fallbackDb.response,
+        action: fallbackDb.action || null,
+        contextUpdates: { ...contextUpdates, ...(fallbackDb.contextUpdates || {}) },
+      };
+    }
+  }
+
+  // For conversational or general questions, answer like a proper AI Assistant using Ollama + live workspace context
+  if (
+    intent === 'GENERAL_ANSWER' ||
+    parsed.needsClarification ||
+    parsed.parsedBy === 'text-fallback' ||
+    !rawResponse
+  ) {
+    const assistantReply = await generateAssistantReply({
+      message,
+      history: conversation?.messages || [],
+      user,
+      ollamaAvailable,
+    });
+    if (containsCredentialHallucination(assistantReply)) {
+      return {
+        statusType: 'warning',
+        response: SENSITIVE_REFUSAL_RESPONSE,
+        action: null,
+        contextUpdates,
+      };
+    }
+    return {
+      statusType: 'response',
+      response: assistantReply,
+      action: null,
+      contextUpdates,
+    };
+  }
+
+  return {
+    statusType: 'response',
+    response: rawResponse,
+    action: null,
+    contextUpdates,
+  };
+}

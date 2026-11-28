@@ -1,0 +1,71 @@
+[
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b6d",
+    "name": "All Tickets Board",
+    "entityType": "ticket",
+    "viewMode": "board",
+    "owner": "6b070cfab30fdb5e7bdb8ab1",
+    "isShared": true,
+    "isPinned": true,
+    "isDefault": true,
+    "config": {
+      "groupBy": "status",
+      "sortBy": "sortOrder",
+      "sortOrder": "asc",
+      "hiddenColumns": [],
+      "visibleFields": [],
+      "hideEmptyColumns": false
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.835Z",
+    "updatedAt": "2026-11-25T16:29:47.835Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b6e",
+    "name": "Critical & High Triage",
+    "entityType": "ticket",
+    "viewMode": "list",
+    "owner": "6b070cfab30fdb5e7bdb8ab2",
+    "isShared": true,
+    "isPinned": true,
+    "isDefault": false,
+    "config": {
+      "groupBy": "priority",
+      "sortBy": "dueDate",
+      "sortOrder": "asc",
+      "filters": {
+        "priority": "High"
+      },
+      "hiddenColumns": [],
+      "visibleFields": [],
+      "hideEmptyColumns": false
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.836Z",
+    "updatedAt": "2026-11-25T16:29:47.836Z",
+    "__v": 0
+  },
+  {
+    "_id": "6b070cfbb30fdb5e7bdb8b6f",
+    "name": "4GL Sprint Board",
+    "entityType": "task",
+    "viewMode": "board",
+    "owner": "6b070cfab30fdb5e7bdb8ab2",
+    "isShared": true,
+    "isPinned": true,
+    "isDefault": true,
+    "config": {
+      "groupBy": "status",
+      "sortBy": "sortOrder",
+      "sortOrder": "asc",
+      "hiddenColumns": [],
+      "visibleFields": [],
+      "hideEmptyColumns": false
+    },
+    "isDeleted": false,
+    "createdAt": "2026-11-25T16:29:47.836Z",
+    "updatedAt": "2026-11-25T16:29:47.836Z",
+    "__v": 0
+  }
+]
