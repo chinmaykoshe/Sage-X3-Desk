@@ -56,7 +56,12 @@ export default function LoginPage() {
         }
       }
     } catch (err) {
-      addToast(getApiError(err, 'Authentication failed'), 'error');
+      const errMsg = getApiError(err, 'Authentication failed');
+      addToast(errMsg, 'error');
+      // If server asks for email verification, automatically show OTP screen
+      if (err.response?.status === 403 && /verify.*email/i.test(errMsg)) {
+        setVerifyState({ email: values.email, code: '', resending: false, error: null });
+      }
     } finally {
       setSubmitting(false);
     }
@@ -163,7 +168,7 @@ export default function LoginPage() {
               />
               {verifyState.error && <p className="text-xs text-rose-500">{verifyState.error}</p>}
               <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? 'Verifying…' : 'Verify & Activate Account'}
+                {submitting ? 'Verifying OTP…' : 'Verify OTP & Create Account'}
               </Button>
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <button type="button" onClick={handleResend} disabled={verifyState.resending} className="text-indigo-600 dark:text-indigo-400 hover:underline disabled:opacity-50">
@@ -263,7 +268,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={submitting}>
-              {submitting ? 'Authenticating...' : mode === 'login' ? 'Sign In to Workspace' : 'Create Account'}
+              {submitting ? 'Please wait...' : mode === 'login' ? 'Sign In to Workspace' : 'Create Account (Send OTP)'}
             </Button>
 
             {mode === 'login' && (

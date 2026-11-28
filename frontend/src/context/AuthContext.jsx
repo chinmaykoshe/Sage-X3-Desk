@@ -60,24 +60,45 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || '/';
-    const s = io(socketUrl, { auth: { token } });
+    const candidateSocketUrls = (import.meta.env.VITE_SOCKET_URL || '/')
+      .split(',')
+      .map((u) => u.trim().replace(/\/+$/, ''))
+      .filter(Boolean);
 
-    s.on('notification:new', (notif) => {
-      setNotifications((prev) => [notif, ...prev]);
-      setUnreadCount((c) => c + 1);
-      addToast(`${notif.title}: ${notif.message}`, 'info', 4500);
-    });
+    let activeIdx = 0;
+    let s = null;
 
-    s.on('permissions:updated', (payload) => {
-      if (!payload?.userId || String(payload.userId) === String(user._id)) {
-        loadUser();
-      }
-    });
+    function connectSocket(idx) {
+      const url = candidateSocketUrls[idx] || candidateSocketUrls[0] || '/';
+      const inst = io(url, { auth: { token }, timeout: 7000 });
 
-    setSocket(s);
+      inst.on('connect_error', () => {
+        if (candidateSocketUrls.length > 1 && idx + 1 < candidateSocketUrls.length) {
+          inst.disconnect();
+          connectSocket(idx + 1);
+        }
+      });
+
+      inst.on('notification:new', (notif) => {
+        setNotifications((prev) => [notif, ...prev]);
+        setUnreadCount((c) => c + 1);
+        addToast(`${notif.title}: ${notif.message}`, 'info', 4500);
+      });
+
+      inst.on('permissions:updated', (payload) => {
+        if (!payload?.userId || String(payload.userId) === String(user._id)) {
+          loadUser();
+        }
+      });
+
+      s = inst;
+      setSocket(inst);
+    }
+
+    connectSocket(activeIdx);
+
     return () => {
-      s.disconnect();
+      if (s) s.disconnect();
     };
   }, [user?._id]);
 

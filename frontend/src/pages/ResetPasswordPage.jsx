@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Forgot Password?</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Submit a request — an admin will send you a reset link</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Enter your work email to receive a password reset link and 4-digit code</p>
                 </div>
               </div>
 
@@ -120,14 +120,14 @@ export default function ResetPasswordPage() {
                 <textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
-                  placeholder="e.g. Forgot my password after vacation"
+                  placeholder="e.g. Forgot my password"
                   rows={2}
                   className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm resize-none dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Submitting…' : 'Request Password Reset'}
+                {loading ? 'Sending Link…' : 'Send Reset Link & Code'}
               </Button>
               <div className="text-center pt-1">
                 <Link to="/login" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
@@ -145,13 +145,16 @@ export default function ResetPasswordPage() {
                   <CheckCircle2 className="h-6 w-6 text-green-600" />
                 </div>
               </div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Request Submitted</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Check Your Email</h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                An admin has been notified. Once approved, you'll receive an email with a reset link and a 4-digit verification code.
+                A password reset link and a 4-digit verification code have been sent directly to <strong>{email}</strong>.
+                Click the link in the email and enter your 4-digit code to set your new password.
               </p>
-              <Link to="/login" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
-                <ArrowLeft className="h-3 w-3" /> Back to Sign In
-              </Link>
+              <div className="pt-2">
+                <Link to="/login" className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
+                  <ArrowLeft className="h-3 w-3" /> Back to Sign In
+                </Link>
+              </div>
             </div>
           )}
 

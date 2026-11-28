@@ -48,11 +48,11 @@ function passwordResetEmailHtml({ fullName, resetUrl, code, expiresInMinutes = 6
   <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
     <div style="background:linear-gradient(135deg,#4f46e5,#638BEF);padding:32px 36px;">
       <h1 style="color:#fff;margin:0;font-size:22px;">Sage X3 Desk</h1>
-      <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px;">Password Reset Request</p>
+      <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px;">Password Reset</p>
     </div>
     <div style="padding:32px 36px;">
       <p style="color:#374151;font-size:15px;">Hi <strong>${fullName}</strong>,</p>
-      <p style="color:#6b7280;font-size:14px;line-height:1.6;">An admin has approved your password reset. Use the button and verification code below to set a new password. This link expires in <strong>${expiresInMinutes} minutes</strong>.</p>
+      <p style="color:#6b7280;font-size:14px;line-height:1.6;">We received a request to reset your Sage X3 Desk password. Click the button below and enter your 4-digit verification code to set a new password. This link expires in <strong>${expiresInMinutes} minutes</strong>.</p>
       <div style="text-align:center;margin:28px 0;">
         <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;">Reset My Password</a>
       </div>
@@ -232,7 +232,7 @@ export const logout = asyncHandler(async (req, res) => {
 // ─── NEW: Email verification ──────────────────────────────────────────────────
 export const verifyEmail = asyncHandler(async (req, res) => {
   const { email, code } = req.validatedBody;
-  const record = await SignupVerification.findOne({ email: email.toLowerCase() });
+  const record = await SignupVerification.findOne({ email: email.toLowerCase() }).select('+codeHash');
   if (!record) throw new AppError('No pending verification for this email.', 404);
   if (record.expiresAt < new Date()) {
     await SignupVerification.deleteOne({ _id: record._id });
@@ -285,30 +285,50 @@ export const resendVerification = asyncHandler(async (req, res) => {
   return sendSuccess(res, {}, 'Verification code resent. Check your inbox.');
 });
 
-// ─── NEW: Forgot password (user-initiated) ────────────────────────────────────
+// ─── NEW: Forgot password (user-initiated: sends reset link + code directly) ──
 export const forgotPassword = asyncHandler(async (req, res) => {
   const { email, reason } = req.validatedBody;
   // Always return 200 to prevent user enumeration
   const user = await User.findOne({ email: email.toLowerCase(), isDeleted: false });
   if (user && user.status !== 'Inactive') {
-    await PasswordResetRequest.create({
+    const token = generateResetToken();
+    const code = generate4DigitCode();
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    const request = await PasswordResetRequest.create({
       user: user._id,
       email: email.toLowerCase(),
-      reason: reason || 'User forgot password',
-      status: 'PENDING_ADMIN',
+      reason: reason || 'Self-service password reset',
+      resetTokenHash: sha256(token),
+      verificationCodeHash: sha256(code),
+      expiresAt,
+      status: 'LINK_SENT',
+      sentAt: new Date(),
     });
-    // Notify all admins (in-app notification via activity — email optional)
-    const admins = await User.find({ role: ROLES.ADMIN, status: 'Active', isDeleted: false }).select('email fullName');
-    for (const admin of admins) {
-      await sendEmailNotification({
-        to: admin.email,
-        subject: `[Action Required] Password reset request from ${user.fullName}`,
-        html: `<p>Hi ${admin.fullName},</p><p><strong>${user.fullName}</strong> (${user.email}) has requested a password reset. Please log in to Sage X3 Desk Admin → Password Resets to review and send them a reset link.</p>`,
-        text: `${user.fullName} (${user.email}) requested a password reset. Please review in Admin > Password Resets.`,
-      }).catch(() => {});
-    }
+
+    const clientUrl = getClientOrigin(req);
+    const resetUrl = `${clientUrl}/reset-password?token=${token}`;
+
+    const emailResult = await sendEmailNotification({
+      to: user.email,
+      subject: 'Reset your Sage X3 Desk password',
+      html: passwordResetEmailHtml({
+        fullName: user.fullName,
+        resetUrl,
+        code,
+        expiresInMinutes: 60,
+      }),
+      text: `Reset your password at: ${resetUrl}\n\nYour 4-digit verification code: ${code}\n\nThis link expires in 60 minutes.`,
+    });
+
+    request.mailDelivery = emailResult;
+    await request.save();
   }
-  return sendSuccess(res, {}, 'If an account with that email exists, an admin has been notified. You will receive a reset link by email shortly.');
+  return sendSuccess(
+    res,
+    {},
+    'If an account with that email exists, a password reset link and 4-digit verification code have been sent directly to your email.'
+  );
 });
 
 // ─── NEW: Admin — list reset requests ────────────────────────────────────────
@@ -430,7 +450,9 @@ export const resetPassword = asyncHandler(async (req, res) => {
     resetTokenHash: tokenHash,
     status: 'LINK_SENT',
     expiresAt: { $gt: new Date() },
-  }).populate('user');
+  })
+    .select('+resetTokenHash +verificationCodeHash')
+    .populate('user');
 
   if (!request) throw new AppError('Invalid or expired reset link. Please request a new one.', 400);
   if ((request.attempts || 0) >= 5) throw new AppError('Too many attempts. Please request a new reset link.', 429);
