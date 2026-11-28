@@ -1,11 +1,14 @@
 import Comment from '../../db/models/Comment.js';
 import Ticket from '../../db/models/Ticket.js';
 import Task from '../../db/models/Task.js';
+import User from '../../db/models/User.js';
 import AppError from '../utils/AppError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import { sendSuccess } from '../utils/response.js';
 import { recordActivity } from '../services/activityService.js';
 import { notifyTicketStakeholders, notifyUsers, emitBroadcast } from '../services/notificationService.js';
+import { sendEmailNotification } from '../utils/email.js';
+import { getTicketCommentTemplate } from '../utils/emailTemplates.js';
 import { ROLES } from '../config/constants.js';
 
 export const getComments = asyncHandler(async (req, res) => {
@@ -82,6 +85,43 @@ export const createComment = asyncHandler(async (req, res) => {
       link: `/tickets/${ticketObj._id}`,
       includeActor: false,
     });
+
+    // Send pixel-perfect branded email notification to ticket stakeholders
+    const rawIds = [
+      ...(ticketObj.assignedDevelopers || []),
+      ticketObj.assignedTeamLead,
+      ticketObj.createdBy,
+    ].filter(Boolean).map(String);
+    const uniqueRecipientIds = [...new Set(rawIds)].filter((id) => id !== String(req.user._id));
+    if (uniqueRecipientIds.length > 0) {
+      const clientUrl = process.env.CLIENT_URL?.split(',')[0]?.trim() || 'https://sage-x3-desk.vercel.app';
+      User.find({ _id: { $in: uniqueRecipientIds }, isDeleted: false, status: 'Active' })
+        .select('fullName email')
+        .lean()
+        .then((recipients) => {
+          const nowStr = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+          for (const r of recipients) {
+            if (!r.email) continue;
+            sendEmailNotification({
+              to: r.email,
+              subject: `New Comment on ${ticketObj.ticketId}: ${ticketObj.title}`,
+              html: getTicketCommentTemplate({
+                recipientName: r.fullName,
+                commenterName: req.user.fullName,
+                ticketId: ticketObj.ticketId,
+                ticketTitle: ticketObj.title,
+                commentBody: body,
+                ticketUrl: `${clientUrl}/tickets/${ticketObj._id}`,
+                isInternal,
+                timestamp: nowStr,
+                clientUrl,
+              }),
+              text: `${req.user.fullName} commented on ${ticketObj.ticketId} (${ticketObj.title}):\n\n"${body}"\n\nView at: ${clientUrl}/tickets/${ticketObj._id}`,
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {});
+    }
   } else {
     await notifyUsers({
       recipientIds: notifyIds,

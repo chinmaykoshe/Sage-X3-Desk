@@ -11,6 +11,12 @@ import { recordActivity } from '../services/activityService.js';
 import { getEffectivePermissions } from '../services/rbacService.js';
 import { recordAudit, recordSystemLog } from '../services/auditService.js';
 import { sendEmailNotification, isMailerConfigured } from '../utils/email.js';
+import {
+  getVerifyEmailTemplate,
+  getWelcomeActivatedTemplate,
+  getLoginAlertTemplate,
+  getPasswordResetTemplate,
+} from '../utils/emailTemplates.js';
 import crypto from 'crypto';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -38,57 +44,6 @@ function getClientOrigin(req) {
     }
   }
   return process.env.CLIENT_URL?.split(',')[0]?.trim() || 'http://localhost:5174';
-}
-
-function passwordResetEmailHtml({ fullName, resetUrl, code, expiresInMinutes = 60 }) {
-  return `
-<!DOCTYPE html>
-<html>
-<body style="font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:24px;">
-  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-    <div style="background:linear-gradient(135deg,#4f46e5,#638BEF);padding:32px 36px;">
-      <h1 style="color:#fff;margin:0;font-size:22px;">Sage X3 Desk</h1>
-      <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px;">Password Reset</p>
-    </div>
-    <div style="padding:32px 36px;">
-      <p style="color:#374151;font-size:15px;">Hi <strong>${fullName}</strong>,</p>
-      <p style="color:#6b7280;font-size:14px;line-height:1.6;">We received a request to reset your Sage X3 Desk password. Click the button below and enter your 4-digit verification code to set a new password. This link expires in <strong>${expiresInMinutes} minutes</strong>.</p>
-      <div style="text-align:center;margin:28px 0;">
-        <a href="${resetUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;font-size:15px;font-weight:600;">Reset My Password</a>
-      </div>
-      <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;padding:16px;text-align:center;margin:20px 0;">
-        <p style="color:#6b7280;font-size:12px;margin:0 0 8px;">Your 4-digit verification code</p>
-        <p style="color:#4f46e5;font-size:32px;font-weight:700;letter-spacing:12px;margin:0;">${code}</p>
-      </div>
-      <p style="color:#9ca3af;font-size:12px;line-height:1.6;">If you didn't request a password reset, please ignore this email. Your account remains secure.</p>
-    </div>
-  </div>
-</body>
-</html>`;
-}
-
-function verifyEmailHtml({ fullName, code }) {
-  return `
-<!DOCTYPE html>
-<html>
-<body style="font-family:Arial,sans-serif;background:#f4f6fb;margin:0;padding:24px;">
-  <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);">
-    <div style="background:linear-gradient(135deg,#4f46e5,#638BEF);padding:32px 36px;">
-      <h1 style="color:#fff;margin:0;font-size:22px;">Sage X3 Desk</h1>
-      <p style="color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px;">Verify Your Email</p>
-    </div>
-    <div style="padding:32px 36px;">
-      <p style="color:#374151;font-size:15px;">Hi <strong>${fullName || 'there'}</strong>,</p>
-      <p style="color:#6b7280;font-size:14px;line-height:1.6;">Welcome to Sage X3 Desk! Enter the 4-digit code below to verify your email address and activate your account.</p>
-      <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:8px;padding:16px;text-align:center;margin:28px 0;">
-        <p style="color:#6b7280;font-size:12px;margin:0 0 8px;">Your verification code (expires in 15 minutes)</p>
-        <p style="color:#4f46e5;font-size:32px;font-weight:700;letter-spacing:12px;margin:0;">${code}</p>
-      </div>
-      <p style="color:#9ca3af;font-size:12px;">If you didn't create an account, please ignore this email.</p>
-    </div>
-  </div>
-</body>
-</html>`;
 }
 
 // ─── Existing: login ─────────────────────────────────────────────────────────
@@ -138,6 +93,32 @@ export const login = asyncHandler(async (req, res) => {
     result: 'SUCCESS',
   });
 
+  // Non-blocking Security Alert: New Sign-In Detected
+  const clientUrl = getClientOrigin(req);
+  const rawIp = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
+  const ipAddress = String(rawIp).split(',')[0].trim().replace(/^::ffff:/, '');
+  const userAgent = req.headers['user-agent'] || 'Desktop Browser';
+  const timestamp = new Date().toLocaleString('en-US', {
+    dateStyle: 'full',
+    timeStyle: 'medium',
+    timeZone: 'Asia/Kolkata',
+  });
+
+  sendEmailNotification({
+    to: user.email,
+    subject: 'Security Alert: New sign-in to your Sage X3 Desk account',
+    html: getLoginAlertTemplate({
+      fullName: user.fullName,
+      email: user.email,
+      timestamp,
+      ipAddress,
+      userAgent,
+      resetPasswordUrl: `${clientUrl}/reset-password`,
+      clientUrl,
+    }),
+    text: `New sign-in detected on your Sage X3 Desk account (${user.email}) at ${timestamp} from IP ${ipAddress}. If this wasn't you, reset your password immediately at ${clientUrl}/reset-password`,
+  }).catch(() => {});
+
   return sendSuccess(res, { token, user: safeUser }, 'Logged in successfully');
 });
 
@@ -175,7 +156,8 @@ export const register = asyncHandler(async (req, res) => {
   });
 
   if (mailerReady) {
-    // Send verification code
+    // Send verification code with Sage X3 Desk branded UI template
+    const clientUrl = getClientOrigin(req);
     const code = generate4DigitCode();
     await SignupVerification.findOneAndDelete({ email: email.toLowerCase() });
     await SignupVerification.create({
@@ -186,7 +168,12 @@ export const register = asyncHandler(async (req, res) => {
     await sendEmailNotification({
       to: email.toLowerCase(),
       subject: 'Verify your Sage X3 Desk account',
-      html: verifyEmailHtml({ fullName, code }),
+      html: getVerifyEmailTemplate({
+        fullName,
+        code,
+        expiresInMinutes: 15,
+        clientUrl,
+      }),
       text: `Your Sage X3 Desk verification code is: ${code}. It expires in 15 minutes.`,
     });
     return sendSuccess(
@@ -256,6 +243,21 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 
   await SignupVerification.deleteOne({ _id: record._id });
 
+  // Send branded Welcome / Account Activated email
+  const clientUrl = getClientOrigin(req);
+  sendEmailNotification({
+    to: user.email,
+    subject: 'Welcome to Sage X3 Desk — Account Activated',
+    html: getWelcomeActivatedTemplate({
+      fullName: user.fullName,
+      employeeId: user.employeeId,
+      email: user.email,
+      designation: user.designation,
+      clientUrl,
+    }),
+    text: `Welcome to Sage X3 Desk, ${user.fullName}! Your account has been activated. Open workspace: ${clientUrl}`,
+  }).catch(() => {});
+
   const token = signToken(user._id);
   const safeUser = user.toJSON();
   safeUser.effectivePermissions = await getEffectivePermissions(user);
@@ -269,6 +271,7 @@ export const resendVerification = asyncHandler(async (req, res) => {
   if (!user) throw new AppError('No account found with this email.', 404);
   if (user.status !== 'Pending') return sendSuccess(res, {}, 'Account already verified.');
 
+  const clientUrl = getClientOrigin(req);
   const code = generate4DigitCode();
   await SignupVerification.findOneAndDelete({ email: email.toLowerCase() });
   await SignupVerification.create({
@@ -279,7 +282,12 @@ export const resendVerification = asyncHandler(async (req, res) => {
   await sendEmailNotification({
     to: email.toLowerCase(),
     subject: 'Your new Sage X3 Desk verification code',
-    html: verifyEmailHtml({ fullName: user.fullName, code }),
+    html: getVerifyEmailTemplate({
+      fullName: user.fullName,
+      code,
+      expiresInMinutes: 15,
+      clientUrl,
+    }),
     text: `Your new verification code is: ${code}. Expires in 15 minutes.`,
   });
   return sendSuccess(res, {}, 'Verification code resent. Check your inbox.');
@@ -312,13 +320,14 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     const emailResult = await sendEmailNotification({
       to: user.email,
       subject: 'Reset your Sage X3 Desk password',
-      html: passwordResetEmailHtml({
+      html: getPasswordResetTemplate({
         fullName: user.fullName,
         resetUrl,
         code,
         expiresInMinutes: 60,
+        clientUrl,
       }),
-      text: `Reset your password at: ${resetUrl}\n\nYour 4-digit verification code: ${code}\n\nThis link expires in 60 minutes.`,
+      text: `Reset your password at: ${resetUrl}\n\nYour 4-digit verification code: ${code}\n\nThis link expires in 60 minutes. If you did not request this, please ignore this email.`,
     });
 
     request.mailDelivery = emailResult;
@@ -368,13 +377,14 @@ export const adminSendReset = asyncHandler(async (req, res) => {
   const emailResult = await sendEmailNotification({
     to: request.user.email,
     subject: 'Reset your Sage X3 Desk password',
-    html: passwordResetEmailHtml({
+    html: getPasswordResetTemplate({
       fullName: request.user.fullName,
       resetUrl,
       code,
       expiresInMinutes: 60,
+      clientUrl,
     }),
-    text: `Reset your password at: ${resetUrl}\n\nYour verification code: ${code}\n\nThis link expires in 60 minutes.`,
+    text: `Reset your password at: ${resetUrl}\n\nYour verification code: ${code}\n\nThis link expires in 60 minutes. If you did not request this, please ignore this email.`,
   });
 
   request.mailDelivery = emailResult;
@@ -411,13 +421,14 @@ export const adminSendResetForUser = asyncHandler(async (req, res) => {
   const emailResult = await sendEmailNotification({
     to: user.email,
     subject: 'Reset your Sage X3 Desk password',
-    html: passwordResetEmailHtml({
+    html: getPasswordResetTemplate({
       fullName: user.fullName,
       resetUrl,
       code,
       expiresInMinutes: 60,
+      clientUrl,
     }),
-    text: `Reset your password at: ${resetUrl}\n\nYour verification code: ${code}\n\nThis link expires in 60 minutes.`,
+    text: `Reset your password at: ${resetUrl}\n\nYour verification code: ${code}\n\nThis link expires in 60 minutes. If you did not request this, please ignore this email.`,
   });
 
   request.mailDelivery = emailResult;

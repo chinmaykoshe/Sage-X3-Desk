@@ -1,6 +1,7 @@
 import Ticket from '../../db/models/Ticket.js';
 import Task from '../../db/models/Task.js';
 import Client from '../../db/models/Client.js';
+import Project from '../../db/models/Project.js';
 import User from '../../db/models/User.js';
 import ApprovalHistory from '../../db/models/ApprovalHistory.js';
 import { getNextSequence } from '../../db/models/Counter.js';
@@ -9,6 +10,8 @@ import AppError from '../utils/AppError.js';
 import { recordActivity } from './activityService.js';
 import { notifyTicketStakeholders, emitBroadcast } from './notificationService.js';
 import { recordAudit } from './auditService.js';
+import { sendEmailNotification } from '../utils/email.js';
+import { getTicketAssignedTemplate } from '../utils/emailTemplates.js';
 
 export async function createTicketService(payload, actor) {
   const client = await Client.findOne({ _id: payload.client, isDeleted: false });
@@ -302,6 +305,43 @@ export async function assignTicketService(id, { assignedDevelopers, assignedTeam
     link: `/tickets/${ticket._id}`,
     includeActor: false,
   });
+
+  // Dispatch work assigned emails to newly assigned developers and/or team lead
+  const newlyAssignedDevs = newDevelopers.filter((id) => !previousDevelopers.includes(id));
+  const tlAssigned = ticket.assignedTeamLead && String(ticket.assignedTeamLead) !== previousTeamLead;
+  const assigneesToEmail = [...new Set([...newlyAssignedDevs, ...(tlAssigned ? [String(ticket.assignedTeamLead)] : [])])];
+
+  if (assigneesToEmail.length > 0) {
+    const clientUrl = process.env.CLIENT_URL?.split(',')[0]?.trim() || 'https://sage-x3-desk.vercel.app';
+    Promise.all([
+      Client.findById(ticket.client).select('companyName').lean(),
+      ticket.project ? Project.findById(ticket.project).select('name').lean() : null,
+      User.find({ _id: { $in: assigneesToEmail }, isDeleted: false, status: 'Active' }).select('fullName email').lean(),
+    ])
+      .then(([clientDoc, projectDoc, usersToEmail]) => {
+        for (const u of usersToEmail || []) {
+          if (!u.email) continue;
+          sendEmailNotification({
+            to: u.email,
+            subject: `Work Assigned: ${ticket.ticketId} — ${ticket.title}`,
+            html: getTicketAssignedTemplate({
+              recipientName: u.fullName,
+              ticketId: ticket.ticketId,
+              ticketTitle: ticket.title,
+              priority: ticket.priority || 'Medium',
+              clientName: clientDoc?.companyName || '',
+              projectName: projectDoc?.name || '',
+              assignedByName: actor.fullName,
+              ticketUrl: `${clientUrl}/tickets/${ticket._id}`,
+              description: ticket.description || '',
+              clientUrl,
+            }),
+            text: `You have been assigned to ${ticket.ticketId} (${ticket.title}) by ${actor.fullName}.\n\nView ticket at: ${clientUrl}/tickets/${ticket._id}`,
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }
 
   emitBroadcast('ticket:changed', { action: 'assigned', ticketId: ticket._id, actorId: actor._id });
   return ticket;
