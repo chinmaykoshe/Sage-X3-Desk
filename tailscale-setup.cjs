@@ -122,9 +122,8 @@ async function main() {
   const backendEnv = path.join(rootDir, 'backend', '.env');
 
   if (fs.existsSync(frontendEnvProd)) {
-    updateEnvFile(frontendEnvProd, 'VITE_API_URL', `${funnelUrl}/api,http://localhost:5001/api`);
-    updateEnvFile(frontendEnvProd, 'VITE_SOCKET_URL', `${funnelUrl},http://localhost:5001`);
-    console.log('  ✓ frontend/.env.production updated with Tailscale Funnel URLs');
+    updateEnvFile(frontendEnvProd, 'VITE_API_URL', `${funnelUrl},http://localhost:5001`);
+    console.log('  ✓ frontend/.env.production updated with Tailscale Funnel URL');
   }
 
   if (fs.existsSync(backendEnv)) {

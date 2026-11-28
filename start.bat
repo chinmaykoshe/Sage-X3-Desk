@@ -7,6 +7,6 @@ exit /b 0
 cd /d "%~dp0"
 node "%~dp0kill-ports.cjs"
 node "%~dp0tailscale-setup.cjs"
-node "%~dp0start-ai.cjs"
+node "%~dp0ai\start-ai.cjs"
 node "%~dp0start-bg.cjs"
 exit /b 0

@@ -18,6 +18,7 @@ import {
   Rocket,
   Server,
   ShieldAlert,
+  Terminal,
   Trash2,
   Wrench,
 } from 'lucide-react';
@@ -31,9 +32,11 @@ import Badge from '../components/ui/Badge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Loader from '../components/ui/Loader';
+import AdminConsolePanel from '../components/admin/AdminConsolePanel';
 
 const TABS = [
   { id: 'overview', route: '/admin/overview', label: 'System Overview & Space', icon: Activity },
+  { id: 'console', route: '/admin/console', label: 'Admin Console (CMD)', icon: Terminal },
   { id: 'governance', route: '/admin/governance', label: 'Data & Duplicate Control', icon: DatabaseZap },
   { id: 'user-activity', route: '/admin/user-activity', label: 'User Activity', icon: History },
   { id: 'dev-logs', route: '/admin/dev-logs', label: 'Development Logs', icon: Wrench },
@@ -330,7 +333,9 @@ export default function AdminMonitoringPage() {
         }
       />
 
-      {loading ? (
+      {tab === 'console' ? (
+        <AdminConsolePanel />
+      ) : loading ? (
         <Loader label="Loading monitoring view..." />
       ) : tab === 'overview' && overview ? (
         <div className="space-y-5">

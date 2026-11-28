@@ -16,6 +16,8 @@ import {
   getAIActivityLogs,
   getAuditLogs,
   blockAuditMutation,
+  getAdminConsoleLogs,
+  execAdminConsoleCommand,
 } from '../controllers/monitoringController.js';
 import { protect, authorizeRoles, requireScreenAccess } from '../middleware/auth.js';
 import { ROLES } from '../config/constants.js';
@@ -46,5 +48,9 @@ router.get('/audit-logs', requireScreenAccess('admin_audit_logs'), getAuditLogs)
 router.put('/audit-logs/:id', blockAuditMutation);
 router.patch('/audit-logs/:id', blockAuditMutation);
 router.delete('/audit-logs/:id', blockAuditMutation);
+
+// Admin CMD Console
+router.get('/console/logs', authorizeRoles(ROLES.ADMIN), getAdminConsoleLogs);
+router.post('/console/exec', authorizeRoles(ROLES.ADMIN), execAdminConsoleCommand);
 
 export default router;

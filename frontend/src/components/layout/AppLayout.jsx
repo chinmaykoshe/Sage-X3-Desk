@@ -31,6 +31,7 @@ import {
   Mail,
   ShieldCheck,
   Activity,
+  Terminal,
   Wrench,
   AlertTriangle,
   ShieldAlert,
@@ -102,6 +103,7 @@ const SIDEBAR_GROUPS = [
     collapsible: true,
     items: [
       { to: '/admin/overview', label: 'System Overview', icon: Activity, screenKey: 'admin_overview' },
+      { to: '/admin/console', label: 'Admin Console (CMD)', icon: Terminal, screenKey: 'admin_overview' },
       { to: '/admin/governance', label: 'Data & Duplicate Control', icon: DatabaseZap, screenKey: 'admin_governance', roles: ['admin'] },
       { to: '/admin/user-activity', label: 'User Activity', icon: Users, screenKey: 'admin_user_activity' },
       { to: '/admin/dev-logs', label: 'Development Logs', icon: Wrench, screenKey: 'admin_dev_logs' },

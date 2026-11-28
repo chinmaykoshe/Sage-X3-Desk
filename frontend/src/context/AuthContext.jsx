@@ -60,9 +60,14 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const candidateSocketUrls = (import.meta.env.VITE_SOCKET_URL || '/')
+    const candidateSocketUrls = (
+      import.meta.env.VITE_SOCKET_URL ||
+      import.meta.env.VITE_BACKEND_URL ||
+      import.meta.env.VITE_API_URL ||
+      '/'
+    )
       .split(',')
-      .map((u) => u.trim().replace(/\/+$/, ''))
+      .map((u) => u.trim().replace(/\/api\/?$/i, '').replace(/\/+$/, ''))
       .filter(Boolean);
 
     let activeIdx = 0;

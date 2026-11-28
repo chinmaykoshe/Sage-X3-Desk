@@ -124,7 +124,7 @@ if "%FRESH_ENV%"=="1" (
 
 :: ── 8. Launch Background Infrastructure ─────────────────────────────────────
 echo [8/8] Starting Backend API (5001) & Gateways in background...
-call "%~dp0start-bg.bat"
+call "%~dp0start.bat"
 
 echo.
 echo ======================================================================
@@ -137,7 +137,7 @@ echo   Cloud Frontend               : https://sage-x3-desk.vercel.app
 echo   Logs Directory               : .\logs\backend.log
 echo.
 echo   Commands:
-echo     - Restart background services : restart.bat
+echo     - Start / Restart services    : start.bat
 echo     - Seed database               : npm run seed
 echo     - Run local frontend (dev)    : npm --prefix frontend run dev
 echo ======================================================================

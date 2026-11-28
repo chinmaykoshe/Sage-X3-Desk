@@ -798,3 +798,140 @@ export const blockAuditMutation = asyncHandler(async (req, res) => {
   });
   throw new AppError('Audit log records are immutable and cannot be modified or deleted.', 403);
 });
+
+// ─── Admin CMD Console ────────────────────────────────────────────────────────
+function readTailLines(filePath, count = 60) {
+  try {
+    const fs = require('fs');
+    if (!fs.existsSync(filePath)) return [];
+    const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/).filter(Boolean);
+    return lines.slice(-Math.min(Math.max(count, 1), 250));
+  } catch {
+    return [];
+  }
+}
+
+export const getAdminConsoleLogs = asyncHandler(async (req, res) => {
+  const path = await import('path');
+  const fs = await import('fs');
+  const linesCount = Math.min(Number(req.query.lines) || 60, 250);
+  const logCandidates = [
+    path.resolve(process.cwd(), '..', 'logs', 'backend.log'),
+    path.resolve(process.cwd(), 'logs', 'backend.log'),
+    path.resolve(process.cwd(), 'server.log'),
+  ];
+  let lines = [];
+  let source = 'none';
+  for (const p of logCandidates) {
+    if (fs.existsSync(p)) {
+      const content = fs.readFileSync(p, 'utf8').split(/\r?\n/).filter(Boolean);
+      lines = content.slice(-linesCount);
+      source = path.basename(p);
+      break;
+    }
+  }
+  return sendSuccess(res, { lines, source, timestamp: new Date().toISOString() }, 'Console logs retrieved');
+});
+
+export const execAdminConsoleCommand = asyncHandler(async (req, res) => {
+  const rawCmd = String(req.body?.command || '').trim();
+  if (!rawCmd) throw new AppError('Command is required.', 400);
+
+  const [cmd, ...args] = rawCmd.split(/\s+/);
+  const lower = cmd.toLowerCase();
+  const { execSync } = await import('child_process');
+  const path = await import('path');
+  const fs = await import('fs');
+  const mongoose = (await import('mongoose')).default;
+
+  let output = '';
+
+  if (lower === 'help' || lower === '?') {
+    output = [
+      'Sage X3 Desk — Admin Diagnostic Console',
+      'Available commands:',
+      '  help              Show this help message',
+      '  health / status   Check Backend, MongoDB, Ollama AI, and Mailer status',
+      '  logs [n]          Show last N lines of backend.log (default 40)',
+      '  tailscale         Show Tailscale node & Funnel status',
+      '  ai                Check local Ollama AI server & qwen2.5-coder:1.5b model',
+      '  db                Show MongoDB connection state & collection counts',
+      '  env               Show Node.js runtime, OS, uptime & memory usage',
+      '  clear             Clear terminal output',
+    ].join('\n');
+  } else if (lower === 'health' || lower === 'status') {
+    const dbState = mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED';
+    let aiStatus = 'OFFLINE';
+    try {
+      const r = await fetch('http://127.0.0.1:11434/api/tags', { signal: AbortSignal.timeout(1500) });
+      if (r.ok) aiStatus = 'ONLINE (127.0.0.1:11434)';
+    } catch { /* offline */ }
+    output = [
+      `Backend API  : OPERATIONAL (uptime: ${Math.floor(process.uptime())}s, PID: ${process.pid})`,
+      `MongoDB      : ${dbState} (${mongoose.connection.name || 'sage_x3_desk'})`,
+      `Ollama AI    : ${aiStatus}`,
+      `Node Runtime : ${process.version} (${process.platform}/${process.arch})`,
+      `Memory (RSS) : ${(process.memoryUsage().rss / 1024 / 1024).toFixed(1)} MB`,
+    ].join('\n');
+  } else if (lower === 'logs') {
+    const n = Math.min(Math.max(parseInt(args[0], 10) || 40, 1), 200);
+    const logCandidates = [
+      path.resolve(process.cwd(), '..', 'logs', 'backend.log'),
+      path.resolve(process.cwd(), 'logs', 'backend.log'),
+      path.resolve(process.cwd(), 'server.log'),
+    ];
+    let found = [];
+    for (const p of logCandidates) {
+      if (fs.existsSync(p)) {
+        found = fs.readFileSync(p, 'utf8').split(/\r?\n/).filter(Boolean).slice(-n);
+        break;
+      }
+    }
+    output = found.length ? found.join('\n') : '(No log entries found)';
+  } else if (lower === 'tailscale') {
+    try {
+      const tsStatus = execSync('tailscale status', { encoding: 'utf8', timeout: 4000 });
+      const tsFunnel = execSync('tailscale funnel status', { encoding: 'utf8', timeout: 4000 });
+      output = `=== tailscale status ===\n${tsStatus.trim()}\n\n=== tailscale funnel status ===\n${tsFunnel.trim()}`;
+    } catch (err) {
+      output = `Tailscale CLI error: ${err.message}`;
+    }
+  } else if (lower === 'ai') {
+    try {
+      const r = await fetch('http://127.0.0.1:11434/api/tags', { signal: AbortSignal.timeout(2000) });
+      const data = await r.json();
+      const models = (data.models || []).map((m) => `  - ${m.name} (${(m.size / 1024 / 1024).toFixed(0)} MB)`);
+      output = `Ollama AI: ONLINE\nInstalled models:\n${models.length ? models.join('\n') : '  (none)'}`;
+    } catch (err) {
+      output = `Ollama AI: OFFLINE (${err.message})`;
+    }
+  } else if (lower === 'db') {
+    const counts = await Promise.all([
+      mongoose.connection.db.collection('users').countDocuments(),
+      mongoose.connection.db.collection('tickets').countDocuments(),
+      mongoose.connection.db.collection('tasks').countDocuments(),
+      mongoose.connection.db.collection('clients').countDocuments(),
+    ]);
+    output = [
+      `Database : ${mongoose.connection.name} (readyState: ${mongoose.connection.readyState})`,
+      `Users    : ${counts[0]}`,
+      `Tickets  : ${counts[1]}`,
+      `Tasks    : ${counts[2]}`,
+      `Clients  : ${counts[3]}`,
+    ].join('\n');
+  } else if (lower === 'env') {
+    const mem = process.memoryUsage();
+    output = [
+      `Node.js  : ${process.version}`,
+      `Platform : ${process.platform} (${process.arch})`,
+      `PID      : ${process.pid}`,
+      `Uptime   : ${Math.floor(process.uptime())} seconds`,
+      `Memory   : RSS ${(mem.rss / 1048576).toFixed(1)} MB | Heap ${(mem.heapUsed / 1048576).toFixed(1)}/${(mem.heapTotal / 1048576).toFixed(1)} MB`,
+      `Port     : ${process.env.PORT || 5001}`,
+    ].join('\n');
+  } else {
+    output = `Unknown command: "${cmd}". Type "help" to see available commands.`;
+  }
+
+  return sendSuccess(res, { command: rawCmd, output, timestamp: new Date().toISOString() }, 'Command executed');
+});

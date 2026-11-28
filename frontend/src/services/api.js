@@ -20,16 +20,22 @@ export function clearStoredToken() {
 }
 
 // ── Multi-Server Failover Configuration ───────────────────────────────────────
-// Support comma-separated list of candidate backend URLs for high availability:
-// e.g. "https://chinmaysloq.tail43ed85.ts.net/api,https://secondary-node.ts.net/api,http://localhost:5001/api"
+// Support single base URL (e.g. "https://chinmaysloq.tail43ed85.ts.net") or comma-separated list.
+// Automatically appends "/api" when needed.
 const rawEndpoints = [
+  import.meta.env.VITE_BACKEND_URL,
   import.meta.env.VITE_API_URL,
   import.meta.env.VITE_FALLBACK_API_URLS,
   '/api',
 ]
   .filter(Boolean)
   .flatMap((str) => String(str).split(','))
-  .map((u) => u.trim().replace(/\/+$/, ''))
+  .map((u) => {
+    const clean = u.trim().replace(/\/+$/, '');
+    if (!clean) return '';
+    if (clean === '/api' || clean.endsWith('/api')) return clean;
+    return `${clean}/api`;
+  })
   .filter(Boolean);
 
 export const SERVER_ENDPOINTS = [...new Set(rawEndpoints.length ? rawEndpoints : ['/api'])];

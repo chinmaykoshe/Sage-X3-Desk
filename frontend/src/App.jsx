@@ -187,6 +187,7 @@ export default function App() {
                   <Route path="help-center" element={<HelpCenterPage />} />
                   <Route path="notifications" element={<ProtectedRoute screenKey="inbox"><NotificationsPage /></ProtectedRoute>} />
                   <Route path="admin/overview" element={<ProtectedRoute screenKey="admin_overview"><AdminMonitoringPage /></ProtectedRoute>} />
+                  <Route path="admin/console" element={<ProtectedRoute screenKey="admin_overview"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/governance" element={<ProtectedRoute screenKey="admin_governance" roles={['admin']}><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/user-activity" element={<ProtectedRoute screenKey="admin_user_activity"><AdminMonitoringPage /></ProtectedRoute>} />
                   <Route path="admin/dev-logs" element={<ProtectedRoute screenKey="admin_dev_logs"><AdminMonitoringPage /></ProtectedRoute>} />
